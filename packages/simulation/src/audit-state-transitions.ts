@@ -116,17 +116,47 @@ export async function runStateTransitionAudit(): Promise<void> {
       /cannot transition from open to resolved/i,
     );
 
+    await apply(processor, {
+      idempotencyKey: `audit-capture-${suffix}`,
+      origin,
+      createdAt: new Date("2026-02-15T08:03:00.000Z").toISOString(),
+      dependencies: [],
+      command: {
+        commandType: "field.capture_converter",
+        commandId: randomUUID(),
+        yardId: "YARD-SIM-01",
+        boxId: boxCode,
+        vinOrSerial: `VIN-AUDIT-${suffix}`,
+        capturedAt: new Date("2026-02-15T08:03:00.000Z").toISOString(),
+        location: { lat: 34.215, lon: -118.494, accuracyM: 9 },
+        evidence: { evidenceBundleId: randomUUID(), requiredTypesPresent: ["image", "gps"] },
+      },
+    });
+
+    await apply(processor, {
+      idempotencyKey: `audit-assign-box-to-queue-${suffix}`,
+      origin,
+      createdAt: new Date("2026-02-15T08:04:00.000Z").toISOString(),
+      dependencies: [],
+      command: {
+        commandType: "custody.assign_box_to_queue",
+        commandId: randomUUID(),
+        boxId: boxCode,
+        queueId: queueCode,
+      },
+    });
+
     await expectFailure(
       processor,
       {
         idempotencyKey: `audit-out-of-order-settlement-${suffix}`,
         origin,
-        createdAt: new Date("2026-02-15T08:03:00.000Z").toISOString(),
+        createdAt: new Date("2026-02-15T08:05:00.000Z").toISOString(),
         dependencies: [],
         command: {
           commandType: "settlement.append_step",
           commandId: randomUUID(),
-          settlementId: `SETTLEMENT-AUDIT-${suffix}`,
+          settlementId: queueCode,
           step: "invoice_finalized",
         },
       },
@@ -136,7 +166,7 @@ export async function runStateTransitionAudit(): Promise<void> {
     const ledgerPosting = await apply(processor, {
       idempotencyKey: `audit-ledger-post-${suffix}`,
       origin,
-      createdAt: new Date("2026-02-15T08:04:00.000Z").toISOString(),
+      createdAt: new Date("2026-02-15T08:06:00.000Z").toISOString(),
       dependencies: [],
       command: {
         commandType: "finance.post_ledger_entry",
@@ -157,7 +187,7 @@ export async function runStateTransitionAudit(): Promise<void> {
       {
         idempotencyKey: `audit-zero-delta-correction-${suffix}`,
         origin,
-        createdAt: new Date("2026-02-15T08:05:00.000Z").toISOString(),
+        createdAt: new Date("2026-02-15T08:07:00.000Z").toISOString(),
         dependencies: [],
         command: {
           commandType: "finance.post_additive_correction",
@@ -174,26 +204,9 @@ export async function runStateTransitionAudit(): Promise<void> {
     );
 
     await apply(processor, {
-      idempotencyKey: `audit-capture-${suffix}`,
-      origin,
-      createdAt: new Date("2026-02-15T08:06:00.000Z").toISOString(),
-      dependencies: [],
-      command: {
-        commandType: "field.capture_converter",
-        commandId: randomUUID(),
-        yardId: "YARD-SIM-01",
-        boxId: boxCode,
-        vinOrSerial: `VIN-AUDIT-${suffix}`,
-        capturedAt: new Date("2026-02-15T08:06:00.000Z").toISOString(),
-        location: { lat: 34.215, lon: -118.494, accuracyM: 9 },
-        evidence: { evidenceBundleId: randomUUID(), requiredTypesPresent: ["image", "gps"] },
-      },
-    });
-
-    await apply(processor, {
       idempotencyKey: `audit-create-shipment-${suffix}`,
       origin,
-      createdAt: new Date("2026-02-15T08:07:00.000Z").toISOString(),
+      createdAt: new Date("2026-02-15T08:08:00.000Z").toISOString(),
       dependencies: [],
       command: {
         commandType: "custody.create_shipment",
@@ -208,7 +221,7 @@ export async function runStateTransitionAudit(): Promise<void> {
     await apply(processor, {
       idempotencyKey: `audit-receive-shipment-${suffix}`,
       origin,
-      createdAt: new Date("2026-02-15T08:08:00.000Z").toISOString(),
+      createdAt: new Date("2026-02-15T08:09:00.000Z").toISOString(),
       dependencies: [],
       command: {
         commandType: "custody.receive_shipment",
@@ -223,7 +236,7 @@ export async function runStateTransitionAudit(): Promise<void> {
       {
         idempotencyKey: `audit-ship-received-box-${suffix}`,
         origin,
-        createdAt: new Date("2026-02-15T08:09:00.000Z").toISOString(),
+        createdAt: new Date("2026-02-15T08:10:00.000Z").toISOString(),
         dependencies: [],
         command: {
           commandType: "custody.create_shipment",
