@@ -1,0 +1,29 @@
+sequenceDiagram
+  autonumber
+  participant OP as Operator
+  participant API as Control API
+  participant PROC as Command Processor
+  participant REC as Reconciliation
+  participant FIN as Financial Ledger
+  participant SET as Settlement
+
+  OP->>API: reconciliation.open_case(trigger, severity, scope)
+  API->>PROC: validate + apply
+  PROC->>REC: case created (open)
+
+  OP->>API: reconciliation.record_action(action, findings)
+  API->>PROC: validate + apply
+  PROC->>REC: append action, status -> investigating
+
+  OP->>API: finance.post_additive_correction(delta, targetEntry)
+  API->>PROC: validate non-zero delta + linked target
+  PROC->>FIN: append correction entry + linkage
+  PROC->>REC: append case action (optional link)
+
+  OP->>API: settlement.finalize_from_assay(finalValue)
+  API->>PROC: enforce sequence + calculate variance
+  PROC->>SET: finalize settlement + immutable invoice
+
+  OP->>API: reconciliation.close_case(resolution)
+  API->>PROC: enforce allowed transition
+  PROC->>REC: case closed (additive history retained)

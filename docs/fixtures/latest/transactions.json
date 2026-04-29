@@ -1,0 +1,112 @@
+[
+  {
+    "appliedAt": "2026-04-23T20:44:52.821Z",
+    "createdAt": "2026-01-15T12:19:00.000Z",
+    "eventType": "settlement.finalize_from_assay",
+    "sourceSystem": "operator_console",
+    "transactionId": "9f977a58-872c-4c33-a0ee-0ea64c5ad450",
+    "idempotencyKey": "sim-settlement-finalize-1",
+    "originDeviceRef": "811d7845-d75f-427f-a51c-6d6188afe496",
+    "validationState": "applied",
+    "originUserDisplay": "Simulation Operator"
+  },
+  {
+    "appliedAt": "2026-04-23T20:44:52.782Z",
+    "createdAt": "2026-01-15T12:18:00.000Z",
+    "eventType": "reconciliation.open_case",
+    "sourceSystem": "operator_console",
+    "transactionId": "423fc987-9adf-4e37-901d-137233c641c4",
+    "idempotencyKey": "sim-reconcile-1",
+    "originDeviceRef": "811d7845-d75f-427f-a51c-6d6188afe496",
+    "validationState": "applied",
+    "originUserDisplay": "Simulation Operator"
+  },
+  {
+    "appliedAt": "2026-04-23T20:44:52.774Z",
+    "createdAt": "2026-01-15T12:17:00.000Z",
+    "eventType": "finance.post_ledger_entry",
+    "sourceSystem": "operator_console",
+    "transactionId": "8ba42aed-6b67-403e-9417-8f77452a2281",
+    "idempotencyKey": "sim-ledger-1",
+    "originDeviceRef": "811d7845-d75f-427f-a51c-6d6188afe496",
+    "validationState": "applied",
+    "originUserDisplay": "Simulation Operator"
+  },
+  {
+    "appliedAt": "2026-04-23T20:44:52.755Z",
+    "createdAt": "2026-01-15T12:16:00.000Z",
+    "eventType": "hedge.open_position",
+    "sourceSystem": "operator_console",
+    "transactionId": "0734f88f-4e3c-46ef-822f-a763de8e7b47",
+    "idempotencyKey": "sim-hedge-1",
+    "originDeviceRef": "811d7845-d75f-427f-a51c-6d6188afe496",
+    "validationState": "applied",
+    "originUserDisplay": "Simulation Operator"
+  },
+  {
+    "appliedAt": "2026-04-23T20:44:52.748Z",
+    "createdAt": "2026-01-15T12:15:00.000Z",
+    "eventType": "pricing.resolve_estimate",
+    "sourceSystem": "operator_console",
+    "transactionId": "abc96d39-7b50-417a-8fd7-a9bf0d93670d",
+    "idempotencyKey": "sim-price-1",
+    "originDeviceRef": "811d7845-d75f-427f-a51c-6d6188afe496",
+    "validationState": "applied",
+    "originUserDisplay": "Simulation Operator"
+  },
+  {
+    "appliedAt": "2026-04-23T20:44:52.727Z",
+    "createdAt": "2026-01-15T12:10:00.000Z",
+    "eventType": "analytics.record_sample",
+    "sourceSystem": "operator_console",
+    "transactionId": "e39de462-f07a-4368-adce-5f5f784f4ad3",
+    "idempotencyKey": "sim-sample-1",
+    "originDeviceRef": "811d7845-d75f-427f-a51c-6d6188afe496",
+    "validationState": "applied",
+    "originUserDisplay": "Simulation Operator"
+  },
+  {
+    "appliedAt": "2026-04-23T20:44:52.715Z",
+    "createdAt": "2026-01-15T12:08:00.000Z",
+    "eventType": "custody.receive_shipment",
+    "sourceSystem": "operator_console",
+    "transactionId": "f90c5382-4d9c-45b8-9a3a-35d9d962cb0b",
+    "idempotencyKey": "sim-shipment-receive-1",
+    "originDeviceRef": "811d7845-d75f-427f-a51c-6d6188afe496",
+    "validationState": "applied",
+    "originUserDisplay": "Simulation Operator"
+  },
+  {
+    "appliedAt": "2026-04-23T20:44:52.700Z",
+    "createdAt": "2026-01-15T12:06:00.000Z",
+    "eventType": "custody.create_shipment",
+    "sourceSystem": "operator_console",
+    "transactionId": "1c8739cd-5834-44b1-82b4-d4e06c32e8d6",
+    "idempotencyKey": "sim-shipment-create-1",
+    "originDeviceRef": "811d7845-d75f-427f-a51c-6d6188afe496",
+    "validationState": "applied",
+    "originUserDisplay": "Simulation Operator"
+  },
+  {
+    "appliedAt": "2026-04-23T20:44:52.679Z",
+    "createdAt": "2026-01-15T12:05:00.000Z",
+    "eventType": "custody.lock_queue_for_processing",
+    "sourceSystem": "operator_console",
+    "transactionId": "d5fb44ae-7bf5-4f95-b177-05a8e77d9129",
+    "idempotencyKey": "sim-lock-queue-1",
+    "originDeviceRef": "811d7845-d75f-427f-a51c-6d6188afe496",
+    "validationState": "applied",
+    "originUserDisplay": "Simulation Operator"
+  },
+  {
+    "appliedAt": "2026-04-23T20:44:52.662Z",
+    "createdAt": "2026-01-15T12:00:00.000Z",
+    "eventType": "field.capture_converter",
+    "sourceSystem": "operator_console",
+    "transactionId": "9bb21994-42f0-4c49-87fa-efc7e689fc62",
+    "idempotencyKey": "sim-field-capture-1",
+    "originDeviceRef": "811d7845-d75f-427f-a51c-6d6188afe496",
+    "validationState": "applied",
+    "originUserDisplay": "Simulation Operator"
+  }
+]

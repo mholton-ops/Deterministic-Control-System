@@ -1,0 +1,14 @@
+[
+  {
+    "status": "open",
+    "scopeId": "QUEUE-SIM-01",
+    "closedAt": null,
+    "openedAt": "2026-04-23T20:44:52.780Z",
+    "severity": "medium",
+    "scopeType": "queue",
+    "actionCount": 0,
+    "triggerType": "assay_variance",
+    "closureRationale": null,
+    "reconciliationCaseId": "8ddf4d59-8999-4082-87de-265f5f649423"
+  }
+]

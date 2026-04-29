@@ -1,0 +1,50 @@
+[
+  {
+    "gpsLat": "0.000000",
+    "gpsLon": "0.000000",
+    "artifacts": [
+      {
+        "uri": "placeholder://note/4bc237e9-38f7-417a-8e65-7fa4a7c4bdcc",
+        "artifactId": "a57e46de-56a8-4c64-9661-2bf485ea6427",
+        "capturedAt": "2026-01-15T12:00:00.000Z",
+        "evidenceType": "note"
+      }
+    ],
+    "capturedAt": "2026-01-15T12:00:00.000Z",
+    "ledgerLinks": 1,
+    "gpsAccuracyM": "1.000",
+    "artifactCount": 1,
+    "capturedByUser": "Simulation Operator",
+    "converterLinks": 0,
+    "capturedByDevice": "811d7845-d75f-427f-a51c-6d6188afe496",
+    "evidenceBundleId": "4bc237e9-38f7-417a-8e65-7fa4a7c4bdcc",
+    "custodyEventLinks": 0
+  },
+  {
+    "gpsLat": "34.212000",
+    "gpsLon": "-118.491000",
+    "artifacts": [
+      {
+        "uri": "placeholder://image/70acc11e-1941-49c4-a8a2-09f902964676",
+        "artifactId": "f48428d4-a159-4957-94e8-c3deb581bb06",
+        "capturedAt": "2026-01-15T12:00:00.000Z",
+        "evidenceType": "image"
+      },
+      {
+        "uri": "placeholder://gps/70acc11e-1941-49c4-a8a2-09f902964676",
+        "artifactId": "fa458403-921a-48f3-aabc-5ef9704c674c",
+        "capturedAt": "2026-01-15T12:00:00.000Z",
+        "evidenceType": "gps"
+      }
+    ],
+    "capturedAt": "2026-01-15T12:00:00.000Z",
+    "ledgerLinks": 0,
+    "gpsAccuracyM": "8.000",
+    "artifactCount": 2,
+    "capturedByUser": "Simulation Operator",
+    "converterLinks": 1,
+    "capturedByDevice": "811d7845-d75f-427f-a51c-6d6188afe496",
+    "evidenceBundleId": "70acc11e-1941-49c4-a8a2-09f902964676",
+    "custodyEventLinks": 0
+  }
+]

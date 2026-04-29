@@ -1,0 +1,77 @@
+name: CI Gate
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: dcs
+          POSTGRES_PASSWORD: dcs
+          POSTGRES_DB: dcs
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U dcs -d dcs"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://dcs:dcs@localhost:5432/dcs
+      NODE_ENV: test
+      CI: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run migrations
+        run: npm run db:migrate
+
+      - name: Seed baseline data
+        run: npm run db:seed
+
+      - name: Run deterministic simulation
+        run: npm run simulate
+
+      - name: Refresh materialized projections
+        run: npm run projections:worker:once
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Processor integration workflow
+        run: npm run test:integration
+
+      - name: API integration workflow
+        run: npm run test:api-integration
+
+      - name: State transition audit checks
+        run: npm run test:state-audit
+
+      - name: Guarantee verification
+        run: npm run verify:guarantees
+
+      - name: Build all workspaces
+        run: npm run build

@@ -1,0 +1,9 @@
+{
+  "generatedAt": "2026-04-23T20:44:54.053Z",
+  "convertersByState": {
+    "received": 1
+  },
+  "queueCount": 1,
+  "openReconciliationCount": 1,
+  "totalEstimatedQueueValueUsd": "1943.18"
+}

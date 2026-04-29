@@ -1,0 +1,16 @@
+{
+    "name":  "@dcs/event-log",
+    "private":  true,
+    "version":  "0.1.0",
+    "type":  "module",
+    "exports":  {
+                    ".":  "./src/index.ts"
+                },
+    "dependencies":  {
+                         "@dcs/db":  "file:../db",
+                         "drizzle-orm":  "^0.39.1"
+                     },
+    "scripts":  {
+                    "typecheck":  "tsc -p tsconfig.json --noEmit"
+                }
+}

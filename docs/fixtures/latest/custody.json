@@ -1,0 +1,48 @@
+{
+  "boxes": [
+    {
+      "boxId": "08ea8cf1-10d5-45bb-a02b-4c7bd6d59360",
+      "state": "received",
+      "boxCode": "BOX-SIM-01",
+      "createdAt": "2026-04-23T20:44:52.649Z",
+      "materialType": "converter_mix",
+      "converterCount": 2,
+      "evidenceArtifactCount": 2,
+      "representativeEvidence": [
+        {
+          "uri": "placeholder://image/70acc11e-1941-49c4-a8a2-09f902964676",
+          "artifactId": "f48428d4-a159-4957-94e8-c3deb581bb06",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "placeholder://gps/70acc11e-1941-49c4-a8a2-09f902964676",
+          "artifactId": "fa458403-921a-48f3-aabc-5ef9704c674c",
+          "evidenceType": "gps"
+        }
+      ]
+    }
+  ],
+  "queues": [
+    {
+      "state": "processing",
+      "queueId": "5955a235-1f02-4907-9e5e-b0e5a75e414c",
+      "boxCount": 0,
+      "createdAt": "2026-04-23T20:44:52.672Z",
+      "queueCode": "QUEUE-SIM-01",
+      "estimatedValueUsd": "1943.18",
+      "lockedForProcessing": true
+    }
+  ],
+  "shipments": [
+    {
+      "state": "received",
+      "boxCount": 1,
+      "departedAt": "2026-04-23T20:44:52.691Z",
+      "receivedAt": "2026-04-23T20:44:52.709Z",
+      "shipmentId": "b62f544d-1eee-438d-b3ed-b46178132cbe",
+      "originSiteId": "52a2513e-309d-45fb-bcd8-d3b42a4176a0",
+      "shipmentCode": "SHIP-SIM-01",
+      "destinationSiteId": "0d58e6b9-9c41-4806-bb56-0b8a14c5e70f"
+    }
+  ]
+}

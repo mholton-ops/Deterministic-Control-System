@@ -1,0 +1,14 @@
+[
+  {
+    "status": "finalized",
+    "scopeId": "SETTLEMENT-SIM-01",
+    "createdAt": "2026-04-23T20:44:52.790Z",
+    "scopeType": "queue",
+    "finalizedAt": "2026-04-23T20:44:52.813Z",
+    "varianceUsd": "1038.41",
+    "invoiceCount": 1,
+    "settlementId": "f0a1378b-ebfd-4b89-b8aa-ed8370986666",
+    "finalValueUsd": "2038.41",
+    "estimatedValueUsd": "1000.00"
+  }
+]

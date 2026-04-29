@@ -1,0 +1,73 @@
+name: Reviewer Artifacts
+
+on:
+  workflow_dispatch:
+    inputs:
+      retention_days:
+        description: "Artifact retention in days (1-90)"
+        required: false
+        default: "14"
+
+concurrency:
+  group: review-artifacts-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: dcs
+          POSTGRES_PASSWORD: dcs
+          POSTGRES_DB: dcs
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U dcs -d dcs"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://dcs:dcs@localhost:5432/dcs
+      NODE_ENV: test
+      CI: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npm run playwright:install
+
+      - name: Generate deterministic reviewer artifacts
+        run: npm run review:artifacts
+
+      - name: Upload fixture artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: fixtures-${{ github.run_id }}
+          path: docs/fixtures/latest
+          if-no-files-found: error
+          retention-days: ${{ fromJSON(inputs.retention_days) }}
+
+      - name: Upload screenshot artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-${{ github.run_id }}
+          path: docs/screenshots/latest
+          if-no-files-found: error
+          retention-days: ${{ fromJSON(inputs.retention_days) }}

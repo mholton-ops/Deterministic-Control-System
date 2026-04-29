@@ -1,0 +1,14 @@
+[
+  {
+    "state": "received",
+    "boxCode": "BOX-SIM-01",
+    "siteCode": "YARD-SIM-01",
+    "capturedAt": "2026-01-15T12:00:00.000Z",
+    "converterId": "938430c9-7c8e-4494-9769-b4c55baf4c6d",
+    "vinOrSerial": "VIN-SIM-1234",
+    "originDeviceRef": "811d7845-d75f-427f-a51c-6d6188afe496",
+    "evidenceBundleId": "70acc11e-1941-49c4-a8a2-09f902964676",
+    "originUserDisplay": "Simulation Operator",
+    "evidenceArtifactCount": 2
+  }
+]

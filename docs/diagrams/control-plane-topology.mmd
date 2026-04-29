@@ -1,0 +1,32 @@
+flowchart LR
+  subgraph F[Field Origination]
+    FC[Field Capture Device]
+    EV[Evidence Bundle<br/>image + geo + device]
+  end
+
+  subgraph C[Control Plane]
+    API[Fastify Command API]
+    CP[Deterministic Command Processor]
+    EL[(Append-Only Transaction Log)]
+    ST[(Operational State Tables)]
+    FIN[(Financial Ledger Tables)]
+  end
+
+  subgraph R[Read and Operator Plane]
+    PJ[Projection Materializer]
+    WB[Operator Workbench UI]
+    AUD[Audit and Evidence Explorer]
+  end
+
+  FC --> API
+  EV --> API
+  API --> CP
+  CP --> EL
+  CP --> ST
+  CP --> FIN
+  EL --> PJ
+  ST --> PJ
+  FIN --> PJ
+  PJ --> WB
+  PJ --> AUD
+  WB --> API

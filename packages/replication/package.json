@@ -1,0 +1,19 @@
+{
+    "name":  "@dcs/replication",
+    "private":  true,
+    "version":  "0.1.0",
+    "type":  "module",
+    "exports":  {
+                    ".":  "./src/index.ts"
+                },
+    "dependencies":  {
+                         "@dcs/contracts":  "file:../contracts",
+                         "@dcs/db":  "file:../db",
+                         "@dcs/domain":  "file:../domain",
+                         "@dcs/event-log":  "file:../event-log",
+                         "drizzle-orm":  "^0.39.1"
+                     },
+    "scripts":  {
+                    "typecheck":  "tsc -p tsconfig.json --noEmit"
+                }
+}

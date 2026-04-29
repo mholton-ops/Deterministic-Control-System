@@ -1,0 +1,12 @@
+{
+  "generatedAt": "2026-04-23T20:44:56.347Z",
+  "entries": [
+    {
+      "ledgerEntryId": "b572f868-efb1-49df-860e-b7f010e9098d",
+      "purposeCode": "funding_advance",
+      "amountUsd": "4500.00",
+      "sourceOperationalRef": "QUEUE-SIM-01",
+      "createdAt": "2026-04-23T20:44:52.771Z"
+    }
+  ]
+}

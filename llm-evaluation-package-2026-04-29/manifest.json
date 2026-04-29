@@ -1,0 +1,241 @@
+{
+  "packageName": "llm-evaluation-package-2026-04-29",
+  "generatedAt": "2026-04-29T20:22:40.965Z",
+  "purpose": "Visual and textual evidence package for LLM evaluation of the HALDN CONTROL deterministic control system against an external requirements/documentation source.",
+  "sourceApp": {
+    "webBase": "http://127.0.0.1:3012",
+    "apiBase": "http://127.0.0.1:3011"
+  },
+  "representativeIds": {
+    "firstConverterId": "d8e19446-d8e8-485c-8008-01371c0f7ab6",
+    "firstSettlementId": "505c4a51-2245-4367-a155-a55488096391"
+  },
+  "screenshots": [
+    {
+      "file": "images/desktop-viewports/01-overview-command-surface.png",
+      "route": "/",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "description": "Executive command surface: capital, material control, risk, custody, pricing, settlement, and evidence health.",
+      "errors": [],
+      "failedRequests": []
+    },
+    {
+      "file": "images/desktop-viewports/02-field-intake.png",
+      "route": "/intake",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "description": "Field capture stream with converter lifecycle, origin, evidence proof, GPS/image requirements, trace/detail actions.",
+      "errors": [],
+      "failedRequests": []
+    },
+    {
+      "file": "images/desktop-viewports/03-custody-queues-shipments.png",
+      "route": "/custody",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "description": "Custody model for boxes, processing queues, shipments, chain completeness, and custody state.",
+      "errors": [],
+      "failedRequests": []
+    },
+    {
+      "file": "images/desktop-viewports/04-grading-workbench.png",
+      "route": "/grading",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "description": "Deterministic grading decisions, confidence, library qualification, and override visibility.",
+      "errors": [],
+      "failedRequests": []
+    },
+    {
+      "file": "images/desktop-viewports/05-analytics-xrf-matrix.png",
+      "route": "/analytics",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "description": "Assay/XRF readings, raw/corrected PGM values, correction matrix linkage, and qualification status.",
+      "errors": [],
+      "failedRequests": []
+    },
+    {
+      "file": "images/desktop-viewports/06-pricing-exposure.png",
+      "route": "/pricing-exposure",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "description": "Pricing and exposure workbench for estimated value, variance, ledger linkage, hedging, and assay state.",
+      "errors": [],
+      "failedRequests": []
+    },
+    {
+      "file": "images/desktop-viewports/07-finance-ledger.png",
+      "route": "/finance-ledger",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "description": "Financial ledger trace connecting operational source references to ledger entries and deployed capital.",
+      "errors": [],
+      "failedRequests": []
+    },
+    {
+      "file": "images/desktop-viewports/08-reconciliation.png",
+      "route": "/reconciliation",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "description": "Reconciliation queue with divergence cases, financial impact, confidence impact, and resolution state.",
+      "errors": [],
+      "failedRequests": []
+    },
+    {
+      "file": "images/desktop-viewports/09-settlements.png",
+      "route": "/settlements",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "description": "Settlement list showing estimated/final value, variance, invoices, chain completeness, and trace links.",
+      "errors": [],
+      "failedRequests": []
+    },
+    {
+      "file": "images/desktop-viewports/10-customer-visibility.png",
+      "route": "/customer",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "description": "Controlled external/customer view with filtered inventory, value, proof, hedge, bids, reports, and daily totals.",
+      "errors": [],
+      "failedRequests": []
+    },
+    {
+      "file": "images/desktop-viewports/11-audit-evidence.png",
+      "route": "/audit",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "description": "Evidence and transaction audit surface with immutable capture context and artifact preview.",
+      "errors": [],
+      "failedRequests": []
+    },
+    {
+      "file": "images/detail-states/12-intake-detail-panel.png",
+      "route": "/intake?panel=converter%3Ad8e19446-d8e8-485c-8008-01371c0f7ab6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "description": "Truth detail panel for a converter, showing identity, state/certainty, origin, evidence, dependency graph, value lineage, financial records, and actions.",
+      "errors": [],
+      "failedRequests": []
+    },
+    {
+      "file": "images/detail-states/13-settlement-detail.png",
+      "route": "/settlements/505c4a51-2245-4367-a155-a55488096391",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "description": "Settlement drilldown with settlement state, value deltas, settlement steps, and invoice lines.",
+      "errors": [],
+      "failedRequests": []
+    },
+    {
+      "file": "images/detail-states/14-settlement-reconstruction.png",
+      "route": "/settlements/505c4a51-2245-4367-a155-a55488096391/reconstruct",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "description": "Replay/reconstruction of settlement truth state from estimate through finalization.",
+      "errors": [],
+      "failedRequests": []
+    },
+    {
+      "file": "images/detail-states/15-trace-settlement.png",
+      "route": "/trace/settlement/505c4a51-2245-4367-a155-a55488096391",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": false,
+      "description": "End-to-end trace view for a settlement, showing upstream/downstream operational truth chain.",
+      "errors": [],
+      "failedRequests": []
+    },
+    {
+      "file": "images/detail-states/16-mobile-intake-sticky-actions.png",
+      "route": "/intake",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "fullPage": false,
+      "description": "Mobile/narrow viewport evidence that dense intake tables scroll while Trace/Detail actions remain accessible.",
+      "errors": [],
+      "failedRequests": []
+    },
+    {
+      "file": "images/full-page-reference/field-intake-full-page.png",
+      "route": "/intake",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": true,
+      "description": "Full-page reference for all visible intake rows.",
+      "errors": [],
+      "failedRequests": []
+    },
+    {
+      "file": "images/full-page-reference/customer-visibility-full-page.png",
+      "route": "/customer",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "fullPage": true,
+      "description": "Full-page reference for all visible customer inventory rows and customer reports/actions.",
+      "errors": [],
+      "failedRequests": []
+    }
+  ],
+  "dataFiles": [
+    "data/api-snapshot-summary.json"
+  ],
+  "documentationFiles": [
+    "documentation/README.md",
+    "documentation/LLM_EVALUATION_PROMPT.md",
+    "documentation/ALIGN_ALIGNMENT_MATRIX.md",
+    "documentation/SYSTEM_SUMMARY.md",
+    "documentation/SCREENSHOT_INDEX.md"
+  ]
+}

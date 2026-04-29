@@ -1,0 +1,16 @@
+[
+  {
+    "source": "internal_xrf",
+    "matrixId": null,
+    "pdPpmRaw": "953.0000",
+    "ptPpmRaw": "612.0000",
+    "rhPpmRaw": "111.0000",
+    "sampleId": "cb8c9f80-ed4d-40dd-a1d4-7b192783d46e",
+    "queueCode": "QUEUE-SIM-01",
+    "capturedAt": "2026-04-23T20:44:52.724Z",
+    "pdPpmCorrected": "953.0000",
+    "ptPpmCorrected": "612.0000",
+    "rhPpmCorrected": "111.0000",
+    "matrixQualificationStatus": null
+  }
+]

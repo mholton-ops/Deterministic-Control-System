@@ -1,0 +1,105 @@
+{
+  "generatedAt": "2026-04-29T20:22:40.797Z",
+  "webBase": "http://127.0.0.1:3012",
+  "apiBase": "http://127.0.0.1:3011",
+  "representativeIds": {
+    "firstConverterId": "d8e19446-d8e8-485c-8008-01371c0f7ab6",
+    "firstSettlementId": "505c4a51-2245-4367-a155-a55488096391"
+  },
+  "operationsOverview": {
+    "generatedAt": "2026-04-29T20:22:40.805Z",
+    "convertersByState": {
+      "in_transit": 35,
+      "sampled": 33,
+      "processing": 23,
+      "received": 101,
+      "captured": 16,
+      "settled": 39,
+      "boxed": 31
+    },
+    "queueCount": 46,
+    "openReconciliationCount": 0,
+    "totalEstimatedQueueValueUsd": "5958296.31"
+  },
+  "commandSurface": {
+    "generatedAt": "2026-04-29T20:22:40.879Z",
+    "totalCapitalDeployedUsd": "4852250.00",
+    "materialValueUnderControlUsd": "5958296.31",
+    "estimatedFloorValueUsd": "5958296.31",
+    "floorInventoryValueUsd": "5958296.31",
+    "materialInCustodyUsd": "4340000.00",
+    "materialInTransitUsd": "813500.00",
+    "processedCatalystValueUsd": "4060000.00",
+    "wholeConverterValueUsd": "675000.00",
+    "pendingSettlementValueUsd": "2659320.38",
+    "pendingAssayValueUsd": "2239320.38",
+    "unprovenExposureUsd": "2659320.38",
+    "unprovenCapitalExposureUsd": "2659320.38",
+    "lowConfidenceExposureUsd": "4249087.20",
+    "openDivergenceImpactUsd": "1294231.34",
+    "queuesAwaitingAssay": 16,
+    "openDivergences": 10,
+    "evidenceGaps": 14,
+    "chainCompleteness": {
+      "complete": 377,
+      "total": 506,
+      "percent": 75
+    },
+    "activeSites": 8,
+    "materialInTransit": 6,
+    "processingBacklog": 10,
+    "estimatedVsFinalVarianceUsd": "65440.75",
+    "settlementVarianceUsd": "65440.75",
+    "hedgeCoveragePercent": 80,
+    "agingRisk": {
+      "oldestCaptureDays": 87,
+      "avgAssayWaitDays": 6,
+      "oldestOpenDivergenceDays": 5
+    }
+  },
+  "customerVisibilitySummary": {
+    "generatedAt": "2026-04-29T20:22:40.906Z",
+    "visibilityMode": "customer_filtered",
+    "totalInventoryUnits": 46,
+    "totalBoxes": 96,
+    "totalConverters": 278,
+    "processedLots": 20,
+    "unprocessedLots": 26,
+    "currentValueUsd": "5989225.40",
+    "estimatedValueUsd": "5958296.31",
+    "finalizedValueUsd": "3329905.02",
+    "pendingAssayValueUsd": "2659320.38",
+    "openDivergences": 10,
+    "hedgeProtectedLots": 37,
+    "bidEligibleLots": 22
+  },
+  "alignControlSurfaces": {
+    "generatedAt": "2026-04-29T13:54:42.6103464-07:00",
+    "replicationSync": {
+      "movementRows": 120,
+      "siteSyncRows": 8,
+      "failed": 5,
+      "retrying": 10,
+      "dependencyBlocked": 7
+    },
+    "smartLibraryDetail": {
+      "rows": 24
+    },
+    "fundingControl": {
+      "rows": 80,
+      "fundingAdvanceCount": 41,
+      "correctionCount": 16,
+      "totalFundingAdvancedUsd": "3631750.00"
+    }
+  },
+  "workbenchCounts": {
+    "intake": 278,
+    "settlements": 28,
+    "custodyQueues": 46,
+    "gradingRows": 188,
+    "analyticsRows": 22,
+    "pricingExposureRows": 46,
+    "reconciliationRows": 28,
+    "transactionRows": 200
+  }
+}

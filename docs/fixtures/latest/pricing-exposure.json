@@ -1,0 +1,19 @@
+[
+  {
+    "queueId": "5955a235-1f02-4907-9e5e-b0e5a75e414c",
+    "queueCode": "QUEUE-SIM-01",
+    "hedgedPdOz": "0",
+    "hedgedPtOz": "0",
+    "hedgedRhOz": "0",
+    "queueState": "processing",
+    "sourceMethod": "vin",
+    "confidenceBand": "high",
+    "openHedgeCount": 0,
+    "settlementStatus": null,
+    "avgPdPpmCorrected": "953.0000000000000000",
+    "avgPtPpmCorrected": "612.0000000000000000",
+    "avgRhPpmCorrected": "111.0000000000000000",
+    "estimatedValueUsd": "1943.18",
+    "needsHedgeAttention": true
+  }
+]

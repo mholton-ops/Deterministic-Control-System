@@ -1,0 +1,23 @@
+{
+    "name":  "@dcs/simulation",
+    "private":  true,
+    "version":  "0.1.0",
+    "type":  "module",
+    "exports":  {
+                    ".":  "./src/index.ts"
+                },
+    "dependencies":  {
+                         "@dcs/contracts":  "file:../contracts",
+                         "@dcs/db":  "file:../db",
+                         "@dcs/projections":  "file:../projections",
+                         "@dcs/replication":  "file:../replication"
+                     },
+    "scripts":  {
+                    "run":  "tsx src/index.ts",
+                    "verify:guarantees":  "tsx src/verify-guarantees.ts",
+                    "typecheck":  "tsc -p tsconfig.json --noEmit",
+                    "test:integration":  "tsx src/integration-field-to-settlement.ts",
+                    "test:api-integration":  "tsx src/integration-api-http.ts",
+                    "test:state-audit":  "tsx src/audit-state-transitions.ts"
+                }
+}

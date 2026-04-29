@@ -1,0 +1,210 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans), "Segoe UI", sans-serif;
+  background:
+    radial-gradient(1200px 500px at 0% -10%, rgba(73, 115, 156, 0.2), transparent 60%),
+    radial-gradient(1000px 400px at 100% -20%, rgba(56, 92, 75, 0.2), transparent 58%),
+    linear-gradient(180deg, #04070b 0%, #0a111a 50%, #070d14 100%);
+  color: #e9edf2;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.font-mono {
+  font-family: var(--font-mono), "Consolas", monospace;
+}
+
+.haldn-loader-grid {
+  background-image:
+    linear-gradient(rgba(46, 61, 80, 0.2) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(46, 61, 80, 0.2) 1px, transparent 1px);
+  background-size: 24px 24px;
+  mask-image: radial-gradient(circle at 50% 45%, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.15));
+}
+
+.haldn-loader-sweep {
+  background: linear-gradient(90deg, transparent, rgba(86, 151, 224, 0.75), transparent);
+  animation: haldn-sweep 1.8s ease-in-out infinite;
+}
+
+.haldn-loader-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: #73abeb;
+  box-shadow: 0 0 0 rgba(115, 171, 235, 0.55);
+  animation: haldn-dot 1.4s ease-in-out infinite;
+}
+
+.haldn-loader-core {
+  position: relative;
+}
+
+.haldn-loader-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(115, 171, 235, 0.45);
+}
+
+.haldn-loader-ring-a {
+  animation: haldn-spin-cw 2.2s linear infinite;
+}
+
+.haldn-loader-ring-b {
+  inset: 12%;
+  border-color: rgba(84, 152, 118, 0.55);
+  animation: haldn-spin-ccw 1.7s linear infinite;
+}
+
+.haldn-loader-center {
+  position: absolute;
+  inset: 34%;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(115, 171, 235, 0.9), rgba(115, 171, 235, 0.2));
+  animation: haldn-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes haldn-sweep {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0.35;
+  }
+}
+
+@keyframes haldn-dot {
+  0%,
+  100% {
+    transform: scale(0.9);
+    box-shadow: 0 0 0 0 rgba(115, 171, 235, 0.5);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 7px rgba(115, 171, 235, 0);
+  }
+}
+
+@keyframes haldn-spin-cw {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes haldn-spin-ccw {
+  0% {
+    transform: rotate(360deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes haldn-pulse {
+  0%,
+  100% {
+    transform: scale(0.9);
+    opacity: 0.65;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+}
+
+.haldn-overlay-spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 2px solid rgba(186, 230, 253, 0.35);
+  border-top-color: rgba(186, 230, 253, 0.98);
+  animation: haldn-overlay-spin 0.9s linear infinite;
+}
+
+@keyframes haldn-overlay-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.haldn-evidence-render-loader {
+  animation: haldn-evidence-render-complete 680ms ease-out forwards;
+}
+
+.haldn-table-sticky-actions-1 th:last-child,
+.haldn-table-sticky-actions-1 td:last-child,
+.haldn-table-sticky-actions-2 th:nth-last-child(1),
+.haldn-table-sticky-actions-2 td:nth-last-child(1),
+.haldn-table-sticky-actions-2 th:nth-last-child(2),
+.haldn-table-sticky-actions-2 td:nth-last-child(2) {
+  position: sticky;
+  z-index: 3;
+  min-width: 92px;
+  width: 92px;
+  background: rgba(10, 17, 26, 0.98);
+}
+
+.haldn-table-sticky-actions-1 th:last-child,
+.haldn-table-sticky-actions-2 th:nth-last-child(1),
+.haldn-table-sticky-actions-2 th:nth-last-child(2) {
+  z-index: 4;
+  background: #111b27;
+}
+
+.haldn-table-sticky-actions-1 th:last-child,
+.haldn-table-sticky-actions-1 td:last-child,
+.haldn-table-sticky-actions-2 th:nth-last-child(1),
+.haldn-table-sticky-actions-2 td:nth-last-child(1) {
+  right: 0;
+}
+
+.haldn-table-sticky-actions-2 th:nth-last-child(2),
+.haldn-table-sticky-actions-2 td:nth-last-child(2) {
+  right: 92px;
+  box-shadow: -10px 0 18px -16px rgba(0, 0, 0, 0.95);
+}
+
+@keyframes haldn-evidence-render-complete {
+  0%,
+  58% {
+    opacity: 1;
+    visibility: visible;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .haldn-evidence-render-loader {
+    animation-duration: 1ms;
+  }
+}

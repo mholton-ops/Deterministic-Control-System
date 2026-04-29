@@ -1,0 +1,40 @@
+{
+    "name": "deterministic-control-system",
+    "private": true,
+    "version": "0.1.0",
+    "description": "Clean-room reference implementation of a deterministic operational control platform",
+    "packageManager": "pnpm@10.0.0",
+    "workspaces": [
+        "apps/*",
+        "packages/*"
+    ],
+    "scripts": {
+        "dev": "echo \"Use 'npm run dev:api' and 'npm run dev:web' after 'npm run db:migrate' + 'npm run simulate'.\"",
+        "dev:api": "npm run --workspace @dcs/api dev",
+        "dev:web": "npm run --workspace @dcs/operator-web dev",
+        "db:generate": "npm run --workspace @dcs/db db:generate",
+        "db:migrate": "npm run --workspace @dcs/db db:migrate",
+        "db:reset": "npm run --workspace @dcs/db reset",
+        "db:seed": "npm run --workspace @dcs/db seed",
+        "projections:rebuild": "npm run --workspace @dcs/projections rebuild",
+        "projections:worker:once": "npm run --workspace @dcs/projections worker:once",
+        "simulate": "npm run --workspace @dcs/simulation run",
+        "verify:guarantees": "npm run --workspace @dcs/simulation verify:guarantees",
+        "build": "npm run --workspaces --if-present build",
+        "lint": "echo \"Lint setup is introduced in a later phase.\"",
+        "typecheck": "npm run --workspaces --if-present typecheck",
+        "test:integration": "npm run --workspace @dcs/simulation test:integration",
+        "test:api-integration": "npm run --workspace @dcs/simulation test:api-integration",
+        "test:state-audit": "npm run --workspace @dcs/simulation test:state-audit",
+        "review:artifacts": "tsx scripts/generate-review-artifacts.ts",
+        "playwright:install": "playwright install chromium"
+    },
+    "devDependencies": {
+        "@types/node": "^22.13.9",
+        "@types/pg": "^8.11.11",
+        "drizzle-kit": "^0.30.6",
+        "playwright": "^1.59.1",
+        "tsx": "^4.19.2",
+        "typescript": "^5.8.3"
+    }
+}

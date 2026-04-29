@@ -1,0 +1,72 @@
+{
+  "steps": [
+    {
+      "stepName": "lot_selected",
+      "stepOrder": 1,
+      "recordedAt": "2026-04-23T20:44:52.795Z"
+    },
+    {
+      "stepName": "contents_reviewed",
+      "stepOrder": 2,
+      "recordedAt": "2026-04-23T20:44:52.797Z"
+    },
+    {
+      "stepName": "sample_data_recorded",
+      "stepOrder": 3,
+      "recordedAt": "2026-04-23T20:44:52.799Z"
+    },
+    {
+      "stepName": "adjustments_recorded",
+      "stepOrder": 4,
+      "recordedAt": "2026-04-23T20:44:52.801Z"
+    },
+    {
+      "stepName": "weight_basis_locked",
+      "stepOrder": 5,
+      "recordedAt": "2026-04-23T20:44:52.803Z"
+    },
+    {
+      "stepName": "hedges_applied",
+      "stepOrder": 6,
+      "recordedAt": "2026-04-23T20:44:52.805Z"
+    },
+    {
+      "stepName": "financial_context_applied",
+      "stepOrder": 7,
+      "recordedAt": "2026-04-23T20:44:52.807Z"
+    },
+    {
+      "stepName": "final_value_calculated",
+      "stepOrder": 8,
+      "recordedAt": "2026-04-23T20:44:52.809Z"
+    },
+    {
+      "stepName": "invoice_finalized",
+      "stepOrder": 9,
+      "recordedAt": "2026-04-23T20:44:52.811Z"
+    }
+  ],
+  "invoices": [
+    {
+      "lines": [
+        {
+          "lineType": "net_payout",
+          "amountUsd": "2038.41",
+          "sortOrder": 1,
+          "description": "Final net payout from assay finalization"
+        }
+      ],
+      "issuedAt": "2026-04-23T20:44:52.816Z",
+      "invoiceId": "6d14ea75-f17f-4a9b-9750-916e6928a339",
+      "invoiceNumber": "INV-F0A1378B"
+    }
+  ],
+  "settlement": {
+    "status": "finalized",
+    "finalizedAt": "2026-04-23T20:44:52.813Z",
+    "varianceUsd": "1038.41",
+    "settlementId": "f0a1378b-ebfd-4b89-b8aa-ed8370986666",
+    "finalValueUsd": "2038.41",
+    "estimatedValueUsd": "1000.00"
+  }
+}

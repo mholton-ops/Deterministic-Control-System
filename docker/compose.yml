@@ -1,0 +1,15 @@
+﻿services:
+  postgres:
+    image: postgres:16
+    container_name: dcs-postgres
+    environment:
+      POSTGRES_DB: dcs
+      POSTGRES_USER: dcs
+      POSTGRES_PASSWORD: dcs
+    ports:
+      - "5432:5432"
+    volumes:
+      - dcs_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  dcs_postgres_data:
