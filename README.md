@@ -6,6 +6,30 @@ This repository is based on architectural principles described in the source doc
 
 This app demonstrates implemented control surfaces and API projections using deterministic synthetic data. It does not represent production deployment, real customer data, or proprietary internals.
 
+## Context
+
+This repository is part of Mike Holton's public HALDN/ALIGN portfolio work.
+
+- Portfolio: https://haldn.com/mike
+- HALDN: https://haldn.com
+- GitHub profile: https://github.com/mholton-ops
+
+This repository is public proof of control-system architecture and implementation style. It is not proprietary RDMS source code.
+
+## Screenshots
+
+### Overview Command Surface
+
+![Overview Command Surface](ALIGN_LLM_REVIEW_15_FILES_2026-04-29/01_overview_command_surface.png)
+
+### Replication / Sync
+
+![Replication / Sync](ALIGN_LLM_REVIEW_15_FILES_2026-04-29/03_replication_sync.png)
+
+### Truth Detail Panel
+
+![Truth Detail Panel](ALIGN_LLM_REVIEW_15_FILES_2026-04-29/12_truth_detail_panel.png)
+
 ## Why this exists
 
 Most software models fail this domain because they assume:
@@ -134,7 +158,7 @@ docs/
   implementation-plan.md
 ```
 
-## Current status
+## Implementation status
 
 This repository now contains completed **Phase 1**, **Phase 2**, **Phase 3**, and a substantial **Phase 4 baseline**:
 - monorepo structure
