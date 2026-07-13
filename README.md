@@ -6,7 +6,7 @@ A public implementation showing how a control platform can keep physical work, r
 
 This repository uses deterministic synthetic data. It demonstrates architecture, control behavior, operator workflows, and implementation depth without publishing proprietary source code, customer data, trade parameters, or private infrastructure.
 
-[Mike Holton's portfolio](https://haldn.com/mike) | [GitHub profile](https://github.com/mholton-ops) | [Public-safe boundary](docs/public-safe-boundary.md)
+[Mike Holton's portfolio](https://haldn.com/mike) | [GitHub profile](https://github.com/mholton-ops) | [Plain-language glossary](docs/glossary.md) | [Public-safe boundary](docs/public-safe-boundary.md)
 
 ## The Operating Problem in Plain English
 
