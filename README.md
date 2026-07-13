@@ -45,10 +45,6 @@ That is why this system is designed as an integrity and control platform, not a 
 
 ![Replication and sync](ALIGN_LLM_REVIEW_15_FILES_2026-04-29/03_replication_sync.png)
 
-### Truth Detail
-
-![Truth detail panel](ALIGN_LLM_REVIEW_15_FILES_2026-04-29/12_truth_detail_panel.png)
-
 ## Architecture at a Glance
 
 ~~~mermaid
