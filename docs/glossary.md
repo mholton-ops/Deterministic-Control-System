@@ -1,20 +1,32 @@
-﻿# Glossary
+# Glossary
 
-- **Truth at origin**: capture of operational reality at the moment of occurrence.
-- **Transaction envelope**: append-only event container with provenance, dependency, and validation metadata.
-- **Evidence bundle**: grouped proof artifacts (image, note, GPS, etc.) required for critical state.
-- **Controlled origin**: policy that only approved source contexts can emit state-changing transactions.
-- **Converter**: atomic origin unit of material.
-- **Box**: first custody boundary for grouped converters.
-- **Queue**: continuity group preserved through transformation, assay, and settlement.
-- **MIT**: material in transit between custody endpoints.
-- **Smart Library**: qualified identity/value knowledge base used in grading.
-- **Matrix correction**: calibration transform applied to raw XRF readings.
-- **Estimated truth**: provisional, controlled estimate prior to final assay.
-- **Finalized truth**: post-assay, reconciled settlement state.
-- **Need hedged**: remaining unhedged exposure quantity.
-- **No floating money**: requirement that all financial movement ties to operational origin and purpose.
-- **Additive correction**: adjustment performed through new events/entries, never destructive update.
-- **Reconstructability**: ability to rebuild historical state deterministically from transaction history.
-- **Divergence**: mismatch between expected and observed operational/analytical/financial outcomes.
-- **Reconciliation case**: structured lifecycle record used to investigate and close divergence.
+This project models a specialized physical-goods workflow, but its control patterns apply broadly to distributed operations. The terms below translate demo-specific labels into plain operational language.
+
+## Control Terms
+
+- **Truth at origin**: recording what happened, where it happened, and who recorded it at the time of the event.
+- **Transaction envelope**: an append-only event record containing source, time, actor, dependencies, validation status, and supporting evidence.
+- **Evidence bundle**: the images, notes, measurements, location data, or other proof required to support a critical state change.
+- **Controlled origin**: a rule allowing state-changing events only from approved people, devices, systems, or operating contexts.
+- **Additive correction**: correcting an error with a new traceable event instead of rewriting accepted history.
+- **Reconstructability**: rebuilding historical state deterministically from accepted events.
+- **Divergence**: a difference between expected state and observed state.
+- **Reconciliation case**: an owned investigation used to explain and resolve a divergence.
+- **Estimated state**: a controlled provisional value used while final measurement is still unavailable.
+- **Finalized state**: the reconciled result after required measurement, review, and approval are complete.
+- **No floating money**: every financial movement must connect to an operating event, accountable owner, and stated purpose.
+
+## Demo Domain Terms
+
+- **Tracked unit** (`converter` in some source identifiers): one individual physical item recorded at intake and followed through later processing.
+- **Container** (`box` in some source identifiers): the first custody grouping for multiple tracked units.
+- **Processing batch** (`queue` in some source identifiers): a group kept together through processing, measurement, valuation, and final payment.
+- **Material in transit (MIT)**: a tracked batch moving between custody locations.
+- **Grading library** (`Smart Library` in the demo): a qualified reference set used to identify an item and estimate its expected value.
+- **Laboratory measurement** (`assay` in the demo): the result used to determine the quantity and quality of recoverable material after processing.
+- **X-ray fluorescence (XRF)**: a measurement method used to estimate material composition.
+- **Matrix correction**: a calibration adjustment applied to a raw instrument reading.
+- **Market-price exposure**: the amount of expected value that can still change as market prices move.
+- **Market-price coverage** (`hedging` in some source identifiers): an action that offsets some market-price exposure so changing prices have less effect on margin.
+- **Final payment** (`settlement` in some source identifiers): the reconciled amount due after custody, measurement, valuation, prior payments, and adjustments are accounted for.
+- **Remaining uncovered exposure** (`need hedged` in some source identifiers): the portion of expected value that is still sensitive to changing market prices.
