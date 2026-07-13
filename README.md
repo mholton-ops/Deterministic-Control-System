@@ -1,239 +1,178 @@
-# Deterministic Control System (Clean-Room ALIGN Reference)
+# Deterministic Control System
 
-A public-safe, clean-room reference implementation of a deterministic operational control platform that preserves truth across field capture, custody, transformation, analysis, pricing, financial state, hedging, and final settlement.
+**Clean-room ALIGN architecture reference**
 
-This repository is based on architectural principles described in the source document by Mike Holton. It is not proprietary source code and does not claim to be an exact internal implementation.
+A public implementation showing how a control platform can keep physical work, recorded state, delayed laboratory measurement, changing market values, and final payment aligned.
 
-This app demonstrates implemented control surfaces and API projections using deterministic synthetic data. It does not represent production deployment, real customer data, or proprietary internals.
+This repository uses deterministic synthetic data. It demonstrates architecture, control behavior, operator workflows, and implementation depth without publishing proprietary source code, customer data, trade parameters, or private infrastructure.
 
-## Context
+[Mike Holton's portfolio](https://haldn.com/mike) | [GitHub profile](https://github.com/mholton-ops) | [Public-safe boundary](docs/public-safe-boundary.md)
 
-This repository is part of Mike Holton's public HALDN/ALIGN portfolio work.
+## The Operating Problem in Plain English
 
-- Portfolio: https://haldn.com/mike
-- HALDN: https://haldn.com
-- GitHub profile: https://github.com/mholton-ops
+The source operating environment was a specialized materials business that purchased high-value physical goods before laboratory processing established their final recoverable value.
 
-This repository is public proof of control-system architecture and implementation style. It is not proprietary RDMS source code.
+Those goods changed hands and physical form while market prices could continue to move. A trustworthy system therefore had to answer, at any time:
+
+- Who owns each batch?
+- What physical work has occurred?
+- What evidence supports the recorded state?
+- What is the expected value while measurement is still incomplete?
+- Where can changing market prices affect margin?
+- Does final payment match the complete operating history?
+
+That is why this system is designed as an integrity and control platform, not a conventional create-read-update-delete application.
+
+## What This Repository Proves
+
+| Control concern | Public implementation |
+| --- | --- |
+| Recorded truth | Append-only transaction envelopes, additive correction, provenance, and reconstruction |
+| Distributed operation | Dependency-aware application, idempotent replay, sync monitoring, and deterministic recovery |
+| Physical and financial alignment | Custody, laboratory results, valuation, market-price risk, ledger state, and final payment remain connected |
+| Divergence handling | Explicit detection rules create owned reconciliation work instead of silently accepting drift |
+| Evidence | Critical state carries source, actor, time, and supporting-evidence requirements |
+| Operator control | A workbench exposes queues, exceptions, trace history, reconciliation, and controlled customer visibility |
+| Verification | Deterministic seeds, simulations, integration tests, state audits, and guarantee checks |
 
 ## Screenshots
 
 ### Overview Command Surface
 
-![Overview Command Surface](ALIGN_LLM_REVIEW_15_FILES_2026-04-29/01_overview_command_surface.png)
+![Overview command surface](ALIGN_LLM_REVIEW_15_FILES_2026-04-29/01_overview_command_surface.png)
 
-### Replication / Sync
+### Replication and Sync
 
-![Replication / Sync](ALIGN_LLM_REVIEW_15_FILES_2026-04-29/03_replication_sync.png)
+![Replication and sync](ALIGN_LLM_REVIEW_15_FILES_2026-04-29/03_replication_sync.png)
 
-### Truth Detail Panel
+### Truth Detail
 
-![Truth Detail Panel](ALIGN_LLM_REVIEW_15_FILES_2026-04-29/12_truth_detail_panel.png)
+![Truth detail panel](ALIGN_LLM_REVIEW_15_FILES_2026-04-29/12_truth_detail_panel.png)
 
-## Why this exists
+## Architecture at a Glance
 
-Most software models fail this domain because they assume:
-- clean inputs
-- stable identity of physical assets
-- finalized value at data entry time
-- accounting detached from operations
+~~~mermaid
+flowchart LR
+  Field[Field and Mobile Capture] --> Commands[Command API]
+  Equipment[Stations and Equipment] --> Commands
+  Commands --> Log[(Append-Only Transaction Log)]
+  Log --> Apply[Deterministic Application]
+  Apply --> State[(Operational Projections)]
+  State --> Workbench[Operator Workbench]
+  Log --> Trace[Trace and Reconstruction]
+  State --> Detect[Divergence Detection]
+  Detect --> Reconcile[Operator Reconciliation]
+  Reconcile --> Commands
+~~~
 
-This domain has the opposite characteristics:
-- money moves before truth is finalized
-- material transforms and original identity is destroyed
-- uncertainty must be represented and controlled
-- operational and financial chains must remain bound
+The architecture separates accepted history from derived current state. Operators can inspect the evidence, replay history, detect disagreement, and write controlled resolutions without rewriting the original record.
 
-The system is therefore designed as an integrity engine, not a CRUD app.
+## Review in 10 Minutes
 
-## Clean-room/public-safe intent
+1. Read [Architecture](docs/architecture.md) for the transaction, projection, and replication model.
+2. Read [System Guarantees](docs/system-guarantees.md) for the invariants the implementation must preserve.
+3. Review [Architecture Diagrams](docs/diagrams.md) for system topology and lifecycle views.
+4. Inspect [the command processor](packages/replication/src/command-processor.ts) for deterministic application and dependency handling.
+5. Inspect [workbench projections](packages/projections/src/workbench.ts) and [customer visibility](packages/projections/src/customer-visibility.ts).
+6. Use the [Reviewer Runbook](docs/reviewer-runbook.md) to generate deterministic fixtures and screenshots.
 
-This repo intentionally preserves architecture and guarantees while avoiding confidential implementation details.
+## Core Guarantees
 
-What it does preserve:
-- control philosophy
-- domain boundaries
-- state discipline
-- deterministic transaction and reconstruction model
-- evidence/provenance requirements
-- financial-operational binding
+- Accepted history is immutable and corrections are additive.
+- Every critical state change has an explicit origin.
+- Replaying the same accepted history produces the same state.
+- Offline and delayed work can be applied safely and idempotently.
+- Evidence, custody, measurement, valuation, and final payment remain traceable.
+- Disagreement becomes visible reconciliation work.
+- No critical record is allowed to become an unexplained orphan.
+- Controls are enforced by the system rather than relying on operator memory.
 
-What it intentionally abstracts:
-- private partner integrations
-- sensitive trade parameters
-- proprietary customer data
-- confidential infrastructure specifics
+See [System Guarantees](docs/system-guarantees.md) and [Reconciliation](docs/reconciliation.md).
 
-See [Public-Safe Boundary](docs/public-safe-boundary.md).
+## Current Public Implementation
 
-## Core guarantees
+The repository includes:
 
-The reference architecture is defined by guarantees, not features:
-- no drift
-- full reconstructability
-- immutable truth with additive correction
-- controlled origin
-- deterministic replication/application
-- evidence-backed critical state
-- financial-physical alignment
-- continuous validation
-- no orphan data
-- system enforcement over user discipline
+- TypeScript monorepo with typed domain invariants and state machines
+- Zod command, event, and query contracts
+- PostgreSQL and Drizzle schemas for provenance, evidence, custody, measurement, pricing, finance, final payment, and reconciliation
+- Fastify command and query API with deterministic command processing
+- Checkpoint-based projection worker and materialized operator views
+- Dependency-aware replication, replay, and convergence monitoring
+- Next.js operator workbench with trace, exception, and reconstruction surfaces
+- Read-only customer visibility that exposes approved status and proof without granting internal control authority
+- Deterministic seed and simulation scenarios
+- Integration, API, state-transition, and guarantee-verification tests
 
-See [System Guarantees](docs/system-guarantees.md).
+This is an inspectable reference implementation, not a claim of production deployment or a copy of a private system.
 
-## Bounded context map
+## Run Locally
 
-The system is split into bounded contexts:
-- Field Origination
-- Inventory and Custody
-- Grading and Smart Library
-- Analytical Layer
-- Pricing and Terms
-- Financial Control Ledger
-- Hedging and Exposure
-- Assay to Settlement
-- Reconciliation and Divergence
+Prerequisites:
 
-See [Architecture](docs/architecture.md) and [Domain Model](docs/domain-model.md).
-See [Module Map](docs/module-map.md) for ownership boundaries.
+- Docker Desktop
+- Node.js 20+
 
-## 5-minute walkthrough
+~~~bash
+docker compose -f docker/compose.yml up -d postgres
+npm run db:migrate
+npm run db:seed
+npm run simulate
+npm run projections:worker:once
+npm run dev:api
+npm run dev:web
+~~~
 
-1. Read [Architecture](docs/architecture.md) for system shape and transaction model.
-2. Read [System Guarantees](docs/system-guarantees.md) for non-negotiable invariants.
-3. Read [Architecture Diagrams](docs/diagrams.md) for control topology and lifecycle flow visuals.
-4. Read [Field to Settlement Workflow](docs/workflows/field-to-settlement.md) for end-to-end lifecycle.
-5. Read [Reconciliation](docs/reconciliation.md) for divergence handling and control loops.
-6. Review [Implementation Plan](docs/implementation-plan.md) for staged build status.
+Then open the operator workbench and follow the [Reviewer Runbook](docs/reviewer-runbook.md).
 
-## Local Runtime (End-to-End Demo)
+## Verification
 
-1. Start Docker Desktop.
-2. Start Postgres: `docker compose -f docker/compose.yml up -d postgres`
-3. Apply migrations: `npm run db:migrate`
-4. Seed deterministic reference data: `npm run db:seed`
-5. Run simulation: `npm run simulate`
-6. Materialize projections: `npm run projections:worker:once`
-7. Run integration workflow test: `npm run test:integration`
-8. Run API integration workflow test: `npm run test:api-integration`
-9. Run state-transition audit test: `npm run test:state-audit`
-10. Verify baseline guarantees: `npm run verify:guarantees`
-11. Start API: `npm run dev:api`
-12. Start operator workbench: `npm run dev:web`
+~~~bash
+npm run test:integration
+npm run test:api-integration
+npm run test:state-audit
+npm run verify:guarantees
+npm run build
+~~~
 
-## Repository structure
+The GitHub Actions CI gate performs database bootstrapping, projection materialization, type checking, integration tests, state auditing, guarantee verification, and workspace builds.
 
-```text
+A separate manual workflow generates deterministic reviewer fixtures and screenshots.
+
+## Repository Map
+
+~~~text
 apps/
   api/                 Fastify control-plane API
   operator-web/        Next.js operator workbench
 packages/
-  domain/              Core domain logic and state machines
-  contracts/           Zod contracts for command/event/query schemas
-  db/                  PostgreSQL + Drizzle schema/migrations/seeds
+  domain/              Invariants and state machines
+  contracts/           Typed command, event, and query contracts
+  db/                  PostgreSQL schema, migrations, and seeds
   event-log/           Append-only transaction envelopes
   replication/         Dependency-aware deterministic application
-  projections/         Read-model builders
+  projections/         Operator and customer read models
   simulation/          Deterministic scenario runner
-  ui-kit/              Shared operator UI primitives
-  config/              Shared TS/lint/runtime config
 docs/
   architecture.md
   diagrams.md
   domain-model.md
-  state-machines.md
-  event-taxonomy.md
-  schema-guide.md
-  glossary.md
-  projections.md
-  seeding-and-simulation.md
-  api/commands.md
-  api/queries.md
   system-guarantees.md
-  workflows/field-to-settlement.md
   reconciliation.md
+  reviewer-runbook.md
   public-safe-boundary.md
-  docs-plan.md
-  implementation-plan.md
-```
+~~~
 
-## Implementation status
+## Design Choices
 
-This repository now contains completed **Phase 1**, **Phase 2**, **Phase 3**, and a substantial **Phase 4 baseline**:
-- monorepo structure
-- architecture and module map
-- guarantee model
-- docs plan and implementation plan
-- typed domain invariants and state machines
-- Zod command and transaction contracts
-- Drizzle schema for provenance, evidence, custody, analytics, pricing, finance, hedge, settlement, and reconciliation
-- Fastify command/query API with deterministic command processor
-- checkpoint-based projection worker and materialized projection support
-- workbench query endpoints for intake, custody, grading, analytics, pricing/exposure, reconciliation, settlements, audit, and customer visibility
-- ALIGN alignment surfaces for replication/sync integrity, Smart Library detail, and funding/money control
-- trace and reconstruction endpoints for chain proof (`/trace/:entityType/:entityId`, `/reconstruct/settlement/:settlementId`)
-- Next.js operator workbench with multi-page operational views and settlement drilldown
-- global trace navigation from converter/box/queue/sample/settlement/ledger rows
-- settlement reconstruction page with replay and uncertainty surfacing
-- deterministic seed/simulation scripts with guarantee verification checks
-- deterministic field-to-settlement integration workflow test script
-- customer-facing controlled visibility surface (source Section 12) implemented as a public-safe, read-only filtered view that exposes inventory/value/proof/report status without internal control authority
+- **Append-only history plus derived projections** provides replayability and auditability while keeping operational reads fast.
+- **Explicit rules for divergence** make exceptions explainable to operators and reviewers.
+- **Operator-focused interfaces** prioritize investigation, traceability, and controlled action over decorative dashboards.
+- **Deterministic synthetic scenarios** make the architecture inspectable without exposing protected business data.
+- **Public-safe boundaries** preserve architectural proof while intentionally omitting private integrations, formulas, counterparties, and customer information.
 
-Phase 5 portfolio hardening is in progress with ongoing docs and demonstration polish.
+## Public-Safe Boundary
 
-For deterministic reviewer artifacts (fixtures + optional screenshots), see [Reviewer Runbook](docs/reviewer-runbook.md).
+This project is original, clean-room, and public-safe. It preserves the architecture, guarantees, and engineering discipline of high-consequence operational control while abstracting confidential workflows and commercial specifics.
 
-## CI Gate
-
-GitHub Actions workflow: `.github/workflows/ci.yml`
-
-The gate runs:
-- migrations and deterministic seed/simulation bootstrapping
-- projection materialization
-- typecheck
-- processor + API integration tests
-- state-transition audit tests
-- guarantee verification
-- workspace build
-
-Reviewer artifact workflow: `.github/workflows/review-artifacts.yml`
-
-This manual workflow generates and uploads:
-- `fixtures-<run_id>` from `docs/fixtures/latest`
-- `screenshots-<run_id>` from `docs/screenshots/latest`
-
-## Important files for reviewers
-
-- [README.md](README.md)
-- [docs/architecture.md](docs/architecture.md)
-- [docs/diagrams.md](docs/diagrams.md)
-- [docs/domain-model.md](docs/domain-model.md)
-- [docs/module-map.md](docs/module-map.md)
-- [docs/system-guarantees.md](docs/system-guarantees.md)
-- [docs/state-machines.md](docs/state-machines.md)
-- [docs/event-taxonomy.md](docs/event-taxonomy.md)
-- [docs/schema-guide.md](docs/schema-guide.md)
-- [docs/glossary.md](docs/glossary.md)
-- [docs/api/commands.md](docs/api/commands.md)
-- [docs/api/queries.md](docs/api/queries.md)
-- [docs/projections.md](docs/projections.md)
-- [docs/seeding-and-simulation.md](docs/seeding-and-simulation.md)
-- [docs/workflows/field-to-settlement.md](docs/workflows/field-to-settlement.md)
-- [docs/reconciliation.md](docs/reconciliation.md)
-- [docs/implementation-plan.md](docs/implementation-plan.md)
-- [docs/reviewer-runbook.md](docs/reviewer-runbook.md)
-- [docs/public-safe-boundary.md](docs/public-safe-boundary.md)
-- [packages/domain/src/index.ts](packages/domain/src/index.ts)
-- [packages/contracts/src/commands.ts](packages/contracts/src/commands.ts)
-- [packages/db/src/schema.ts](packages/db/src/schema.ts)
-- [packages/db/drizzle/0000_worried_rictor.sql](packages/db/drizzle/0000_worried_rictor.sql)
-- [packages/db/drizzle/0001_lethal_spencer_smythe.sql](packages/db/drizzle/0001_lethal_spencer_smythe.sql)
-- [packages/db/drizzle/0002_dashing_vindicator.sql](packages/db/drizzle/0002_dashing_vindicator.sql)
-- [packages/db/drizzle/0003_broad_outlaw_kid.sql](packages/db/drizzle/0003_broad_outlaw_kid.sql)
-- [packages/replication/src/command-processor.ts](packages/replication/src/command-processor.ts)
-- [packages/projections/src/workbench.ts](packages/projections/src/workbench.ts)
-- [packages/projections/src/customer-visibility.ts](packages/projections/src/customer-visibility.ts)
-- [apps/api/src/server.ts](apps/api/src/server.ts)
-- [apps/operator-web/src/app/page.tsx](apps/operator-web/src/app/page.tsx)
-- [apps/operator-web/src/app/customer/page.tsx](apps/operator-web/src/app/customer/page.tsx)
+See [Public-Safe Boundary](docs/public-safe-boundary.md) for the exact scope.
