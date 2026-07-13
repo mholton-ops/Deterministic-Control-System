@@ -35,16 +35,6 @@ That is why this system is designed as an integrity and control platform, not a 
 | Operator control | A workbench exposes queues, exceptions, trace history, reconciliation, and controlled customer visibility |
 | Verification | Deterministic seeds, simulations, integration tests, state audits, and guarantee checks |
 
-## Screenshots
-
-### Overview Command Surface
-
-![Overview command surface](ALIGN_LLM_REVIEW_15_FILES_2026-04-29/01_overview_command_surface.png)
-
-### Replication and Sync
-
-![Replication and sync](ALIGN_LLM_REVIEW_15_FILES_2026-04-29/03_replication_sync.png)
-
 ## Architecture at a Glance
 
 ~~~mermaid
