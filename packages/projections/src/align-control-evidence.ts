@@ -57,6 +57,7 @@ export interface ReplicationSyncProjection {
     readonly transactionId: string;
     readonly eventType: string;
     readonly sourceSystem: string;
+    readonly targetNode: string;
     readonly localCreation: string;
     readonly localPersistence: string;
     readonly outboundQueue: string;
@@ -275,6 +276,7 @@ export async function buildReplicationSyncProjection(db: DcsDb): Promise<Replica
       transactionId: row.transactionId,
       eventType: row.eventType,
       sourceSystem: row.sourceSystem,
+      targetNode: row.targetNode,
       localCreation: "created",
       localPersistence: row.createdAt ? "persisted locally" : "missing local write",
       outboundQueue: confirmed ? "acknowledged" : "queued for controlled retry",

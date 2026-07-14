@@ -372,6 +372,7 @@ export interface ReplicationSync {
     readonly transactionId: string;
     readonly eventType: string;
     readonly sourceSystem: string;
+    readonly targetNode: string;
     readonly localCreation: string;
     readonly localPersistence: string;
     readonly outboundQueue: string;

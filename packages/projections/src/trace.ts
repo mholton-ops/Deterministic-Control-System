@@ -1483,16 +1483,17 @@ export async function buildTraceViewProjection(
   const settlementIsFinalized = chain.settlement?.status === "finalized";
 
   for (const step of steps) {
+    const stepRef = `${step.title} (${step.entityType}:${step.entityId.slice(0, 8)})`;
     overallTrust = minConfidence(overallTrust, step.confidence);
     if (!settlementIsFinalized && step.truthStatus !== "finalized" && step.stepKey !== "pricing") {
-      openGaps.push(`${step.title}: truth is ${step.truthStatus}`);
+      openGaps.push(`${stepRef}: truth is ${step.truthStatus}`);
     }
     if (step.dependencyState === "incomplete") {
-      openGaps.push(`${step.title}: dependency chain incomplete`);
+      openGaps.push(`${stepRef}: dependency chain incomplete`);
       overallTrust = minConfidence(overallTrust, "low");
     }
     if (step.evidence && step.evidence.missingTypes.length > 0) {
-      openGaps.push(`${step.title}: missing evidence ${step.evidence.missingTypes.join(", ")}`);
+      openGaps.push(`${stepRef}: missing evidence ${step.evidence.missingTypes.join(", ")}`);
       overallTrust = minConfidence(overallTrust, "low");
     }
   }

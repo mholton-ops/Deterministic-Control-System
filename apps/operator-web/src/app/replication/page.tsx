@@ -94,6 +94,7 @@ export default async function ReplicationPage() {
                 "Transaction",
                 "Event",
                 "Source",
+                "Target",
                 "Local",
                 "Outbound",
                 "Transmission",
@@ -108,10 +109,11 @@ export default async function ReplicationPage() {
               stickyActionColumns={0}
             >
               {projection.movement.slice(0, 40).map((row) => (
-                <tr key={row.transactionId}>
+                <tr key={`${row.transactionId}:${row.targetNode}:${row.streamType}`}>
                   <td className="px-3 py-2 font-mono text-status-info">{row.transactionId.slice(0, 8)}</td>
                   <td className="px-3 py-2">{row.eventType}</td>
                   <td className="px-3 py-2">{row.sourceSystem}</td>
+                  <td className="px-3 py-2">{row.targetNode}</td>
                   <td className="px-3 py-2 text-xs">
                     <div>{row.localCreation}</div>
                     <div>{row.localPersistence}</div>
