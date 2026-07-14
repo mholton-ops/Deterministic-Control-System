@@ -173,6 +173,15 @@ function formatUsd(value: number): string {
   return value.toFixed(2);
 }
 
+function formatAggregateTimestamp(value: Date | string | null): string | null {
+  if (value === null) return null;
+  const parsed = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new Error("Projection received an invalid aggregate timestamp.");
+  }
+  return parsed.toISOString();
+}
+
 function asRecord(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
   return value as Record<string, unknown>;
@@ -453,7 +462,7 @@ export async function buildSmartLibraryDetailProjection(
             queueId: queues.queueId,
             queueCode: queues.queueCode,
             sampleCount: sql<number>`count(distinct ${samples.sampleId})::int`,
-            latestSampleAt: sql<Date | null>`max(${samples.capturedAt})`,
+            latestSampleAt: sql<Date | string | null>`max(${samples.capturedAt})`,
             pricingMethod: sql<string | null>`max((${pricingDecisions.sourceMethod})::text)`,
             latestEstimateUsd: sql<string | null>`max(${pricingDecisions.estimateUsd})`,
             settlementStatus: sql<string | null>`max((${settlements.status})::text)`,
@@ -488,6 +497,7 @@ export async function buildSmartLibraryDetailProjection(
       const qualifier = row.qualificationStatus ?? "unknown";
       const settlementStatus = queue?.settlementStatus ?? "pending_final_assay";
       const finalValue = queue?.finalValueUsd ? formatUsd(Number(queue.finalValueUsd)) : null;
+      const latestSampleAt = formatAggregateTimestamp(queue?.latestSampleAt ?? null);
 
       return {
         gradingDecisionId: row.gradingDecisionId,
@@ -510,7 +520,7 @@ export async function buildSmartLibraryDetailProjection(
         physicalCharacteristics: `${body}; ${substrate}; ${shield}`,
         dimensionalAttributes: `body ${lengthMm} mm x ${diameterMm} mm; pattern ${row.vinPattern ?? row.serialPattern ?? "category scope"}`,
         assayHistory: queue
-          ? `${queue.sampleCount} samples on ${queue.queueCode}; latest ${queue.latestSampleAt ? queue.latestSampleAt.toISOString() : "pending"}`
+          ? `${queue.sampleCount} samples on ${queue.queueCode}; latest ${latestSampleAt ?? "pending"}`
           : "awaiting queue assay history",
         pricingHistory: `${row.method} estimate ${formatUsd(Number(row.estimatedValueUsd))}; queue pricing ${
           queue?.pricingMethod ?? "pending"
