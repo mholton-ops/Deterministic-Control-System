@@ -120,8 +120,12 @@ export async function runApiIntegrationWorkflow(): Promise<void> {
     stdio: ["ignore", "pipe", "pipe"],
   });
 
+  let stdoutBuffer = "";
   let stderrBuffer = "";
   let success = false;
+  apiProcess.stdout.on("data", (chunk) => {
+    stdoutBuffer += chunk.toString();
+  });
   apiProcess.stderr.on("data", (chunk) => {
     stderrBuffer += chunk.toString();
   });
@@ -151,6 +155,15 @@ export async function runApiIntegrationWorkflow(): Promise<void> {
 
     const readiness = await fetch(`${BASE_URL}/ready`);
     assert.equal(readiness.status, 200, "Readiness must include a successful database check.");
+
+    const replicationProjection = await getJson<{ movement: unknown[] }>("/workbench/replication-sync");
+    assert.ok(Array.isArray(replicationProjection.movement), "Replication projection should expose movement rows.");
+
+    const smartLibraryProjection = await getJson<{ rows: unknown[] }>("/workbench/smart-library-detail");
+    assert.ok(Array.isArray(smartLibraryProjection.rows), "Smart Library projection should expose detail rows.");
+
+    const fundingProjection = await getJson<{ rows: unknown[] }>("/workbench/funding-control");
+    assert.ok(Array.isArray(fundingProjection.rows), "Funding projection should expose control rows.");
 
     await postCommand({
       idempotencyKey: `api-capture-${suffix}`,
@@ -483,8 +496,11 @@ export async function runApiIntegrationWorkflow(): Promise<void> {
     killProcessTree(apiProcess.pid);
     await sleep(300);
 
+    if (!success && stdoutBuffer.trim().length > 0) {
+      console.log(`API stdout tail:\n${stdoutBuffer.slice(-2500)}`);
+    }
     if (!success && stderrBuffer.trim().length > 0) {
-      console.log(`API stderr tail:\n${stderrBuffer.slice(-1200)}`);
+      console.log(`API stderr tail:\n${stderrBuffer.slice(-2500)}`);
     }
   }
 }

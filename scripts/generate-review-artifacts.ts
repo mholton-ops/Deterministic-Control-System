@@ -111,7 +111,8 @@ async function fetchJson(path: string): Promise<unknown> {
     cache: "no-store",
   });
   if (!response.ok) {
-    throw new Error(`GET ${path} failed with status ${response.status}`);
+    const body = await response.text();
+    throw new Error(`GET ${path} failed with status ${response.status}: ${body.slice(0, 500)}`);
   }
 
   return response.json();
@@ -268,10 +269,18 @@ async function main(): Promise<void> {
     stdio: ["ignore", "pipe", "pipe"],
   });
 
+  let apiStdout = "";
   let apiStderr = "";
+  let webStdout = "";
   let webStderr = "";
+  apiProcess.stdout.on("data", (chunk) => {
+    apiStdout += chunk.toString();
+  });
   apiProcess.stderr.on("data", (chunk) => {
     apiStderr += chunk.toString();
+  });
+  webProcess.stdout.on("data", (chunk) => {
+    webStdout += chunk.toString();
   });
   webProcess.stderr.on("data", (chunk) => {
     webStderr += chunk.toString();
@@ -299,11 +308,17 @@ async function main(): Promise<void> {
       );
     }
   } catch (error) {
+    if (apiStdout.trim().length > 0) {
+      console.error(`API stdout tail:\n${apiStdout.slice(-2500)}`);
+    }
     if (apiStderr.trim().length > 0) {
-      console.error(`API stderr tail:\n${apiStderr.slice(-1500)}`);
+      console.error(`API stderr tail:\n${apiStderr.slice(-2500)}`);
+    }
+    if (webStdout.trim().length > 0) {
+      console.error(`Web stdout tail:\n${webStdout.slice(-2500)}`);
     }
     if (webStderr.trim().length > 0) {
-      console.error(`Web stderr tail:\n${webStderr.slice(-1500)}`);
+      console.error(`Web stderr tail:\n${webStderr.slice(-2500)}`);
     }
     throw error;
   } finally {
