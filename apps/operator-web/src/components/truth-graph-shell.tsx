@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
 import { EvidencePreview, orderedEvidenceTypes } from "./evidence-preview";
@@ -15,8 +15,7 @@ import {
 } from "../lib/api";
 
 const PANEL_NAVIGATION_EVENT = "haldn:panel-navigation";
-const PANEL_OPEN_LOADER_MS = 450;
-const PANEL_CLOSE_LOADER_MS = 450;
+const PANEL_CLOSE_TRANSITION_MS = 140;
 
 type PanelTarget = { entityType: GraphEntityType; entityId: string };
 
@@ -45,7 +44,6 @@ function parsePanel(value: string | null): { entityType: GraphEntityType; entity
 }
 
 export function TruthGraphShell(props: { children: ReactNode }) {
-  const pathname = usePathname();
   const searchParams = useSearchParams();
   const rawPanel = useMemo(() => parsePanel(searchParams.get("panel")), [searchParams]);
   const rawPanelKey = rawPanel ? `${rawPanel.entityType}:${rawPanel.entityId}` : null;
@@ -58,10 +56,18 @@ export function TruthGraphShell(props: { children: ReactNode }) {
   const [loadingPanel, setLoadingPanel] = useState(false);
   const [panelTransition, setPanelTransition] = useState<"opening" | "closing" | null>(null);
   const closeLoaderTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [panelLoadAttempt, setPanelLoadAttempt] = useState(0);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [results, setResults] = useState<readonly TruthGraphSearchResult[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState(false);
+  const [activeSearchIndex, setActiveSearchIndex] = useState(-1);
+  const searchShellRef = useRef<HTMLDivElement | null>(null);
   const panelDataMatchesTarget = Boolean(
     panel &&
       panelData &&
@@ -69,46 +75,58 @@ export function TruthGraphShell(props: { children: ReactNode }) {
       panelData.identity.entityId === panel.entityId,
   );
   const showPanelLoadingOverlay = Boolean(
-    panelTransition || (panel && (loadingPanel || (!panelDataMatchesTarget && !panelError))),
+    panelTransition === "closing" ||
+      (panel && (panelTransition === "opening" || loadingPanel || (!panelDataMatchesTarget && !panelError))),
   );
 
-  function openPanel(entityType: GraphEntityType, entityId: string) {
+  const openPanel = useCallback((entityType: GraphEntityType, entityId: string) => {
     if (closeLoaderTimerRef.current) {
       clearTimeout(closeLoaderTimerRef.current);
       closeLoaderTimerRef.current = null;
     }
     const currentUrl = new URL(window.location.href);
-    const next = new URLSearchParams(currentUrl.search);
     const nextPanel = `${entityType}:${entityId}`;
     if (currentUrl.searchParams.get("panel") === nextPanel) return;
 
+    if (!panel) {
+      previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    }
     setPanelOverride({ entityType, entityId });
     setClosedPanelKey(null);
     setPanelTransition("opening");
     setLoadingPanel(true);
     setPanelError(null);
     setPanelData(null);
-    next.set("panel", nextPanel);
-    window.history.pushState(window.history.state, "", `${pathname}?${next.toString()}`);
-  }
+    currentUrl.searchParams.set("panel", nextPanel);
+    window.history.pushState(
+      window.history.state,
+      "",
+      `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`,
+    );
+  }, [panel]);
 
-  function closePanel() {
+  const closePanel = useCallback(() => {
     const panelKey = panel ? `${panel.entityType}:${panel.entityId}` : rawPanelKey;
-    setPanelOverride(null);
-    setClosedPanelKey(panelKey);
+    if (!panelKey) return;
     setPanelTransition("closing");
     if (closeLoaderTimerRef.current) {
       clearTimeout(closeLoaderTimerRef.current);
     }
-    closeLoaderTimerRef.current = setTimeout(() => {
-      setPanelTransition((current) => (current === "closing" ? null : current));
-      closeLoaderTimerRef.current = null;
-    }, PANEL_CLOSE_LOADER_MS);
     const nextUrl = new URL(window.location.href);
     nextUrl.searchParams.delete("panel");
     const nextHref = `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`;
     window.history.replaceState(window.history.state, "", nextHref);
-  }
+    closeLoaderTimerRef.current = setTimeout(() => {
+      setPanelOverride(null);
+      setClosedPanelKey(panelKey);
+      setPanelTransition(null);
+      setPanelData(null);
+      setPanelError(null);
+      closeLoaderTimerRef.current = null;
+      previousFocusRef.current?.focus();
+      previousFocusRef.current = null;
+    }, PANEL_CLOSE_TRANSITION_MS);
+  }, [panel, rawPanelKey]);
 
   useEffect(() => {
     function onPanelNavigation(event: Event) {
@@ -126,13 +144,16 @@ export function TruthGraphShell(props: { children: ReactNode }) {
         clearTimeout(closeLoaderTimerRef.current);
         closeLoaderTimerRef.current = null;
       }
-      setPanelTransition(detail.action === "open" ? "opening" : "closing");
       if (detail.action === "open") {
         const nextPanel =
           typeof detail.entityType === "string" && typeof detail.entityId === "string"
             ? parsePanel(`${detail.entityType}:${detail.entityId}`)
             : null;
         if (nextPanel) {
+          if (!panel) {
+            previousFocusRef.current =
+              document.activeElement instanceof HTMLElement ? document.activeElement : null;
+          }
           setPanelOverride(nextPanel);
         }
         setClosedPanelKey(null);
@@ -140,10 +161,7 @@ export function TruthGraphShell(props: { children: ReactNode }) {
         setPanelError(null);
         setPanelData(null);
       } else {
-        closeLoaderTimerRef.current = setTimeout(() => {
-          setPanelTransition((current) => (current === "closing" ? null : current));
-          closeLoaderTimerRef.current = null;
-        }, PANEL_CLOSE_LOADER_MS);
+        closePanel();
       }
     }
 
@@ -154,7 +172,7 @@ export function TruthGraphShell(props: { children: ReactNode }) {
         clearTimeout(closeLoaderTimerRef.current);
       }
     };
-  }, []);
+  }, [closePanel, panel]);
 
   useEffect(() => {
     function syncPanelFromLocation() {
@@ -177,36 +195,31 @@ export function TruthGraphShell(props: { children: ReactNode }) {
       return;
     }
     const target = panel;
-    let cancelled = false;
+    const controller = new AbortController();
 
     async function load() {
-      const startedAt = Date.now();
       setLoadingPanel(true);
       setPanelData(null);
       setPanelError(null);
       try {
         const response = await fetch(
           `${getBrowserApiBaseUrl()}/graph/entity/${encodeURIComponent(target.entityType)}/${encodeURIComponent(target.entityId)}`,
-          { cache: "no-store" },
+          { cache: "no-store", signal: controller.signal },
         );
         if (!response.ok) {
-          throw new Error(`graph_entity_${response.status}`);
+          throw new Error(`Unable to load detail data (HTTP ${response.status}).`);
         }
         const payload = (await response.json()) as TruthGraphEntity;
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           setPanelData(payload);
         }
       } catch (error) {
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           setPanelData(null);
-          setPanelError(error instanceof Error ? error.message : "failed_to_load_panel");
+          setPanelError(error instanceof Error ? error.message : "Unable to load detail data.");
         }
       } finally {
-        const remainingLoaderMs = PANEL_OPEN_LOADER_MS - (Date.now() - startedAt);
-        if (remainingLoaderMs > 0) {
-          await new Promise((resolve) => setTimeout(resolve, remainingLoaderMs));
-        }
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           setLoadingPanel(false);
           setPanelTransition(null);
         }
@@ -215,107 +228,262 @@ export function TruthGraphShell(props: { children: ReactNode }) {
 
     void load();
     return () => {
-      cancelled = true;
+      controller.abort();
     };
-  }, [panel]);
-
-  useEffect(() => {
-    if (!panel) {
-      return;
-    }
-
-    setPanelTransition(null);
-  }, [panelDataMatchesTarget, panelError, panel]);
+  }, [panel, panelLoadAttempt]);
 
   useEffect(() => {
     if (query.trim().length < 2) {
       setResults([]);
+      setSearchLoading(false);
+      setSearchError(false);
+      setActiveSearchIndex(-1);
       return;
     }
 
-    let cancelled = false;
+    const controller = new AbortController();
+    setSearchLoading(true);
+    setSearchError(false);
     const timer = setTimeout(async () => {
       try {
         const response = await fetch(
           `${getBrowserApiBaseUrl()}/graph/search?q=${encodeURIComponent(query)}&limit=14`,
-          { cache: "no-store" },
+          { cache: "no-store", signal: controller.signal },
         );
         if (!response.ok) throw new Error("search_failed");
         const payload = (await response.json()) as TruthGraphSearchResult[];
-        if (!cancelled) setResults(payload);
+        if (!controller.signal.aborted) {
+          setResults(payload);
+          setActiveSearchIndex(payload.length > 0 ? 0 : -1);
+        }
       } catch {
-        if (!cancelled) setResults([]);
+        if (!controller.signal.aborted) {
+          setResults([]);
+          setSearchError(true);
+          setActiveSearchIndex(-1);
+        }
+      } finally {
+        if (!controller.signal.aborted) setSearchLoading(false);
       }
     }, 180);
 
     return () => {
-      cancelled = true;
+      controller.abort();
       clearTimeout(timer);
     };
   }, [query]);
 
+  useEffect(() => {
+    function onDocumentPointerDown(event: PointerEvent) {
+      if (searchShellRef.current && !searchShellRef.current.contains(event.target as Node)) {
+        setSearchOpen(false);
+      }
+    }
+
+    document.addEventListener("pointerdown", onDocumentPointerDown);
+    return () => document.removeEventListener("pointerdown", onDocumentPointerDown);
+  }, []);
+
+  useEffect(() => {
+    if (!panel || showPanelLoadingOverlay) return;
+
+    const dialog = dialogRef.current;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeButtonRef.current?.focus();
+
+    function onDialogKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closePanel();
+        return;
+      }
+      if (event.key !== "Tab" || !dialog) return;
+
+      const focusable = Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
+      }
+    }
+
+    document.addEventListener("keydown", onDialogKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", onDialogKeyDown);
+    };
+  }, [closePanel, panel, showPanelLoadingOverlay]);
+
   return (
     <>
-      <div className="rounded-xl border border-surface-700/80 bg-surface-900/75 px-4 py-3 shadow-panel">
-        <div className="grid gap-2 lg:grid-cols-[1fr_auto]">
-          <div className="relative">
-            <input
-              value={query}
-              onChange={(event) => {
-                setQuery(event.target.value);
-                setSearchOpen(true);
-              }}
-              onFocus={() => setSearchOpen(true)}
-              placeholder="Search converter, box, queue, shipment, settlement, ledger, reconciliation..."
-              className="w-full rounded-lg border border-surface-700/80 bg-surface-850/80 px-3 py-2 text-sm text-surface-100 outline-none ring-status-info/50 focus:ring-2"
-            />
-            {searchOpen && results.length > 0 ? (
-              <div className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border border-surface-700/80 bg-surface-900 shadow-panel">
-                {results.map((result) => (
-                  <button
-                    key={`${result.entityType}:${result.entityId}`}
-                    type="button"
-                    onClick={() => {
+      <div
+        className="space-y-4"
+        aria-hidden={panel ? true : undefined}
+        inert={panel ? true : undefined}
+      >
+        <div className="rounded-lg border border-surface-700/80 bg-surface-900/75 px-4 py-3 shadow-panel">
+          <div className="grid gap-2 lg:grid-cols-[1fr_auto]">
+            <div ref={searchShellRef} className="relative">
+              <label htmlFor="truth-graph-search" className="sr-only">
+                Search the truth graph
+              </label>
+              <input
+                id="truth-graph-search"
+                role="combobox"
+                aria-autocomplete="list"
+                aria-expanded={searchOpen && query.trim().length >= 2}
+                aria-controls="truth-graph-search-results"
+                aria-activedescendant={
+                  activeSearchIndex >= 0 ? `truth-search-result-${activeSearchIndex}` : undefined
+                }
+                value={query}
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                  setSearchOpen(true);
+                }}
+                onFocus={() => setSearchOpen(true)}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") {
+                    setSearchOpen(false);
+                    return;
+                  }
+                  if (event.key === "ArrowDown" && results.length > 0) {
+                    event.preventDefault();
+                    setActiveSearchIndex((current) => Math.min(current + 1, results.length - 1));
+                    return;
+                  }
+                  if (event.key === "ArrowUp" && results.length > 0) {
+                    event.preventDefault();
+                    setActiveSearchIndex((current) => Math.max(current - 1, 0));
+                    return;
+                  }
+                  if (event.key === "Enter" && activeSearchIndex >= 0) {
+                    const result = results[activeSearchIndex];
+                    if (result) {
+                      event.preventDefault();
                       openPanel(result.entityType, result.entityId);
                       setSearchOpen(false);
-                    }}
-                    className="block w-full border-b border-surface-700/60 px-3 py-2 text-left hover:bg-surface-850/80"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono text-xs uppercase tracking-wider text-status-info">
-                        {result.entityType}
-                      </span>
-                      <span className="text-xs text-surface-200">{result.state}</span>
+                    }
+                  }
+                }}
+                placeholder="Search converter, box, queue, shipment, settlement, ledger, reconciliation..."
+                className="w-full rounded-lg border border-surface-700/80 bg-surface-850/80 px-3 py-2 text-sm text-surface-100 outline-none ring-status-info/50 focus:ring-2"
+              />
+              {searchOpen && query.trim().length >= 2 ? (
+                <div
+                  id="truth-graph-search-results"
+                  role="listbox"
+                  aria-label="Truth graph search results"
+                  className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border border-surface-700/80 bg-surface-900 shadow-panel"
+                >
+                  {searchLoading ? (
+                    <div role="status" className="px-3 py-2 text-sm text-surface-200">
+                      Searching control records...
                     </div>
-                    <div className="text-sm text-surface-100">{result.label}</div>
-                    <div className="text-xs text-surface-200">{result.context}</div>
-                  </button>
-                ))}
-              </div>
-            ) : null}
+                  ) : searchError ? (
+                    <div role="status" className="px-3 py-2 text-sm text-status-bad">
+                      Search is temporarily unavailable.
+                    </div>
+                  ) : results.length === 0 ? (
+                    <div role="status" className="px-3 py-2 text-sm text-surface-200">
+                      No matching control records.
+                    </div>
+                  ) : (
+                    results.map((result, index) => (
+                      <button
+                        id={`truth-search-result-${index}`}
+                        role="option"
+                        aria-selected={index === activeSearchIndex}
+                        key={`${result.entityType}:${result.entityId}`}
+                        type="button"
+                        onPointerMove={() => setActiveSearchIndex(index)}
+                        onClick={() => {
+                          openPanel(result.entityType, result.entityId);
+                          setSearchOpen(false);
+                        }}
+                        className={`block w-full border-b border-surface-700/60 px-3 py-2 text-left hover:bg-surface-850/80 ${
+                          index === activeSearchIndex ? "bg-surface-850/80" : ""
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-mono text-xs uppercase tracking-wider text-status-info">
+                            {result.entityType}
+                          </span>
+                          <span className="text-xs text-surface-200">{result.state}</span>
+                        </div>
+                        <div className="text-sm text-surface-100">{result.label}</div>
+                        <div className="text-xs text-surface-200">{result.context}</div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              ) : null}
+            </div>
+            <div className="text-left text-xs text-surface-200 lg:text-right">
+              HALDN CONTROL | Truth Graph Navigation
+            </div>
           </div>
-          <div className="text-right text-xs text-surface-200">HALDN CONTROL - Truth Graph Navigation</div>
         </div>
+
+        {props.children}
       </div>
 
-      {props.children}
-
       {showPanelLoadingOverlay ? (
-        <div className="fixed inset-0 z-40 grid place-items-center bg-black/45 p-4">
+        <div
+          className="fixed inset-0 z-40 grid place-items-center bg-black/45 p-4"
+          role="status"
+          aria-live="polite"
+          aria-busy="true"
+        >
           <div className="w-full max-w-3xl">
+            <div className="mb-2 text-center font-mono text-xs uppercase tracking-wider text-surface-100">
+              {panelTransition === "closing" ? "Closing detail panel" : "Loading detail panel"}
+            </div>
             <RouteLoader compact />
           </div>
         </div>
       ) : null}
 
       {panel && !showPanelLoadingOverlay ? (
-        <div className="fixed inset-0 z-30 flex justify-end bg-black/45">
-          <div className="h-full w-full max-w-[540px] overflow-y-auto border-l border-surface-700/80 bg-surface-900 p-4 shadow-panel">
+        <div
+          className="fixed inset-0 z-30 flex justify-end bg-black/45"
+          onPointerDown={(event) => {
+            if (event.target === event.currentTarget) closePanel();
+          }}
+        >
+          <div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="truth-detail-panel-title"
+            className="h-full w-full max-w-[540px] overflow-y-auto border-l border-surface-700/80 bg-surface-900 p-4 shadow-panel"
+          >
             <div className="mb-3 flex items-center justify-between gap-2">
-              <h2 className="font-mono text-sm uppercase tracking-wider text-surface-100">Truth Detail Panel</h2>
+              <h2
+                id="truth-detail-panel-title"
+                className="font-mono text-sm uppercase tracking-wider text-surface-100"
+              >
+                Truth Detail Panel
+              </h2>
               <button
+                ref={closeButtonRef}
                 type="button"
-                onClick={closePanel}
+                onPointerDown={(event) => {
+                  if (event.button === 0) closePanel();
+                }}
+                onClick={(event) => {
+                  if (event.detail === 0) closePanel();
+                }}
                 className="rounded border border-surface-700/70 px-2 py-1 text-xs text-surface-200 hover:bg-surface-850"
               >
                 Close
@@ -323,8 +491,18 @@ export function TruthGraphShell(props: { children: ReactNode }) {
             </div>
 
             {panelError ? (
-              <div className="rounded border border-status-bad/40 bg-status-bad/10 p-3 text-sm text-status-bad">
-                {panelError}
+              <div
+                role="alert"
+                className="rounded border border-status-bad/40 bg-status-bad/10 p-3 text-sm text-status-bad"
+              >
+                <div>{panelError}</div>
+                <button
+                  type="button"
+                  onClick={() => setPanelLoadAttempt((attempt) => attempt + 1)}
+                  className="mt-3 rounded border border-status-bad/60 px-2 py-1 font-mono text-xs uppercase hover:bg-status-bad/10"
+                >
+                  Retry
+                </button>
               </div>
             ) : null}
 
@@ -402,7 +580,9 @@ export function TruthGraphShell(props: { children: ReactNode }) {
                             {bundle.capturedByDevice ?? "-"}
                           </div>
                           <div className="text-[11px] text-surface-200">
-                            {bundle.gps.lat}, {bundle.gps.lon} ({bundle.gps.accuracyM}m)
+                            {bundle.gps.lat && bundle.gps.lon
+                              ? `${bundle.gps.lat}, ${bundle.gps.lon} (${bundle.gps.accuracyM ?? "unknown"}m)`
+                              : "Location not captured"}
                           </div>
                         </div>
                       ))}

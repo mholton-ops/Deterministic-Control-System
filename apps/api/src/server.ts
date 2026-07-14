@@ -1,10 +1,11 @@
-﻿import { createHash } from "node:crypto";
+import { timingSafeEqual } from "node:crypto";
 
-import Fastify from "fastify";
+import Fastify, { type FastifyReply, type FastifyRequest } from "fastify";
 import cors from "@fastify/cors";
-import { z } from "zod";
+import rateLimit from "@fastify/rate-limit";
+import { ZodError, z } from "zod";
 import { commandSchema, dependencyRefSchema, isoDateTimeSchema, originSchema } from "@dcs/contracts";
-import { createDb, createPool, devices, users } from "@dcs/db";
+import { createDb, createPool } from "@dcs/db";
 import {
   buildAnalyticsWorkbenchProjection,
   buildCommandSurfaceProjection,
@@ -36,8 +37,14 @@ import {
   runProjectionWorkerOnce,
   searchTruthGraph,
 } from "@dcs/projections";
-import { CommandProcessor } from "@dcs/replication";
-import { eq } from "drizzle-orm";
+import {
+  CommandProcessor,
+  ControlledOriginError,
+  IdempotencyConflictError,
+  processControlledQueueBatch,
+  retryControlledTransaction,
+} from "@dcs/replication";
+import { sql } from "drizzle-orm";
 
 const submitCommandRequestSchema = z.object({
   idempotencyKey: z.string().min(8).max(128),
@@ -71,54 +78,79 @@ const graphEntityTypeSchema = z.enum([
   "settlement",
 ]);
 
-function normalizeToUuid(value: string): string {
-  const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-  if (uuidRegex.test(value)) {
-    return value;
-  }
-
-  const hex = createHash("sha1").update(value).digest("hex");
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
+export interface BuildServerOptions {
+  readonly commandToken?: string;
+  readonly allowUnauthenticatedCommands?: boolean;
+  readonly allowedOrigins?: readonly string[];
 }
 
-async function ensureOriginRecords(db: ReturnType<typeof createDb>, origin: { userId: string; deviceId: string }) {
-  const userRows = await db.select().from(users).where(eq(users.userId, origin.userId)).limit(1);
-  if (userRows.length === 0) {
-    await db.insert(users).values({
-      userId: origin.userId,
-      externalRef: origin.userId,
-      displayName: `User ${origin.userId.slice(0, 8)}`,
-      role: "operator",
-      active: true,
-      createdAt: new Date(),
-    });
-  }
-
-  const deviceRows = await db.select().from(devices).where(eq(devices.deviceId, origin.deviceId)).limit(1);
-  if (deviceRows.length === 0) {
-    await db.insert(devices).values({
-      deviceId: origin.deviceId,
-      externalRef: origin.deviceId,
-      assignedUserId: origin.userId,
-      active: true,
-      createdAt: new Date(),
-    });
-  }
+function isAuthorized(authorization: string | undefined, expectedToken: string): boolean {
+  if (!authorization?.startsWith("Bearer ")) return false;
+  const supplied = Buffer.from(authorization.slice("Bearer ".length));
+  const expected = Buffer.from(expectedToken);
+  return supplied.length === expected.length && timingSafeEqual(supplied, expected);
 }
 
-export function buildServer() {
+export function buildServer(options: BuildServerOptions = {}) {
   const pool = createPool();
   const db = createDb(pool);
   const processor = new CommandProcessor(db);
 
-  const app = Fastify({ logger: true });
-  void app.register(cors, { origin: true });
+  const commandToken = options.commandToken ?? process.env.DCS_CONTROL_API_TOKEN;
+  const allowUnauthenticatedCommands =
+    options.allowUnauthenticatedCommands ?? process.env.DCS_ALLOW_UNAUTHENTICATED_DEMO === "true";
+  const allowedOrigins =
+    options.allowedOrigins ??
+    (process.env.DCS_CORS_ORIGINS ?? "http://127.0.0.1:3012,http://localhost:3012")
+      .split(",")
+      .map((value) => value.trim())
+      .filter(Boolean);
+
+  const app = Fastify({ logger: true, bodyLimit: 1_048_576 });
+  void app.register(cors, {
+    origin(origin, callback) {
+      callback(null, !origin || allowedOrigins.includes(origin));
+    },
+  });
+  void app.register(rateLimit, { max: 300, timeWindow: "1 minute" });
+
+  app.addHook("onSend", async (_request, reply) => {
+    reply.header("x-content-type-options", "nosniff");
+    reply.header("x-frame-options", "DENY");
+    reply.header("referrer-policy", "no-referrer");
+    reply.header("cache-control", "no-store");
+  });
+
+  app.setErrorHandler((error, request, reply) => {
+    if (error instanceof ZodError) {
+      return reply.code(400).send({ error: "invalid_request", issues: error.issues });
+    }
+    request.log.error({ err: error }, "request failed");
+    return reply.code(500).send({ error: "internal_server_error" });
+  });
+
+  const requireMutationAuthorization = async (request: FastifyRequest, reply: FastifyReply) => {
+    if (allowUnauthenticatedCommands) return;
+    if (!commandToken) {
+      return reply.code(503).send({ error: "mutation_auth_not_configured" });
+    }
+    if (!isAuthorized(request.headers.authorization, commandToken)) {
+      reply.header("www-authenticate", "Bearer");
+      return reply.code(401).send({ error: "unauthorized" });
+    }
+  };
 
   app.get("/health", async () => ({ ok: true, service: "dcs-control-api" }));
+  app.get("/ready", async (_request, reply) => {
+    try {
+      await db.execute(sql`select 1`);
+      return { ok: true, service: "dcs-control-api", database: "reachable" };
+    } catch {
+      return reply.code(503).send({ ok: false, service: "dcs-control-api", database: "unreachable" });
+    }
+  });
 
-  app.post("/commands", async (request, reply) => {
+  app.post("/commands", { preHandler: requireMutationAuthorization }, async (request, reply) => {
     const parsed = submitCommandRequestSchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.code(400).send({
@@ -127,26 +159,24 @@ export function buildServer() {
       });
     }
 
-    const normalizedOrigin = {
-      ...parsed.data.origin,
-      userId: normalizeToUuid(parsed.data.origin.userId),
-      deviceId: normalizeToUuid(parsed.data.origin.deviceId),
-    };
-
-    await ensureOriginRecords(db, normalizedOrigin);
-
     try {
       const result = await processor.process({
         idempotencyKey: parsed.data.idempotencyKey,
         createdAt: parsed.data.createdAt ?? new Date().toISOString(),
         dependencies: parsed.data.dependencies,
         command: parsed.data.command,
-        origin: normalizedOrigin,
+        origin: parsed.data.origin,
       });
 
       return reply.code(200).send(result);
     } catch (error) {
       request.log.error({ err: error }, "command application failed");
+      if (error instanceof ControlledOriginError) {
+        return reply.code(403).send({ error: error.code, message: error.message });
+      }
+      if (error instanceof IdempotencyConflictError) {
+        return reply.code(409).send({ error: "idempotency_conflict", message: error.message });
+      }
       return reply.code(422).send({
         error: "command_application_failed",
         message: error instanceof Error ? error.message : "unknown error",
@@ -154,12 +184,21 @@ export function buildServer() {
     }
   });
 
-  app.post("/projections/rebuild", async () => {
+  app.post("/projections/rebuild", { preHandler: requireMutationAuthorization }, async () => {
     return rebuildMaterializedProjections(db);
   });
 
-  app.post("/projections/worker/run-once", async () => {
+  app.post("/projections/worker/run-once", { preHandler: requireMutationAuthorization }, async () => {
     return runProjectionWorkerOnce(db);
+  });
+
+  app.post("/replication/worker/run-once", { preHandler: requireMutationAuthorization }, async () => {
+    return processControlledQueueBatch(db);
+  });
+
+  app.post("/replication/:transactionId/retry", { preHandler: requireMutationAuthorization }, async (request) => {
+    const params = z.object({ transactionId: z.string().uuid() }).parse(request.params);
+    return retryControlledTransaction(db, params.transactionId);
   });
 
   app.get("/projections/operations-overview", async (request, reply) => {

@@ -46,6 +46,7 @@ export default async function AnalyticsPage() {
                 "Rh Raw -> Corrected",
                 "Matrix",
                 "Provisional / Final",
+                "Evidence",
                 "Captured",
                 "Trace",
                 "Detail",
@@ -93,6 +94,9 @@ export default async function AnalyticsPage() {
                     </td>
                     <td className="px-3 py-2 text-xs">
                       {row.source === "icp_final" ? "final assay" : "provisional internal estimate"}
+                    </td>
+                    <td className="px-3 py-2 font-mono text-xs" title={row.evidenceBundleId}>
+                      note:{row.evidenceBundleId.slice(0, 8)}
                     </td>
                     <td className="px-3 py-2">{formatDateTime(row.capturedAt)}</td>
                     <td className="px-3 py-2">

@@ -16,15 +16,15 @@ The source document describes the core problem as a system integrity problem, no
 - structural enforcement over user discipline
 - additive history over destructive edits
 - controlled origin over unrestricted mutation
-- deterministic replay over opaque state mutation
+- deterministic, atomic application over opaque state mutation
 
 ## Logical system shape
 
 ```text
 Field Capture (controlled input)
-  -> Transaction Log (append-only, provenance-rich)
+  -> Transaction Spine (immutable intent, provenance-rich, controlled status)
   -> Deterministic Application Engine (dependency-aware, idempotent)
-  -> Domain State + Projections
+  -> Controlled Domain State + Rebuildable Projections
   -> Operator Controls (grading, pricing, finance, hedge, settlement)
   -> Reconciliation Loops (variance detection and correction)
 ```
@@ -193,12 +193,14 @@ Application engine rules:
 
 ### Projection strategy
 
-Read models are derived from transaction history and can be rebuilt:
+Read models are derived from transaction-linked operational state and can be rebuilt:
 - operator workflow projections
 - audit and provenance views
 - exposure and hedge views
 - settlement and variance views
 - ledger balance views
+
+In this public implementation, projections rebuild from transaction-linked operational tables inside one repeatable-read snapshot. The trace and settlement-reconstruction surfaces explain proof chains. They are not a generic temporal event-store replay engine.
 
 ## Deployment and execution model (reference)
 
@@ -206,9 +208,9 @@ This public-safe repo will demonstrate:
 - local control-plane API
 - operator workbench UI
 - deterministic simulation runner
-- single-node Postgres baseline with replay capability
+- single-node Postgres baseline with projection rebuild and receiver-idempotency capability
 
-A multi-node replication demo may be added later as a simulation mode to mirror the source architecture philosophy.
+Replication transport is represented through record/image outbox streams, receiver receipts, dependency validation, retry state, and acknowledgement. Physical multi-node networking remains intentionally abstracted.
 
 ## What this reference intentionally does not do
 

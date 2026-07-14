@@ -1,0 +1,1 @@
+ALTER TABLE "projection_rebuild_checkpoint" ADD COLUMN "source_fingerprint" varchar(64) DEFAULT '' NOT NULL;

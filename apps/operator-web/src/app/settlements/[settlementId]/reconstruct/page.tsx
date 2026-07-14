@@ -28,7 +28,7 @@ export default async function SettlementReconstructPage(props: RouteParams) {
       <div className="space-y-4">
         <PageHeader
           title="Settlement Reconstruction"
-          subtitle="Step-by-step replay of how this outcome formed, where uncertainty existed, and what finalized proof closed it."
+          subtitle="Step-by-step proof chain showing how this outcome formed, where uncertainty existed, and what finalized proof closed it."
         />
 
         <Panel title="Before / After Value Chain">
@@ -52,9 +52,9 @@ export default async function SettlementReconstructPage(props: RouteParams) {
           </dl>
         </Panel>
 
-        <Panel title="Replay">
+        <Panel title="Controlled History">
           <div className="space-y-3">
-            {reconstruction.replay.map((step) => (
+            {reconstruction.steps.map((step) => (
               <article
                 key={`${step.order}-${step.stage}`}
                 className="rounded-lg border border-surface-700/70 bg-surface-850/35 p-3"
@@ -146,7 +146,7 @@ export default async function SettlementReconstructPage(props: RouteParams) {
       <div className="space-y-4">
         <PageHeader
           title="Settlement Reconstruction"
-          subtitle="Step-by-step replay of how this outcome formed, where uncertainty existed, and what finalized proof closed it."
+          subtitle="Step-by-step proof chain showing how this outcome formed, where uncertainty existed, and what finalized proof closed it."
         />
         <ApiFailure error={error instanceof Error ? error.message : "Unknown API error"} />
       </div>

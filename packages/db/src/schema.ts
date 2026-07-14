@@ -25,6 +25,7 @@ export const sourceSystemEnum = pgEnum("source_system", [
 ]);
 
 export const evidenceTypeEnum = pgEnum("evidence_type", ["image", "note", "gps", "video", "document"]);
+export const replicationStreamEnum = pgEnum("replication_stream", ["record", "image"]);
 export const transactionStatusEnum = pgEnum("transaction_status", [
   "pending",
   "awaiting_validation",
@@ -144,9 +145,9 @@ export const evidenceBundles = pgTable("evidence_bundles", {
     .notNull()
     .references(() => devices.deviceId),
   capturedAt: timestamp("captured_at", { withTimezone: true }).notNull(),
-  gpsLat: numeric("gps_lat", { precision: 9, scale: 6 }).notNull(),
-  gpsLon: numeric("gps_lon", { precision: 9, scale: 6 }).notNull(),
-  gpsAccuracyM: decimal("gps_accuracy_m", { precision: 8, scale: 3 }).notNull(),
+  gpsLat: numeric("gps_lat", { precision: 9, scale: 6 }),
+  gpsLon: numeric("gps_lon", { precision: 9, scale: 6 }),
+  gpsAccuracyM: decimal("gps_accuracy_m", { precision: 8, scale: 3 }),
 });
 
 export const evidenceArtifacts = pgTable(
@@ -159,6 +160,7 @@ export const evidenceArtifacts = pgTable(
     evidenceType: evidenceTypeEnum("evidence_type").notNull(),
     uri: text("uri").notNull(),
     sha256: varchar("sha256", { length: 64 }),
+    synthetic: boolean("synthetic").notNull().default(true),
     capturedAt: timestamp("captured_at", { withTimezone: true }).notNull(),
   },
   (table) => [
@@ -180,11 +182,13 @@ export const transactionEnvelopes = pgTable(
     originDeviceId: uuid("origin_device_id")
       .notNull()
       .references(() => devices.deviceId),
+    originCapturedAt: timestamp("origin_captured_at", { withTimezone: true }).notNull(),
     payload: jsonb("payload").$type<Record<string, unknown>>().notNull(),
     validationState: transactionStatusEnum("validation_state").notNull().default("pending"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
     appliedAt: timestamp("applied_at", { withTimezone: true }),
     confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
+    failureReason: text("failure_reason"),
   },
   (table) => [
     uniqueIndex("transaction_envelopes_idempotency_uq").on(table.idempotencyKey),
@@ -214,12 +218,48 @@ export const replicationQueue = pgTable(
       .notNull()
       .references(() => transactionEnvelopes.transactionId),
     targetNode: varchar("target_node", { length: 64 }).notNull(),
+    streamType: replicationStreamEnum("stream_type").notNull().default("record"),
+    payloadChecksum: varchar("payload_checksum", { length: 64 }),
     status: transactionStatusEnum("status").notNull().default("pending"),
     lastError: text("last_error"),
     retryCount: integer("retry_count").notNull().default(0),
+    lastAttemptAt: timestamp("last_attempt_at", { withTimezone: true }),
+    nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }),
+    acknowledgedAt: timestamp("acknowledged_at", { withTimezone: true }),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index("replication_queue_status_idx").on(table.status)],
+  (table) => [
+    uniqueIndex("replication_queue_transaction_target_stream_uq").on(
+      table.transactionId,
+      table.targetNode,
+      table.streamType,
+    ),
+    index("replication_queue_status_idx").on(table.status),
+    check("replication_queue_retry_count_chk", sql`${table.retryCount} >= 0`),
+  ],
+);
+
+export const replicationReceipts = pgTable(
+  "replication_receipts",
+  {
+    replicationReceiptId: bigint("replication_receipt_id", { mode: "number" })
+      .primaryKey()
+      .generatedAlwaysAsIdentity(),
+    transactionId: uuid("transaction_id")
+      .notNull()
+      .references(() => transactionEnvelopes.transactionId),
+    targetNode: varchar("target_node", { length: 64 }).notNull(),
+    streamType: replicationStreamEnum("stream_type").notNull(),
+    payloadChecksum: varchar("payload_checksum", { length: 64 }).notNull(),
+    receivedAt: timestamp("received_at", { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    uniqueIndex("replication_receipts_transaction_target_stream_uq").on(
+      table.transactionId,
+      table.targetNode,
+      table.streamType,
+    ),
+  ],
 );
 
 export const converters = pgTable(
@@ -228,6 +268,9 @@ export const converters = pgTable(
     converterId: uuid("converter_id").primaryKey().defaultRandom(),
     state: converterStateEnum("state").notNull().default("captured"),
     originTransactionId: uuid("origin_transaction_id")
+      .notNull()
+      .references(() => transactionEnvelopes.transactionId),
+    lastTransitionTransactionId: uuid("last_transition_transaction_id")
       .notNull()
       .references(() => transactionEnvelopes.transactionId),
     evidenceBundleId: uuid("evidence_bundle_id")
@@ -253,6 +296,9 @@ export const boxes = pgTable(
     createdByTransactionId: uuid("created_by_transaction_id")
       .notNull()
       .references(() => transactionEnvelopes.transactionId),
+    lastTransitionTransactionId: uuid("last_transition_transaction_id")
+      .notNull()
+      .references(() => transactionEnvelopes.transactionId),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index("boxes_state_idx").on(table.state)],
@@ -272,13 +318,22 @@ export const boxConverters = pgTable(
       .notNull()
       .references(() => transactionEnvelopes.transactionId),
   },
-  (table) => [primaryKey({ columns: [table.boxId, table.converterId] })],
+  (table) => [
+    primaryKey({ columns: [table.boxId, table.converterId] }),
+    uniqueIndex("box_converters_converter_uq").on(table.converterId),
+  ],
 );
 
 export const queues = pgTable(
   "queues",
   {
     queueId: uuid("queue_id").primaryKey().defaultRandom(),
+    createdByTransactionId: uuid("created_by_transaction_id")
+      .notNull()
+      .references(() => transactionEnvelopes.transactionId),
+    lastTransitionTransactionId: uuid("last_transition_transaction_id")
+      .notNull()
+      .references(() => transactionEnvelopes.transactionId),
     queueCode: varchar("queue_code", { length: 64 }).notNull().unique(),
     state: queueStateEnum("state").notNull().default("open"),
     lockedForProcessing: boolean("locked_for_processing").notNull().default(false),
@@ -302,13 +357,22 @@ export const queueBoxes = pgTable(
       .notNull()
       .references(() => transactionEnvelopes.transactionId),
   },
-  (table) => [primaryKey({ columns: [table.queueId, table.boxId] })],
+  (table) => [
+    primaryKey({ columns: [table.queueId, table.boxId] }),
+    uniqueIndex("queue_boxes_box_uq").on(table.boxId),
+  ],
 );
 
 export const shipments = pgTable(
   "shipments",
   {
     shipmentId: uuid("shipment_id").primaryKey().defaultRandom(),
+    createdByTransactionId: uuid("created_by_transaction_id")
+      .notNull()
+      .references(() => transactionEnvelopes.transactionId),
+    lastTransitionTransactionId: uuid("last_transition_transaction_id")
+      .notNull()
+      .references(() => transactionEnvelopes.transactionId),
     shipmentCode: varchar("shipment_code", { length: 64 }).notNull().unique(),
     state: shipmentStateEnum("state").notNull().default("prepared"),
     originSiteId: uuid("origin_site_id")
@@ -332,9 +396,15 @@ export const shipmentBoxes = pgTable(
     boxId: uuid("box_id")
       .notNull()
       .references(() => boxes.boxId),
+    assignedByTransactionId: uuid("assigned_by_transaction_id")
+      .notNull()
+      .references(() => transactionEnvelopes.transactionId),
     assignedAt: timestamp("assigned_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [primaryKey({ columns: [table.shipmentId, table.boxId] })],
+  (table) => [
+    primaryKey({ columns: [table.shipmentId, table.boxId] }),
+    uniqueIndex("shipment_boxes_box_uq").on(table.boxId),
+  ],
 );
 
 export const custodyEvents = pgTable(
@@ -359,9 +429,15 @@ export const massMeasurements = pgTable(
   "mass_measurements",
   {
     massMeasurementId: uuid("mass_measurement_id").primaryKey().defaultRandom(),
+    transactionId: uuid("transaction_id")
+      .notNull()
+      .references(() => transactionEnvelopes.transactionId),
     queueId: uuid("queue_id")
       .notNull()
       .references(() => queues.queueId),
+    evidenceBundleId: uuid("evidence_bundle_id")
+      .notNull()
+      .references(() => evidenceBundles.evidenceBundleId),
     stage: varchar("stage", { length: 32 }).notNull(),
     inputWeightKg: decimal("input_weight_kg", { precision: 12, scale: 3 }).notNull(),
     outputWeightKg: decimal("output_weight_kg", { precision: 12, scale: 3 }).notNull(),
@@ -389,6 +465,9 @@ export const gradingDecisions = pgTable(
   "grading_decisions",
   {
     gradingDecisionId: uuid("grading_decision_id").primaryKey().defaultRandom(),
+    transactionId: uuid("transaction_id")
+      .notNull()
+      .references(() => transactionEnvelopes.transactionId),
     converterId: uuid("converter_id")
       .notNull()
       .references(() => converters.converterId),
@@ -427,11 +506,17 @@ export const samples = pgTable(
   "samples",
   {
     sampleId: uuid("sample_id").primaryKey().defaultRandom(),
+    transactionId: uuid("transaction_id")
+      .notNull()
+      .references(() => transactionEnvelopes.transactionId),
     queueId: uuid("queue_id")
       .notNull()
       .references(() => queues.queueId),
     source: sampleSourceEnum("source").notNull(),
     matrixId: uuid("matrix_id").references(() => correctionMatrices.matrixId),
+    evidenceBundleId: uuid("evidence_bundle_id")
+      .notNull()
+      .references(() => evidenceBundles.evidenceBundleId),
     ptPpmRaw: decimal("pt_ppm_raw", { precision: 14, scale: 4 }).notNull(),
     pdPpmRaw: decimal("pd_ppm_raw", { precision: 14, scale: 4 }).notNull(),
     rhPpmRaw: decimal("rh_ppm_raw", { precision: 14, scale: 4 }).notNull(),
@@ -469,6 +554,9 @@ export const pricingDecisions = pgTable(
   "pricing_decisions",
   {
     pricingDecisionId: uuid("pricing_decision_id").primaryKey().defaultRandom(),
+    transactionId: uuid("transaction_id")
+      .notNull()
+      .references(() => transactionEnvelopes.transactionId),
     queueId: uuid("queue_id")
       .notNull()
       .references(() => queues.queueId),
@@ -519,10 +607,23 @@ export const ledgerEntries = pgTable(
       .notNull()
       .references(() => evidenceBundles.evidenceBundleId),
     notes: text("notes").notNull(),
+    approvedByUserId: uuid("approved_by_user_id").references(() => users.userId),
+    executedByUserId: uuid("executed_by_user_id")
+      .notNull()
+      .references(() => users.userId),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     check("ledger_entries_distinct_accounts_chk", sql`${table.debitAccountId} <> ${table.creditAccountId}`),
+    check("ledger_entries_positive_amount_chk", sql`${table.amountUsd} > 0`),
+    check(
+      "ledger_entries_separation_of_duty_chk",
+      sql`${table.approvedByUserId} is null or ${table.approvedByUserId} <> ${table.executedByUserId}`,
+    ),
+    check(
+      "ledger_entries_funding_approval_chk",
+      sql`${table.purposeCode} <> 'funding_advance' or ${table.approvedByUserId} is not null`,
+    ),
     index("ledger_entries_source_ref_idx").on(table.sourceOperationalRef),
   ],
 );
@@ -547,6 +648,9 @@ export const hedgePositions = pgTable(
   "hedge_positions",
   {
     hedgePositionId: uuid("hedge_position_id").primaryKey().defaultRandom(),
+    transactionId: uuid("transaction_id")
+      .notNull()
+      .references(() => transactionEnvelopes.transactionId),
     layer: hedgeLayerEnum("layer").notNull(),
     scopeType: scopeTypeEnum("scope_type").notNull(),
     scopeId: varchar("scope_id", { length: 64 }).notNull(),
@@ -578,6 +682,12 @@ export const settlements = pgTable(
   "settlements",
   {
     settlementId: uuid("settlement_id").primaryKey().defaultRandom(),
+    createdByTransactionId: uuid("created_by_transaction_id")
+      .notNull()
+      .references(() => transactionEnvelopes.transactionId),
+    finalizedByTransactionId: uuid("finalized_by_transaction_id").references(
+      () => transactionEnvelopes.transactionId,
+    ),
     scopeType: scopeTypeEnum("scope_type").notNull(),
     scopeId: varchar("scope_id", { length: 64 }).notNull(),
     status: settlementStatusEnum("status").notNull().default("draft"),
@@ -587,13 +697,20 @@ export const settlements = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     finalizedAt: timestamp("finalized_at", { withTimezone: true }),
   },
-  (table) => [index("settlements_scope_idx").on(table.scopeType, table.scopeId)],
+  (table) => [
+    index("settlements_scope_idx").on(table.scopeType, table.scopeId),
+    check("settlements_positive_estimate_chk", sql`${table.estimatedValueUsd} > 0`),
+    check("settlements_positive_final_value_chk", sql`${table.finalValueUsd} is null or ${table.finalValueUsd} > 0`),
+  ],
 );
 
 export const settlementSteps = pgTable(
   "settlement_steps",
   {
     settlementStepId: uuid("settlement_step_id").primaryKey().defaultRandom(),
+    transactionId: uuid("transaction_id")
+      .notNull()
+      .references(() => transactionEnvelopes.transactionId),
     settlementId: uuid("settlement_id")
       .notNull()
       .references(() => settlements.settlementId),
@@ -611,6 +728,9 @@ export const invoices = pgTable(
   "invoices",
   {
     invoiceId: uuid("invoice_id").primaryKey().defaultRandom(),
+    transactionId: uuid("transaction_id")
+      .notNull()
+      .references(() => transactionEnvelopes.transactionId),
     settlementId: uuid("settlement_id")
       .notNull()
       .references(() => settlements.settlementId),
@@ -641,6 +761,15 @@ export const reconciliationCases = pgTable(
   "reconciliation_cases",
   {
     reconciliationCaseId: uuid("reconciliation_case_id").primaryKey().defaultRandom(),
+    openedByTransactionId: uuid("opened_by_transaction_id")
+      .notNull()
+      .references(() => transactionEnvelopes.transactionId),
+    lastTransitionTransactionId: uuid("last_transition_transaction_id")
+      .notNull()
+      .references(() => transactionEnvelopes.transactionId),
+    closedByTransactionId: uuid("closed_by_transaction_id").references(
+      () => transactionEnvelopes.transactionId,
+    ),
     triggerType: varchar("trigger_type", { length: 64 }).notNull(),
     severity: reconciliationSeverityEnum("severity").notNull(),
     status: reconciliationStatusEnum("status").notNull().default("open"),
@@ -657,6 +786,9 @@ export const reconciliationActions = pgTable(
   "reconciliation_actions",
   {
     reconciliationActionId: uuid("reconciliation_action_id").primaryKey().defaultRandom(),
+    transactionId: uuid("transaction_id")
+      .notNull()
+      .references(() => transactionEnvelopes.transactionId),
     reconciliationCaseId: uuid("reconciliation_case_id")
       .notNull()
       .references(() => reconciliationCases.reconciliationCaseId),
@@ -748,6 +880,8 @@ export const projectionRebuildCheckpoint = pgTable(
     checkpointKey: varchar("checkpoint_key", { length: 32 }).primaryKey(),
     lastAppliedAt: timestamp("last_applied_at", { withTimezone: true }),
     lastTransactionId: uuid("last_transaction_id"),
+    sourceTransactionCount: integer("source_transaction_count").notNull().default(0),
+    sourceFingerprint: varchar("source_fingerprint", { length: 64 }).notNull().default(""),
     projectionGeneratedAt: timestamp("projection_generated_at", { withTimezone: true }),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -763,6 +897,7 @@ export const schema = {
   transactionEnvelopes,
   transactionDependencies,
   replicationQueue,
+  replicationReceipts,
   converters,
   boxes,
   boxConverters,

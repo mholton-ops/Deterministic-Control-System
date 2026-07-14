@@ -1,20 +1,21 @@
 {
-    "name":  "@dcs/api",
-    "private":  true,
-    "version":  "0.1.0",
-    "type":  "module",
-    "dependencies":  {
-                         "@dcs/contracts":  "file:../../packages/contracts",
-                         "@dcs/db":  "file:../../packages/db",
-                         "@dcs/projections":  "file:../../packages/projections",
-                         "@dcs/replication":  "file:../../packages/replication",
-                         "@fastify/cors":  "^10.1.0",
-                         "drizzle-orm":  "^0.39.1",
-                         "fastify":  "^5.1.0",
-                         "zod":  "^3.24.1"
-                     },
-    "scripts":  {
-                    "dev":  "tsx src/index.ts",
-                    "typecheck":  "tsc -p tsconfig.json --noEmit"
-                }
+    "name": "@dcs/api",
+    "private": true,
+    "version": "0.1.0",
+    "type": "module",
+    "dependencies": {
+        "@dcs/contracts": "file:../../packages/contracts",
+        "@dcs/db": "file:../../packages/db",
+        "@dcs/projections": "file:../../packages/projections",
+        "@dcs/replication": "file:../../packages/replication",
+        "@fastify/cors": "^11.3.0",
+        "@fastify/rate-limit": "^11.1.0",
+        "drizzle-orm": "^0.45.2",
+        "fastify": "^5.10.0",
+        "zod": "^3.24.1"
+    },
+    "scripts": {
+        "dev": "tsx src/index.ts",
+        "typecheck": "tsc -p tsconfig.json --noEmit"
+    }
 }

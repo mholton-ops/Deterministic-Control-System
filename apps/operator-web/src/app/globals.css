@@ -154,10 +154,6 @@ a {
   }
 }
 
-.haldn-evidence-render-loader {
-  animation: haldn-evidence-render-complete 680ms ease-out forwards;
-}
-
 .haldn-table-sticky-actions-1 th:last-child,
 .haldn-table-sticky-actions-1 td:last-child,
 .haldn-table-sticky-actions-2 th:nth-last-child(1),
@@ -191,20 +187,13 @@ a {
   box-shadow: -10px 0 18px -16px rgba(0, 0, 0, 0.95);
 }
 
-@keyframes haldn-evidence-render-complete {
-  0%,
-  58% {
-    opacity: 1;
-    visibility: visible;
-  }
-  100% {
-    opacity: 0;
-    visibility: hidden;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .haldn-evidence-render-loader {
-    animation-duration: 1ms;
+  .haldn-loader-sweep,
+  .haldn-loader-dot,
+  .haldn-loader-ring-a,
+  .haldn-loader-ring-b,
+  .haldn-loader-center,
+  .haldn-overlay-spinner {
+    animation: none;
   }
 }

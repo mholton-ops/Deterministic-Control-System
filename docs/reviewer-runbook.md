@@ -14,6 +14,7 @@ Produce a reproducible package of:
 - Docker Desktop running
 - Postgres container available via `docker/compose.yml`
 - Node dependencies installed (`npm install`)
+- `DATABASE_URL` set explicitly for the demonstration Postgres instance
 
 Optional for screenshots:
 - Chromium browser install:
@@ -52,9 +53,11 @@ How to run:
   - `docs/fixtures/latest/*.json`
 - Screenshots (if Playwright available):
   - `docs/screenshots/latest/*.png`
+  - capped at 15 files per deterministic run
   - includes `settlement-detail.png` when a deterministic settlement exists
-  - includes `settlement-reconstruct.png` and `trace-settlement.png` for replay/trace proof views
+  - includes `settlement-reconstruct.png` and `trace-settlement.png` for reconstruction/trace proof views
   - includes `replication-sync.png` for controlled transaction movement and stream integrity
+  - includes `truth-detail-panel.png` for the evidence-backed detail interaction
   - includes `customer-visibility.png` for the controlled customer-facing visibility surface
 
 ## Recommended review sequence
@@ -71,6 +74,10 @@ How to run:
    - `npm run test:integration`
    - `npm run test:api-integration`
    - `npm run test:state-audit`
+   - `npm run verify:guarantees`
+   - `npm run typecheck`
+   - `npm run lint`
+   - `npm run build`
 10. Cross-check commands and guarantees in:
    - `docs/api/commands.md`
    - `docs/system-guarantees.md`

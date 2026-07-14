@@ -1,10 +1,14 @@
 # API Queries
 
-Base URL: `http://localhost:3001`
+Base URL: `http://127.0.0.1:3001`
 
 ## GET `/health`
 
 Basic health response.
+
+## GET `/ready`
+
+Readiness response that verifies database reachability. Returns HTTP 503 when the database is unavailable.
 
 ## GET `/projections/operations-overview`
 
@@ -78,13 +82,13 @@ This endpoint intentionally exposes visibility without internal mutation authori
 
 ## GET `/workbench/replication-sync`
 
-Returns deterministic demo evidence for ALIGN-style replication control:
+Returns deterministic synthetic evidence from stored replication control records:
 - local transaction creation and local persistence
 - outbound queue and transmission status
 - receiver validation, dependency checks, idempotent apply, and acknowledgement
 - confirmed, failed, retrying, and dependency-blocked movement states
 - image stream and record stream separation
-- projection rebuild and replay status
+- projection rebuild and reconstruction status
 - last sync by site
 
 This endpoint is a public abstraction of controlled transaction movement. It does not expose production topology.
@@ -118,12 +122,12 @@ This prevents financial movement from separating from material state and settlem
 
 ## GET `/reconstruct/settlement/:settlementId`
 
-Returns settlement replay view:
+Returns settlement proof-chain reconstruction:
 - before/after estimate vs final comparison
 - variance explanation
-- step-by-step replay with uncertainty markers
+- step-by-step controlled history with uncertainty markers
 - dependency references
-- origin/evidence linkage at each replay step
+- origin/evidence linkage at each reconstruction step
 
 ## GET `/workbench/intake`
 
@@ -202,6 +206,8 @@ Query params:
 ## POST `/projections/rebuild`
 
 Rebuilds materialized projection tables from current operational data.
+
+This mutation requires bearer authorization. It is a repeatable-read projection rebuild, not generic event-store replay.
 
 Implementation references:
 - `packages/projections/src/projections.ts`

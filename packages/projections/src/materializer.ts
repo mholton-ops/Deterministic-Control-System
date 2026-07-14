@@ -51,7 +51,7 @@ export interface RebuildProjectionSummary {
   readonly settlementDrilldownRows: number;
 }
 
-export async function rebuildMaterializedProjections(db: DcsDb): Promise<RebuildProjectionSummary> {
+async function rebuildMaterializedProjectionsInSnapshot(db: DcsDb): Promise<RebuildProjectionSummary> {
   const generatedAt = new Date();
 
   const overview = await buildOperationsOverviewProjection(db);
@@ -191,6 +191,14 @@ export async function rebuildMaterializedProjections(db: DcsDb): Promise<Rebuild
     workbenchViewsUpdated: workbenchPayloads.length,
     settlementDrilldownRows: settlementDrilldowns.length,
   };
+}
+
+export async function rebuildMaterializedProjections(db: DcsDb): Promise<RebuildProjectionSummary> {
+  return db.transaction(
+    async (transaction) =>
+      rebuildMaterializedProjectionsInSnapshot(transaction as unknown as DcsDb),
+    { isolationLevel: "repeatable read", accessMode: "read write" },
+  );
 }
 
 export async function getMaterializedOperationsOverview(

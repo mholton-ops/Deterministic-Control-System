@@ -42,19 +42,21 @@ Responsibility:
 
 ### `packages/event-log`
 Responsibility:
-- append-only transaction envelope persistence
-- idempotency key index support
+- immutable command-intent persistence with controlled status progression
+- deterministic identity and payload-checksum support
+- record/image outbox creation within the caller transaction
 
 ### `packages/replication`
 Responsibility:
 - dependency-aware application
-- queue states: pending/transmitting/awaiting_validation/applied/confirmed
+- controlled resume after dependency validation
+- idempotent receiver receipts and acknowledgements
 - deterministic retry behavior
 
 ### `packages/projections`
 Responsibility:
-- build query/read models from event stream
-- rebuild and checksum support
+- build query/read models from transaction-linked operational state
+- repeatable-read rebuild and source-checkpoint support
 
 ### `packages/simulation`
 Responsibility:

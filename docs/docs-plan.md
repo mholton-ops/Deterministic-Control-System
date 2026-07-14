@@ -41,7 +41,7 @@ Status:
 
 ### Phase 4
 - `docs/demo-scenarios.md`
-- `docs/replay-and-reconstruction.md`
+- `docs/projection-rebuild-and-reconstruction.md`
 - `docs/reconciliation-examples.md`
 
 ### Phase 5

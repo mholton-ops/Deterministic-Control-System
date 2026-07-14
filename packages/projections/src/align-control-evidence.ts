@@ -1,4 +1,4 @@
-import { desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import type { DcsDb } from "@dcs/db";
 import {
   accounts,
@@ -11,8 +11,11 @@ import {
   ledgerEntries,
   libraryEntries,
   pricingDecisions,
+  projectionRebuildCheckpoint,
   queueBoxes,
   queues,
+  replicationQueue,
+  replicationReceipts,
   samples,
   settlements,
   sites,
@@ -21,7 +24,7 @@ import {
   users,
 } from "@dcs/db";
 
-type ReplicationLegState = "confirmed" | "failed" | "retrying" | "dependency_blocked";
+type ReplicationLegState = "confirmed" | "failed" | "retrying" | "dependency_blocked" | "not_applicable";
 
 export interface ReplicationSyncProjection {
   readonly generatedAt: string;
@@ -74,12 +77,12 @@ export interface ReplicationSyncProjection {
     readonly failed: number;
     readonly controlNote: string;
   }[];
-  readonly projectionReplay: readonly {
+  readonly projectionRebuild: readonly {
     readonly projectionName: string;
     readonly sourceTransactionCount: number;
-    readonly replayStatus: string;
+    readonly reconstructionStatus: string;
     readonly rebuildStatus: string;
-    readonly lastReplayAt: string;
+    readonly lastRebuildAt: string;
   }[];
 }
 
@@ -139,27 +142,31 @@ export interface FundingControlRow {
   readonly createdAt: string;
 }
 
-function statusForReplicationLeg(
-  row: {
-    validationState: string;
-    dependencyCount: number;
-  },
-  index: number,
-): ReplicationLegState {
-  if (row.validationState === "awaiting_validation") return "dependency_blocked";
-  if (row.validationState === "failed") return "failed";
-  if ((row.dependencyCount > 0 && index % 13 === 5) || index % 17 === 9) return "dependency_blocked";
-  if (index % 19 === 7) return "failed";
-  if (index % 11 === 3) return "retrying";
+function replicationLegState(row: {
+  validationState: string;
+  queueStatus: string;
+  retryCount: number;
+}): ReplicationLegState {
+  if (row.validationState === "awaiting_validation" || row.queueStatus === "awaiting_validation") {
+    return "dependency_blocked";
+  }
+  if (row.queueStatus === "confirmed") return "confirmed";
+  if (row.queueStatus === "failed" && row.retryCount >= 3) return "failed";
+  return "retrying";
+}
+
+function aggregateLegState(rows: readonly { transmissionStatus: ReplicationLegState }[]): ReplicationLegState {
+  if (rows.length === 0) return "not_applicable";
+  if (rows.some((row) => row.transmissionStatus === "dependency_blocked")) return "dependency_blocked";
+  if (rows.some((row) => row.transmissionStatus === "failed")) return "failed";
+  if (rows.some((row) => row.transmissionStatus === "retrying")) return "retrying";
   return "confirmed";
 }
 
-function streamTypeForEvent(eventType: string): "record_stream" | "image_stream" {
-  return eventType === "field.capture_converter" ? "image_stream" : "record_stream";
-}
-
-function addMinutes(iso: string, minutes: number): string {
-  return new Date(Date.parse(iso) + minutes * 60_000).toISOString();
+function payloadSiteRefs(payload: Record<string, unknown>): readonly string[] {
+  return ["yardId", "originSiteId", "destinationSiteId", "receivingSiteId"]
+    .map((key) => payload[key])
+    .filter((value): value is string => typeof value === "string" && value.length > 0);
 }
 
 function formatUsd(value: number): string {
@@ -189,31 +196,39 @@ export async function buildReplicationSyncProjection(db: DcsDb): Promise<Replica
       eventType: transactionEnvelopes.eventType,
       sourceSystem: transactionEnvelopes.sourceSystem,
       validationState: transactionEnvelopes.validationState,
+      payload: transactionEnvelopes.payload,
       originUserDisplay: users.displayName,
       originDeviceRef: devices.externalRef,
-      dependencyCount: sql<number>`count(${transactionDependencies.dependencyEntityType})::int`,
+      dependencyCount: sql<number>`(
+        select count(*)::int
+        from ${transactionDependencies}
+        where ${transactionDependencies.transactionId} = ${transactionEnvelopes.transactionId}
+      )`,
       createdAt: transactionEnvelopes.createdAt,
       appliedAt: transactionEnvelopes.appliedAt,
       confirmedAt: transactionEnvelopes.confirmedAt,
+      targetNode: replicationQueue.targetNode,
+      streamType: replicationQueue.streamType,
+      queueStatus: replicationQueue.status,
+      retryCount: replicationQueue.retryCount,
+      lastError: replicationQueue.lastError,
+      acknowledgedAt: replicationQueue.acknowledgedAt,
+      receiptId: replicationReceipts.replicationReceiptId,
     })
     .from(transactionEnvelopes)
     .leftJoin(users, eq(users.userId, transactionEnvelopes.originUserId))
     .leftJoin(devices, eq(devices.deviceId, transactionEnvelopes.originDeviceId))
-    .leftJoin(transactionDependencies, eq(transactionDependencies.transactionId, transactionEnvelopes.transactionId))
-    .groupBy(
-      transactionEnvelopes.transactionId,
-      transactionEnvelopes.idempotencyKey,
-      transactionEnvelopes.eventType,
-      transactionEnvelopes.sourceSystem,
-      transactionEnvelopes.validationState,
-      users.displayName,
-      devices.externalRef,
-      transactionEnvelopes.createdAt,
-      transactionEnvelopes.appliedAt,
-      transactionEnvelopes.confirmedAt,
+    .innerJoin(replicationQueue, eq(replicationQueue.transactionId, transactionEnvelopes.transactionId))
+    .leftJoin(
+      replicationReceipts,
+      and(
+        eq(replicationReceipts.transactionId, replicationQueue.transactionId),
+        eq(replicationReceipts.targetNode, replicationQueue.targetNode),
+        eq(replicationReceipts.streamType, replicationQueue.streamType),
+      ),
     )
     .orderBy(desc(transactionEnvelopes.createdAt))
-    .limit(120);
+    .limit(160);
 
   const siteRows = await db
     .select({
@@ -230,16 +245,22 @@ export async function buildReplicationSyncProjection(db: DcsDb): Promise<Replica
     db.select({ count: sql<number>`count(*)::int` }).from(ledgerEntries),
     db.select({ count: sql<number>`count(*)::int` }).from(settlements),
     db.select({ count: sql<number>`count(*)::int` }).from(evidenceArtifacts),
+    db.select().from(projectionRebuildCheckpoint).where(eq(projectionRebuildCheckpoint.checkpointKey, "global")).limit(1),
   ]);
   const totalTransactions = counts[0][0]?.count ?? rows.length;
-  const latestCreatedAt = rows[0]?.createdAt.toISOString() ?? new Date("2026-01-01T00:00:00.000Z").toISOString();
+  const latestCreatedAt = rows[0]?.createdAt.toISOString() ?? new Date(0).toISOString();
 
-  const movement = rows.map((row, index) => {
-    const transmissionStatus = statusForReplicationLeg(row, index);
+  const movementWithSites = rows.map((row) => {
+    const transmissionStatus = replicationLegState({
+      validationState: row.validationState,
+      queueStatus: row.queueStatus,
+      retryCount: row.retryCount,
+    });
     const dependencyBlocked = transmissionStatus === "dependency_blocked";
     const failed = transmissionStatus === "failed";
-    const retrying = transmissionStatus === "retrying";
-    const streamType = streamTypeForEvent(row.eventType);
+    const confirmed = transmissionStatus === "confirmed";
+    const streamType: "record_stream" | "image_stream" =
+      row.streamType === "image" ? "image_stream" : "record_stream";
 
     return {
       transactionId: row.transactionId,
@@ -247,25 +268,29 @@ export async function buildReplicationSyncProjection(db: DcsDb): Promise<Replica
       sourceSystem: row.sourceSystem,
       localCreation: "created",
       localPersistence: row.createdAt ? "persisted locally" : "missing local write",
-      outboundQueue: transmissionStatus === "confirmed" ? "drained" : "held for control",
+      outboundQueue: confirmed ? "acknowledged" : "queued for controlled retry",
       transmissionStatus,
-      receiverValidation: dependencyBlocked
+      receiverValidation: row.receiptId
+        ? "receiver checksum validated"
+        : dependencyBlocked
         ? "dependency blocked"
         : failed
-          ? "receiver rejected demo leg"
-          : "receiver validated",
+          ? row.lastError ?? "receiver validation failed"
+          : "awaiting receiver validation",
       dependencyCheck: dependencyBlocked
-        ? "required state not yet present"
+        ? row.lastError ?? "required state not yet present"
         : row.dependencyCount > 0
           ? `${row.dependencyCount} dependency checks passed`
           : "no dependency required",
-      idempotentApply: transmissionStatus === "confirmed" ? "applied once" : "safe to replay",
-      acknowledgement: transmissionStatus === "confirmed" ? "acknowledged" : retrying ? "pending ack" : "not acknowledged",
+      idempotentApply: row.receiptId ? "unique receiver receipt stored" : "not yet applied",
+      acknowledgement: row.acknowledgedAt ? row.acknowledgedAt.toISOString() : "not acknowledged",
       streamType,
       origin: `${row.originUserDisplay ?? "unknown user"} / ${row.originDeviceRef ?? "unknown device"}`,
       createdAt: row.createdAt.toISOString(),
+      siteRefs: payloadSiteRefs(row.payload),
     };
   });
+  const movement = movementWithSites.map(({ siteRefs: _siteRefs, ...row }) => row);
 
   const byStatus = (status: ReplicationLegState) =>
     movement.filter((row) => row.transmissionStatus === status).length;
@@ -278,11 +303,11 @@ export async function buildReplicationSyncProjection(db: DcsDb): Promise<Replica
     summary: {
       localCreated: totalTransactions,
       localPersisted: rows.filter((row) => Boolean(row.createdAt)).length,
-      outboundQueued: movement.filter((row) => row.outboundQueue !== "drained").length,
+      outboundQueued: movement.filter((row) => row.transmissionStatus !== "confirmed").length,
       transmitting: byStatus("retrying"),
-      receiverValidated: movement.filter((row) => row.receiverValidation === "receiver validated").length,
-      idempotentApplied: movement.filter((row) => row.idempotentApply === "applied once").length,
-      acknowledged: movement.filter((row) => row.acknowledgement === "acknowledged").length,
+      receiverValidated: movement.filter((row) => row.receiverValidation === "receiver checksum validated").length,
+      idempotentApplied: movement.filter((row) => row.idempotentApply === "unique receiver receipt stored").length,
+      acknowledged: rows.filter((row) => Boolean(row.acknowledgedAt)).length,
       confirmed: byStatus("confirmed"),
       failed: byStatus("failed"),
       retrying: byStatus("retrying"),
@@ -290,69 +315,78 @@ export async function buildReplicationSyncProjection(db: DcsDb): Promise<Replica
       recordStreamCount: recordRows.length,
       imageStreamCount: imageRows.length,
     },
-    siteSync: siteRows.map((site, index) => ({
-      siteCode: site.siteCode,
-      siteType: site.siteType,
-      lastSyncAt: addMinutes(latestCreatedAt, -index * 7),
-      recordStreamStatus: index % 5 === 4 ? "retrying" : "confirmed",
-      imageStreamStatus: index % 7 === 3 ? "failed" : index % 4 === 2 ? "retrying" : "confirmed",
-      outboundQueueDepth: index % 5,
-      dependencyBlockedTransactions: index % 6 === 3 ? 1 : 0,
-    })),
+    siteSync: siteRows
+      .map((site) => {
+        const linked = movementWithSites.filter((row) => row.siteRefs.includes(site.siteCode));
+        const lastSyncAt = linked
+          .map((row) => row.createdAt)
+          .sort((left, right) => Date.parse(right) - Date.parse(left))[0];
+        if (!lastSyncAt) return null;
+        return {
+          siteCode: site.siteCode,
+          siteType: site.siteType,
+          lastSyncAt,
+          recordStreamStatus: aggregateLegState(linked.filter((row) => row.streamType === "record_stream")),
+          imageStreamStatus: aggregateLegState(linked.filter((row) => row.streamType === "image_stream")),
+          outboundQueueDepth: linked.filter((row) => row.transmissionStatus !== "confirmed").length,
+          dependencyBlockedTransactions: linked.filter((row) => row.transmissionStatus === "dependency_blocked").length,
+        };
+      })
+      .filter((row): row is NonNullable<typeof row> => row !== null),
     movement,
     streamSeparation: [
       {
         streamType: "record_stream",
-        queued: recordRows.filter((row) => row.outboundQueue !== "drained").length,
+        queued: recordRows.filter((row) => row.transmissionStatus !== "confirmed").length,
         confirmed: recordRows.filter((row) => row.transmissionStatus === "confirmed").length,
         retrying: recordRows.filter((row) => row.transmissionStatus === "retrying").length,
         failed: recordRows.filter((row) => row.transmissionStatus === "failed").length,
-        controlNote: "Operational records replay in dependency order.",
+        controlNote: "Operational records apply only after recognized dependencies are satisfied.",
       },
       {
         streamType: "image_stream",
-        queued: imageRows.filter((row) => row.outboundQueue !== "drained").length,
+        queued: imageRows.filter((row) => row.transmissionStatus !== "confirmed").length,
         confirmed: imageRows.filter((row) => row.transmissionStatus === "confirmed").length,
         retrying: imageRows.filter((row) => row.transmissionStatus === "retrying").length,
         failed: imageRows.filter((row) => row.transmissionStatus === "failed").length,
         controlNote: "Evidence artifacts move as proof references separate from record state.",
       },
     ],
-    projectionReplay: [
+    projectionRebuild: [
       {
         projectionName: "truth graph",
         sourceTransactionCount: totalTransactions,
-        replayStatus: "dependency ordered replay available",
-        rebuildStatus: "current",
-        lastReplayAt: addMinutes(latestCreatedAt, 3),
+        reconstructionStatus: "proof chains use deterministic envelope identity and linked state",
+        rebuildStatus: counts[6][0] ? "materialized" : "not materialized",
+        lastRebuildAt: counts[6][0]?.projectionGeneratedAt?.toISOString() ?? latestCreatedAt,
       },
       {
         projectionName: "custody and queue projection",
         sourceTransactionCount: counts[2][0]?.count ?? 0,
-        replayStatus: "queue state rebuilt from events",
-        rebuildStatus: "current",
-        lastReplayAt: addMinutes(latestCreatedAt, 4),
+        reconstructionStatus: "rebuilt from controlled operational tables",
+        rebuildStatus: counts[6][0] ? "materialized" : "not materialized",
+        lastRebuildAt: counts[6][0]?.projectionGeneratedAt?.toISOString() ?? latestCreatedAt,
       },
       {
         projectionName: "finance ledger projection",
         sourceTransactionCount: counts[3][0]?.count ?? 0,
-        replayStatus: "ledger movements tied to source refs",
-        rebuildStatus: "current",
-        lastReplayAt: addMinutes(latestCreatedAt, 5),
+        reconstructionStatus: "ledger movements retain transaction and operational references",
+        rebuildStatus: counts[6][0] ? "materialized" : "not materialized",
+        lastRebuildAt: counts[6][0]?.projectionGeneratedAt?.toISOString() ?? latestCreatedAt,
       },
       {
         projectionName: "settlement projection",
         sourceTransactionCount: counts[4][0]?.count ?? 0,
-        replayStatus: "estimate to final chain replayable",
-        rebuildStatus: "current",
-        lastReplayAt: addMinutes(latestCreatedAt, 6),
+        reconstructionStatus: "ordered settlement controls remain linked to the final outcome",
+        rebuildStatus: counts[6][0] ? "materialized" : "not materialized",
+        lastRebuildAt: counts[6][0]?.projectionGeneratedAt?.toISOString() ?? latestCreatedAt,
       },
       {
         projectionName: "evidence artifact index",
         sourceTransactionCount: counts[5][0]?.count ?? 0,
-        replayStatus: "artifact references retained",
-        rebuildStatus: "current",
-        lastReplayAt: addMinutes(latestCreatedAt, 7),
+        reconstructionStatus: "artifact references and checksums retained",
+        rebuildStatus: counts[6][0] ? "materialized" : "not materialized",
+        lastRebuildAt: counts[6][0]?.projectionGeneratedAt?.toISOString() ?? latestCreatedAt,
       },
     ],
   };
@@ -511,6 +545,8 @@ export async function buildFundingControlProjection(db: DcsDb): Promise<FundingC
       sourceOperationalRef: ledgerEntries.sourceOperationalRef,
       evidenceBundleId: ledgerEntries.evidenceBundleId,
       notes: ledgerEntries.notes,
+      approvedByUserId: ledgerEntries.approvedByUserId,
+      executedByUserId: ledgerEntries.executedByUserId,
       createdAt: ledgerEntries.createdAt,
     })
     .from(ledgerEntries)
@@ -519,6 +555,8 @@ export async function buildFundingControlProjection(db: DcsDb): Promise<FundingC
 
   const accountRows = await db.select().from(accounts);
   const accountById = new Map(accountRows.map((row) => [row.accountId, row] as const));
+  const actorRows = await db.select({ userId: users.userId, displayName: users.displayName, role: users.role }).from(users);
+  const actorById = new Map(actorRows.map((row) => [row.userId, row] as const));
   const balances = new Map<string, number>();
   for (const entry of await db.select().from(ledgerEntries)) {
     balances.set(entry.creditAccountId, (balances.get(entry.creditAccountId) ?? 0) + Number(entry.amountUsd));
@@ -599,6 +637,8 @@ export async function buildFundingControlProjection(db: DcsDb): Promise<FundingC
     const queue = queueByRef.get(row.sourceOperationalRef);
     const purchase = purchaseCountByRef.get(row.sourceOperationalRef);
     const corrections = correctionsByEntry.get(row.ledgerEntryId) ?? [];
+    const approvingActor = row.approvedByUserId ? actorById.get(row.approvedByUserId) : null;
+    const executingActor = actorById.get(row.executedByUserId);
     const isFinalized = row.purposeCode === "settlement_payout" || queue?.settlementStatus === "finalized";
     const isProvisional =
       row.purposeCode === "funding_advance" || row.purposeCode === "field_purchase" || queue?.settlementStatus !== "finalized";
@@ -608,13 +648,12 @@ export async function buildFundingControlProjection(db: DcsDb): Promise<FundingC
       transactionId: row.transactionId,
       purposeCode: row.purposeCode,
       fundingAdvanceUsd: row.purposeCode === "funding_advance" ? row.amountUsd : "0.00",
-      approvingActor:
-        row.purposeCode === "settlement_payout"
-          ? "Settlement lead"
-          : row.purposeCode === "wire"
-            ? "Treasury reviewer"
-            : "Finance controller",
-      executingActor: `${origin?.userDisplay ?? "system operator"} via ${origin?.deviceRef ?? origin?.sourceSystem ?? "control API"}`,
+      approvingActor: approvingActor
+        ? `${approvingActor.displayName} (${approvingActor.role})`
+        : row.purposeCode === "funding_advance"
+          ? "legacy record: approval actor unavailable"
+          : "not required for this movement",
+      executingActor: `${executingActor?.displayName ?? origin?.userDisplay ?? "legacy operator"} via ${origin?.deviceRef ?? origin?.sourceSystem ?? "control API"}`,
       buyerOrSiteBalanceUsd: controllingAccount ? formatUsd(balances.get(controllingAccount.accountId) ?? 0) : "0.00",
       linkedPurchases: purchase
         ? `${purchase.count} purchases, ${formatUsd(purchase.amount)}`
@@ -623,12 +662,12 @@ export async function buildFundingControlProjection(db: DcsDb): Promise<FundingC
           : "none linked yet",
       linkedBoxesQueues: queue
         ? `${queue.queueCode}; ${queue.boxCount} boxes; ${queue.converterCount} converters; ${queue.state}`
-        : `${row.sourceOperationalRef}; material link pending`,
+        : `${row.sourceOperationalRef}; legacy reference unresolved`,
       provisionalFinalState: isFinalized ? "finalized against settlement truth" : isProvisional ? "provisional until material truth finalizes" : "validated",
       offsettingCorrections: corrections.length > 0 ? corrections.join(", ") : "none",
-      separationOfDutyTrail: `approved by ${row.purposeCode === "wire" ? "treasury" : "finance"}; executed by ${
-        origin?.userDisplay ?? "operator"
-      }; final value requires separate settlement control`,
+      separationOfDutyTrail: row.approvedByUserId
+        ? `approved by ${approvingActor?.displayName ?? row.approvedByUserId}; executed by ${executingActor?.displayName ?? row.executedByUserId}; final value requires settlement control`
+        : `executed by ${executingActor?.displayName ?? row.executedByUserId}; no separate approval required by this purpose code`,
       evidenceRequirement: row.evidenceBundleId
         ? `note required and linked; ${row.notes}`
         : `note required; ${row.notes}`,

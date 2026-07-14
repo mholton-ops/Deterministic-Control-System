@@ -5,11 +5,11 @@ This project models a specialized physical-goods workflow, but its control patte
 ## Control Terms
 
 - **Truth at origin**: recording what happened, where it happened, and who recorded it at the time of the event.
-- **Transaction envelope**: an append-only event record containing source, time, actor, dependencies, validation status, and supporting evidence.
+- **Transaction envelope**: a persistent command-intent record with immutable identity, origin, payload, and dependencies plus controlled validation and delivery status.
 - **Evidence bundle**: the images, notes, measurements, location data, or other proof required to support a critical state change.
 - **Controlled origin**: a rule allowing state-changing events only from approved people, devices, systems, or operating contexts.
 - **Additive correction**: correcting an error with a new traceable event instead of rewriting accepted history.
-- **Reconstructability**: rebuilding historical state deterministically from accepted events.
+- **Reconstructability**: explaining a represented record through its connected command, evidence, custody, valuation, ledger, and settlement proof chain.
 - **Divergence**: a difference between expected state and observed state.
 - **Reconciliation case**: an owned investigation used to explain and resolve a divergence.
 - **Estimated state**: a controlled provisional value used while final measurement is still unavailable.

@@ -36,6 +36,7 @@ export async function resetDemoData(): Promise<void> {
         box_converters,
         boxes,
         converters,
+        replication_receipts,
         replication_queue,
         transaction_dependencies,
         transaction_envelopes,

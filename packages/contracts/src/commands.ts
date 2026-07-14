@@ -27,6 +27,12 @@ export const custodyAssignConverterToBoxCommandSchema = z.object({
   boxId: idSchema,
 });
 
+export const custodyCloseBoxCommandSchema = z.object({
+  commandType: z.literal("custody.close_box"),
+  commandId: idSchema,
+  boxId: idSchema,
+});
+
 export const custodyLockQueueCommandSchema = z.object({
   commandType: z.literal("custody.lock_queue_for_processing"),
   commandId: idSchema,
@@ -56,6 +62,30 @@ export const custodyReceiveShipmentCommandSchema = z.object({
   receivingSiteId: idSchema,
 });
 
+export const custodyRecordEventCommandSchema = z.object({
+  commandType: z.literal("custody.record_event"),
+  commandId: idSchema,
+  scopeType: z.enum(["queue", "shipment"]),
+  scopeId: idSchema,
+  eventType: z.string().min(3).max(64),
+  capturedAt: isoDateTimeSchema,
+  evidence: evidenceRefSchema,
+});
+
+export const custodyRecordMassMeasurementCommandSchema = z.object({
+  commandType: z.literal("custody.record_mass_measurement"),
+  commandId: idSchema,
+  queueId: idSchema,
+  stage: z.string().min(3).max(32),
+  inputWeightKg: z.number().positive(),
+  outputWeightKg: z.number().gte(0),
+  explainedLossKg: z.number().gte(0),
+  capturedAt: isoDateTimeSchema,
+  evidence: evidenceRefSchema.refine((value) => value.requiredTypesPresent.includes("note"), {
+    message: "custody.record_mass_measurement requires note evidence",
+  }),
+});
+
 export const gradingIssueDecisionCommandSchema = z.object({
   commandType: z.literal("grading.issue_decision"),
   commandId: idSchema,
@@ -75,6 +105,9 @@ export const analyticsRecordSampleCommandSchema = z.object({
   pdPpm: z.number().gte(0),
   rhPpm: z.number().gte(0),
   matrixId: idSchema.nullable(),
+  evidence: evidenceRefSchema.refine((value) => value.requiredTypesPresent.includes("note"), {
+    message: "analytics.record_sample requires note evidence",
+  }),
 });
 
 export const pricingResolveEstimateCommandSchema = z.object({
@@ -88,24 +121,25 @@ export const pricingResolveEstimateCommandSchema = z.object({
 });
 
 export const financePostLedgerEntryCommandSchema = z.object({
-  commandType: z.literal("finance.post_ledger_entry"),
-  commandId: idSchema,
-  debitAccountId: idSchema,
-  creditAccountId: idSchema,
-  amount: moneySchema,
-  purposeCode: z.enum([
-    "funding_advance",
-    "field_purchase",
-    "deposit",
-    "settlement_payout",
-    "adjustment",
-    "wire",
-  ]),
-  sourceOperationalRef: z.string().min(1).max(128),
-  notes: z.string().min(3).max(1000),
-  evidence: evidenceRefSchema.refine((value) => value.requiredTypesPresent.includes("note"), {
-    message: "finance.post_ledger_entry requires note evidence",
-  }),
+    commandType: z.literal("finance.post_ledger_entry"),
+    commandId: idSchema,
+    debitAccountId: idSchema,
+    creditAccountId: idSchema,
+    amount: moneySchema,
+    purposeCode: z.enum([
+      "funding_advance",
+      "field_purchase",
+      "deposit",
+      "settlement_payout",
+      "adjustment",
+      "wire",
+    ]),
+    sourceOperationalRef: z.string().min(1).max(128),
+    approvedByUserId: z.string().uuid().nullable().default(null),
+    notes: z.string().min(3).max(1000),
+    evidence: evidenceRefSchema.refine((value) => value.requiredTypesPresent.includes("note"), {
+      message: "finance.post_ledger_entry requires note evidence",
+    }),
 });
 
 export const financePostAdditiveCorrectionCommandSchema = z.object({
@@ -153,7 +187,10 @@ export const settlementFinalizeFromAssayCommandSchema = z.object({
   commandType: z.literal("settlement.finalize_from_assay"),
   commandId: idSchema,
   settlementId: idSchema,
-  finalValueUsd: z.string().regex(/^-?\d+(\.\d{1,2})?$/),
+  finalValueUsd: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/)
+    .refine((value) => Number(value) > 0, "finalValueUsd must be greater than zero"),
 });
 
 export const reconciliationOpenCaseCommandSchema = z.object({
@@ -190,10 +227,13 @@ export const reconciliationRecordActionCommandSchema = z.object({
 export const commandSchema = z.discriminatedUnion("commandType", [
   fieldCaptureConverterCommandSchema,
   custodyAssignConverterToBoxCommandSchema,
+  custodyCloseBoxCommandSchema,
   custodyLockQueueCommandSchema,
   custodyAssignBoxToQueueCommandSchema,
   custodyCreateShipmentCommandSchema,
   custodyReceiveShipmentCommandSchema,
+  custodyRecordEventCommandSchema,
+  custodyRecordMassMeasurementCommandSchema,
   gradingIssueDecisionCommandSchema,
   analyticsRecordSampleCommandSchema,
   pricingResolveEstimateCommandSchema,
@@ -207,4 +247,5 @@ export const commandSchema = z.discriminatedUnion("commandType", [
   reconciliationRecordActionCommandSchema,
 ]);
 
-export type CommandDto = z.infer<typeof commandSchema>;
+export type CommandInputDto = z.input<typeof commandSchema>;
+export type CommandDto = z.output<typeof commandSchema>;

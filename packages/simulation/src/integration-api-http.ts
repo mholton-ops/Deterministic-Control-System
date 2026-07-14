@@ -5,9 +5,10 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const PORT = 39123;
-const BASE_URL = `http://localhost:${PORT}`;
+const BASE_URL = `http://127.0.0.1:${PORT}`;
 const ROOT_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 const NPM_EXECUTABLE = process.platform === "win32" ? "npm.cmd" : "npm";
+const CONTROL_TOKEN = randomUUID();
 
 interface CommandSubmission {
   readonly idempotencyKey: string;
@@ -87,7 +88,7 @@ async function waitForHealth(timeoutMs: number): Promise<void> {
 async function postCommand(submission: CommandSubmission): Promise<Record<string, unknown>> {
   const response = await fetch(`${BASE_URL}/commands`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", authorization: `Bearer ${CONTROL_TOKEN}` },
     body: JSON.stringify(submission),
   });
 
@@ -114,7 +115,7 @@ export async function runApiIntegrationWorkflow(): Promise<void> {
   const apiCommand = resolveCommand(NPM_EXECUTABLE, ["run", "dev:api"]);
   const apiProcess = spawn(apiCommand.executable, apiCommand.args, {
     cwd: ROOT_DIR,
-    env: { ...process.env, PORT: String(PORT) },
+    env: { ...process.env, PORT: String(PORT), DCS_CONTROL_API_TOKEN: CONTROL_TOKEN },
     detached: process.platform !== "win32",
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -135,10 +136,21 @@ export async function runApiIntegrationWorkflow(): Promise<void> {
 
     const origin = {
       sourceSystem: "operator_console" as const,
-      userId: `api-user-${suffix}`,
-      deviceId: `api-device-${suffix}`,
+      userId: "8a3d5b8f-899f-4a3f-a8eb-2c7af6dd0001",
+      deviceId: "8a3d5b8f-899f-4a3f-a8eb-2c7af6dd0002",
       capturedAt: new Date("2026-02-10T10:00:00.000Z").toISOString(),
     };
+
+    const unauthorizedMutation = await fetch(`${BASE_URL}/commands`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: "{}",
+    });
+    assert.equal(unauthorizedMutation.status, 401, "Mutation routes must reject missing bearer authorization.");
+    assert.equal(unauthorizedMutation.headers.get("x-content-type-options"), "nosniff");
+
+    const readiness = await fetch(`${BASE_URL}/ready`);
+    assert.equal(readiness.status, 200, "Readiness must include a successful database check.");
 
     await postCommand({
       idempotencyKey: `api-capture-${suffix}`,
@@ -158,9 +170,22 @@ export async function runApiIntegrationWorkflow(): Promise<void> {
     });
 
     await postCommand({
-      idempotencyKey: `api-lock-queue-${suffix}`,
+      idempotencyKey: `api-assign-box-queue-${suffix}`,
       origin,
       createdAt: new Date("2026-02-10T10:05:00.000Z").toISOString(),
+      dependencies: [],
+      command: {
+        commandType: "custody.assign_box_to_queue",
+        commandId: randomUUID(),
+        boxId: boxCode,
+        queueId: queueCode,
+      },
+    });
+
+    await postCommand({
+      idempotencyKey: `api-lock-queue-${suffix}`,
+      origin,
+      createdAt: new Date("2026-02-10T10:05:30.000Z").toISOString(),
       dependencies: [],
       command: {
         commandType: "custody.lock_queue_for_processing",
@@ -170,15 +195,14 @@ export async function runApiIntegrationWorkflow(): Promise<void> {
     });
 
     await postCommand({
-      idempotencyKey: `api-assign-box-queue-${suffix}`,
+      idempotencyKey: `api-close-box-${suffix}`,
       origin,
-      createdAt: new Date("2026-02-10T10:05:30.000Z").toISOString(),
+      createdAt: new Date("2026-02-10T10:05:45.000Z").toISOString(),
       dependencies: [],
       command: {
-        commandType: "custody.assign_box_to_queue",
+        commandType: "custody.close_box",
         commandId: randomUUID(),
         boxId: boxCode,
-        queueId: queueCode,
       },
     });
 
@@ -224,6 +248,7 @@ export async function runApiIntegrationWorkflow(): Promise<void> {
         pdPpm: 942,
         rhPpm: 109,
         matrixId: null,
+        evidence: { evidenceBundleId: randomUUID(), requiredTypesPresent: ["note"] },
       },
     });
 
@@ -241,6 +266,7 @@ export async function runApiIntegrationWorkflow(): Promise<void> {
         pdPpm: 960,
         rhPpm: 112,
         matrixId: null,
+        evidence: { evidenceBundleId: randomUUID(), requiredTypesPresent: ["note"] },
       },
     });
 
@@ -253,8 +279,8 @@ export async function runApiIntegrationWorkflow(): Promise<void> {
         commandType: "pricing.resolve_estimate",
         commandId: randomUUID(),
         queueId: queueCode,
-        marketSnapshotId: randomUUID(),
-        termsProfileId: randomUUID(),
+        marketSnapshotId: "8a3d5b8f-899f-4a3f-a8eb-2c7af6dd2001",
+        termsProfileId: "8a3d5b8f-899f-4a3f-a8eb-2c7af6dd3001",
         sourceCandidates: ["vin", "library_match"],
         attemptedFieldOverride: false,
       },
@@ -290,6 +316,7 @@ export async function runApiIntegrationWorkflow(): Promise<void> {
         amount: { amount: "4600.00", currency: "USD" },
         purposeCode: "funding_advance",
         sourceOperationalRef: queueCode,
+        approvedByUserId: "8a3d5b8f-899f-4a3f-a8eb-2c7af6dd0003",
         notes: "API integration baseline funding",
         evidence: { evidenceBundleId: randomUUID(), requiredTypesPresent: ["note"] },
       },
@@ -354,6 +381,30 @@ export async function runApiIntegrationWorkflow(): Promise<void> {
     const exposureBeforeSettlement = exposureRowsBeforeSettlement.find((row) => row.queueCode === queueCode);
     const estimatedQueueValueUsd = Number(exposureBeforeSettlement?.estimatedValueUsd ?? "75000");
     const finalizedValueUsd = (estimatedQueueValueUsd * 1.028).toFixed(2);
+
+    const settlementControls = [
+      "lot_selected",
+      "contents_reviewed",
+      "sample_data_recorded",
+      "adjustments_recorded",
+      "weight_basis_locked",
+      "hedges_applied",
+      "financial_context_applied",
+    ] as const;
+    for (let stepIndex = 0; stepIndex < settlementControls.length; stepIndex += 1) {
+      await postCommand({
+        idempotencyKey: `api-settlement-control-${suffix}-${stepIndex + 1}`,
+        origin,
+        createdAt: new Date(Date.parse("2026-02-10T10:17:00.000Z") + stepIndex * 1_000).toISOString(),
+        dependencies: [],
+        command: {
+          commandType: "settlement.append_step",
+          commandId: randomUUID(),
+          settlementId: queueCode,
+          step: settlementControls[stepIndex],
+        },
+      });
+    }
 
     await postCommand({
       idempotencyKey: `api-finalize-settlement-${suffix}`,

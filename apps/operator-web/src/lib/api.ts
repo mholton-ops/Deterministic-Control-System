@@ -213,6 +213,8 @@ export interface GradingRow {
 
 export interface AnalyticsRow {
   readonly sampleId: string;
+  readonly transactionId: string;
+  readonly evidenceBundleId: string;
   readonly queueCode: string;
   readonly source: string;
   readonly ptPpmRaw: string;
@@ -307,12 +309,13 @@ export interface SettlementDrilldown {
 export interface EvidenceRow {
   readonly evidenceBundleId: string;
   readonly capturedAt: string;
-  readonly gpsLat: string;
-  readonly gpsLon: string;
-  readonly gpsAccuracyM: string;
+  readonly gpsLat: string | null;
+  readonly gpsLon: string | null;
+  readonly gpsAccuracyM: string | null;
   readonly artifactCount: number;
   readonly converterLinks: number;
   readonly custodyEventLinks: number;
+  readonly sampleLinks: number;
   readonly ledgerLinks: number;
   readonly capturedByUser: string | null;
   readonly capturedByDevice: string | null;
@@ -389,12 +392,12 @@ export interface ReplicationSync {
     readonly failed: number;
     readonly controlNote: string;
   }[];
-  readonly projectionReplay: readonly {
+  readonly projectionRebuild: readonly {
     readonly projectionName: string;
     readonly sourceTransactionCount: number;
-    readonly replayStatus: string;
+    readonly reconstructionStatus: string;
     readonly rebuildStatus: string;
-    readonly lastReplayAt: string;
+    readonly lastRebuildAt: string;
   }[];
 }
 
@@ -531,6 +534,7 @@ export interface TraceView {
     queueId: string | null;
     queueCode: string | null;
     shipmentIds: readonly string[];
+    gradingDecisionIds: readonly string[];
     sampleIds: readonly string[];
     pricingDecisionId: string | null;
     hedgePositionIds: readonly string[];
@@ -554,7 +558,7 @@ export interface SettlementReconstruction {
     varianceUsd: string | null;
     explanation: string;
   };
-  readonly replay: readonly {
+  readonly steps: readonly {
     order: number;
     stage: string;
     truthStatus: "estimated" | "provisional" | "validated" | "finalized";
@@ -610,9 +614,9 @@ export interface TruthGraphEntity {
     capturedByUser: string | null;
     capturedByDevice: string | null;
     gps: {
-      lat: string;
-      lon: string;
-      accuracyM: string;
+      lat: string | null;
+      lon: string | null;
+      accuracyM: string | null;
     };
   }[];
   readonly upstream: readonly {
@@ -690,7 +694,7 @@ export interface TruthGraphEntity {
   };
 }
 
-const DEFAULT_API_BASE_URL = "http://localhost:3001";
+const DEFAULT_API_BASE_URL = "http://127.0.0.1:3001";
 
 function apiBase(): string {
   return process.env.DCS_API_BASE_URL ?? DEFAULT_API_BASE_URL;

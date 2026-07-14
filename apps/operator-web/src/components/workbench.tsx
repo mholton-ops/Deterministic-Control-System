@@ -29,7 +29,7 @@ export function toneForState(value: string | null | undefined): BadgeTone {
 
 export function PageHeader(props: { title: string; subtitle: string }) {
   return (
-    <header className="min-w-0 rounded-xl border border-surface-700/80 bg-surface-900/75 px-6 py-4 shadow-panel">
+    <header className="min-w-0 rounded-lg border border-surface-700/80 bg-surface-900/75 px-4 py-3 shadow-panel sm:px-6 sm:py-4">
       <h1 className="font-mono text-xl uppercase tracking-wide text-surface-100">{props.title}</h1>
       <p className="mt-1 text-sm text-surface-200">{props.subtitle}</p>
     </header>
@@ -38,18 +38,20 @@ export function PageHeader(props: { title: string; subtitle: string }) {
 
 export function Panel(props: { title: string; children: ReactNode }) {
   return (
-    <section className="min-w-0 rounded-xl border border-surface-700/70 bg-surface-900/70 p-4 shadow-panel">
+    <section className="min-w-0 rounded-lg border border-surface-700/70 bg-surface-900/70 p-3 shadow-panel sm:p-4">
       <h2 className="font-mono text-sm uppercase tracking-wider text-surface-200">{props.title}</h2>
       <div className="mt-3">{props.children}</div>
     </section>
   );
 }
 
-export function StatCard(props: { label: string; value: string; hint?: string }) {
+export function StatCard(props: { label: string; value: string; hint?: string; compact?: boolean }) {
   return (
     <div className="min-w-0 rounded-lg border border-surface-700/80 bg-surface-850/70 p-3">
       <div className="text-xs uppercase tracking-wider text-surface-200">{props.label}</div>
-      <div className="mt-1 font-mono text-2xl text-surface-100">{props.value}</div>
+      <div className={`mt-1 font-mono text-surface-100 ${props.compact ? "text-lg" : "text-2xl"}`}>
+        {props.value}
+      </div>
       {props.hint ? <div className="mt-1 text-xs text-surface-200">{props.hint}</div> : null}
     </div>
   );
@@ -140,6 +142,7 @@ export function DataTable(props: {
   columns: readonly string[];
   children: ReactNode;
   stickyActionColumns?: 0 | 1 | 2;
+  label?: string;
 }) {
   const lastColumn = props.columns[props.columns.length - 1];
   const nextToLastColumn = props.columns[props.columns.length - 2];
@@ -156,11 +159,18 @@ export function DataTable(props: {
       : stickyActionColumns === 1
         ? "haldn-table-sticky-actions-1"
         : "";
+  const accessibleLabel = props.label ?? `${props.columns.join(", ")} records`;
 
   return (
-    <div className={`max-w-full overflow-x-auto rounded-lg border border-surface-700/60 ${stickyClass}`}>
+    <div
+      className={`max-h-[min(70vh,48rem)] max-w-full overflow-auto rounded-lg border border-surface-700/60 ${stickyClass}`}
+      role="region"
+      aria-label={accessibleLabel}
+      tabIndex={0}
+    >
       <table className="min-w-max w-full divide-y divide-surface-700 text-left text-sm">
-        <thead className="bg-surface-850/80">
+        <caption className="sr-only">{accessibleLabel}</caption>
+        <thead className="sticky top-0 z-10 bg-surface-850">
           <tr>
             {props.columns.map((column) => (
               <th

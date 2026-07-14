@@ -326,22 +326,17 @@ export function EvidencePreview(props: EvidencePreviewProps) {
   const label = proofRoleLabel(props.evidenceType);
   const time = formatTime(props.capturedAt);
   const displayRef = compactEvidenceRef(props.uri, props.artifactId);
+  const synthetic = props.uri.startsWith("generated://") || props.uri.startsWith("placeholder://");
 
   return (
     <div className={`overflow-hidden rounded border border-surface-700/60 bg-surface-900/80 ${classes.shell}`}>
       <div className={`${classes.frame} relative overflow-hidden bg-surface-950`}>
         <EvidenceVisual {...props} label={label} time={time} />
-        <div className="haldn-evidence-render-loader absolute inset-0 overflow-hidden bg-surface-950/95" aria-hidden>
-          <div className="haldn-loader-grid absolute inset-0 opacity-65" />
-          <div className="haldn-loader-sweep absolute inset-x-0 top-0 h-1" />
-          <div className="absolute inset-0 grid place-items-center">
-            <div className="haldn-loader-core h-8 w-8">
-              <div className="haldn-loader-ring haldn-loader-ring-a" />
-              <div className="haldn-loader-ring haldn-loader-ring-b" />
-              <div className="haldn-loader-center" />
-            </div>
-          </div>
-        </div>
+        {synthetic ? (
+          <span className="absolute bottom-1 left-1 rounded-sm bg-surface-950/85 px-1 font-mono text-[8px] uppercase text-status-warn">
+            Synthetic
+          </span>
+        ) : null}
       </div>
       <div className={`space-y-0.5 px-1.5 py-1 font-mono leading-tight text-surface-200 ${classes.meta}`}>
         <div className="truncate text-surface-100">{displayRef}</div>

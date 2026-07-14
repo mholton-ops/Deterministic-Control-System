@@ -78,13 +78,17 @@ Primary implementation file:
 ## Notable constraints already encoded
 
 - transaction idempotency uniqueness (`transaction_envelopes.idempotency_key`)
+- source-command foreign keys on custody aggregates and links, measurement, grading, samples, pricing, hedge, settlement, invoice, and reconciliation records
 - ledger debit/credit account inequality check
 - hedge application ratio check `(0,1]`
 - settlement step uniqueness per sequence order
 - invoice immutability check
+- insert-time event-type validation for financial and correction lineage
+- database transition guards for transaction status, mutable custody aggregates, settlement finalization, and reconciliation lifecycle
+- append-only triggers on represented historical facts, including hedge openings and financial artifacts
 
-## Planned next schema increments
+## Intentionally deferred schema depth
 
-- additional checks for stronger no-orphan guarantees
-- projection rebuild metadata and checkpoints
-- materialized settlement drilldown model
+- hedge application and close commands, which remain documented extension targets
+- external identity, object-storage, and transport references used only in a production deployment
+- retention, archival, and legal-hold policy tables

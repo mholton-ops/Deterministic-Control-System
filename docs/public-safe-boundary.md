@@ -7,7 +7,7 @@ This repository is a clean-room reference that demonstrates architecture and con
 ## Included
 
 - domain architecture and bounded contexts
-- deterministic transaction and replay concepts
+- deterministic transaction, projection rebuild, and receiver-idempotency concepts
 - state machines and validation patterns
 - placeholder market and assay workflows
 - seeded fictional demo data
@@ -41,8 +41,8 @@ This repository is a clean-room reference that demonstrates architecture and con
 ## Security posture for public repo
 
 - no plaintext secrets
-- sample env files only
-- non-sensitive defaults
+- explicit environment configuration with no committed secrets
+- non-sensitive synthetic defaults only where the repository identifies them as demonstration values
 - explicit warning against production use without hardening
 
 ## Review checklist for public-safe compliance

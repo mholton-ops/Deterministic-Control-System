@@ -28,13 +28,20 @@ export function EntityLink(props: {
     <button
       type="button"
       title={props.title ?? "Open detail panel"}
-      onClick={() => {
+      onPointerDown={(event) => {
+        if (event.button === 0) {
+          signalPanelNavigation("open", props.entityType, props.entityId);
+        }
+      }}
+      onClick={(event) => {
         const currentUrl = new URL(window.location.href);
         const next = new URLSearchParams(currentUrl.search);
         const nextPanel = `${props.entityType}:${props.entityId}`;
         if (currentUrl.searchParams.get("panel") === nextPanel) return;
 
-        signalPanelNavigation("open", props.entityType, props.entityId);
+        if (event.detail === 0) {
+          signalPanelNavigation("open", props.entityType, props.entityId);
+        }
         next.set("panel", nextPanel);
         window.history.pushState(window.history.state, "", `${pathname}?${next.toString()}`);
       }}
@@ -55,6 +62,7 @@ export function OpenPanelButton(props: {
       entityType={props.entityType}
       entityId={props.entityId}
       className="inline-flex rounded border border-status-info/60 bg-status-info/10 px-2 py-1 font-mono text-xs uppercase tracking-wide text-status-info hover:bg-status-info/20"
+      title={`Open ${props.entityType.replaceAll("_", " ")} detail`}
     >
       {props.label ?? "Detail"}
     </EntityLink>

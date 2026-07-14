@@ -38,18 +38,17 @@ Deliverables:
 - seed data and local bootstrap path
 
 Exit criteria:
-- replay of seeded transaction stream reconstructs projections identically
+- seeded transaction-linked operational state rebuilds projections consistently
 
 Status:
 - baseline implementation complete:
   - Fastify API command/query routes
-  - deterministic command processor skeleton
+  - deterministic atomic command processor
   - projection query builders
   - materialized projection rebuild pipeline and tables
   - initial migration generation and seed/simulation scripts
   - expanded command coverage including shipment and reconciliation action commands
-- remaining:
-  - periodic/incremental projection worker scheduling
+  - checkpoint-based projection worker and repeatable-read rebuild
 
 ## Phase 4: Operator UI and deterministic simulation
 
@@ -82,7 +81,7 @@ Exit criteria:
 - repository communicates serious operational systems design
 
 Status:
-- in progress:
+- implemented public-reference baseline:
   - API/query docs updated to match implemented endpoints
   - simulation and projection docs updated
   - README refreshed with CI gate coverage and reviewer artifact pointers
@@ -98,7 +97,7 @@ Status:
   - trace-first UX refactor implemented:
     - global `[Trace]` navigation on converter/box/queue/sample/settlement/ledger rows
     - `/trace/:entityType/:entityId` chain proof endpoint and full trace page
-    - `/reconstruct/settlement/:settlementId` replay endpoint and reconstruction page
+    - `/reconstruct/settlement/:settlementId` proof-chain reconstruction endpoint and page
     - lifecycle certainty layer (`truth status`, `confidence`, `validation`) across workbench pages
     - evidence-first field/custody displays with visible artifact previews
     - reconciliation page upgraded with estimate-vs-actual and financial impact context
@@ -106,3 +105,12 @@ Status:
     - `/customer/visibility` read-only projection for controlled customer visibility
     - `/customer` operator-web page showing filtered inventory, lot progress, customer-visible value, proof status, hedge/sale/bid/report availability, and daily activity totals
     - reviewer artifacts include customer visibility JSON and screenshot
+  - July 2026 hardening pass:
+    - atomic command and domain persistence
+    - fail-closed origin, dependency, master-data, and API authorization controls
+    - receiver receipts, stream checksums, retry state, and controlled dependency resume
+    - database append-only triggers and settlement/funding/custody constraints
+    - responsive and keyboard-accessible operator navigation, tables, search, and detail panel
+    - real lint, dependency audit, and hardened CI gates
+
+The full audit record and intentionally abstracted production concerns are documented in [Audit Hardening, July 2026](AUDIT_HARDENING_2026-07.md).

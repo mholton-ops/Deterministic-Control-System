@@ -78,9 +78,9 @@ export interface TruthGraphEntityProjection {
     capturedByUser: string | null;
     capturedByDevice: string | null;
     gps: {
-      lat: string;
-      lon: string;
-      accuracyM: string;
+      lat: string | null;
+      lon: string | null;
+      accuracyM: string | null;
     };
   }[];
   readonly upstream: readonly TruthGraphLink[];
@@ -226,10 +226,6 @@ function queueRefCondition(ref: string) {
   return isUuid(ref) ? eq(queues.queueId, ref) : eq(queues.queueCode, ref);
 }
 
-function boxRefCondition(ref: string) {
-  return isUuid(ref) ? eq(boxes.boxId, ref) : eq(boxes.externalCode, ref);
-}
-
 function shipmentRefCondition(ref: string) {
   return isUuid(ref) ? eq(shipments.shipmentId, ref) : eq(shipments.shipmentCode, ref);
 }
@@ -353,22 +349,28 @@ async function buildQueueFacts(db: DcsDb, queueId: string, queueCode: string): P
           .leftJoin(converters, eq(converters.converterId, boxConverters.converterId))
           .where(inArray(boxConverters.boxId, boxIds));
 
-  const evidenceBundleIds = converterRows
-    .map((row) => row.evidenceBundleId)
-    .filter((bundleId): bundleId is string => Boolean(bundleId));
+  const sampleRows = await db
+    .select({
+      sampleId: samples.sampleId,
+      source: samples.source,
+      evidenceBundleId: samples.evidenceBundleId,
+    })
+    .from(samples)
+    .where(eq(samples.queueId, queueId));
+
+  const evidenceBundleIds = [
+    ...converterRows.map((row) => row.evidenceBundleId),
+    ...sampleRows.map((row) => row.evidenceBundleId),
+  ].filter((bundleId): bundleId is string => Boolean(bundleId));
+  const uniqueEvidenceBundleIds = [...new Set(evidenceBundleIds)];
 
   const evidenceCountRows =
-    evidenceBundleIds.length === 0
+    uniqueEvidenceBundleIds.length === 0
       ? [{ count: 0 }]
       : await db
           .select({ count: sql<number>`count(*)::int` })
           .from(evidenceArtifacts)
-          .where(inArray(evidenceArtifacts.evidenceBundleId, evidenceBundleIds));
-
-  const sampleRows = await db
-    .select({ sampleId: samples.sampleId, source: samples.source })
-    .from(samples)
-    .where(eq(samples.queueId, queueId));
+          .where(inArray(evidenceArtifacts.evidenceBundleId, uniqueEvidenceBundleIds));
 
   const ledgerRows = await db
     .select({ ledgerEntryId: ledgerEntries.ledgerEntryId, amountUsd: ledgerEntries.amountUsd })
@@ -532,9 +534,6 @@ function linksAround(
 function candidateTraceAnchor(
   entityType: GraphEntityType,
   entityId: string,
-  queueId: string | null,
-  settlementId: string | null,
-  ledgerEntryId: string | null,
 ): { type: TraceEntityType; id: string } | null {
   if (
     entityType === "converter" ||
@@ -564,7 +563,6 @@ export async function buildTruthGraphEntityProjection(
   let queueRefId: string | null = null;
   let queueRefCode: string | null = null;
   let settlementRefId: string | null = null;
-  let ledgerRefId: string | null = null;
   let materialFormHint: string | null = null;
   let reconciliationRef:
     | {
@@ -696,7 +694,6 @@ export async function buildTruthGraphEntityProjection(
     title = `Ledger ${rows[0].purposeCode}`;
     state = rows[0].purposeCode;
     updatedAt = rows[0].createdAt;
-    ledgerRefId = rows[0].ledgerEntryId;
 
     const queueRows = await db
       .select({ queueId: queues.queueId, queueCode: queues.queueCode })
@@ -773,7 +770,6 @@ export async function buildTruthGraphEntityProjection(
       }
     }
     if (rows[0].scopeType === "ledger") {
-      ledgerRefId = rows[0].scopeId;
     }
     if (rows[0].scopeType === "shipment") {
       const shipmentRows = await db
@@ -816,7 +812,7 @@ export async function buildTruthGraphEntityProjection(
     return null;
   }
 
-  const anchor = candidateTraceAnchor(entityType, entityId, queueRefId, settlementRefId, ledgerRefId);
+  const anchor = candidateTraceAnchor(entityType, entityId);
   let trace: TraceViewProjection | null = null;
   if (anchor) {
     try {

@@ -8,28 +8,34 @@ Definition:
 - Multiple system views must not silently diverge.
 
 Enforcement:
-- append-only transaction history
-- deterministic projection rebuild
-- idempotent transaction application
-- dependency-gated apply rules
+- atomic persistence of command intent and domain effects
+- deterministic projection rebuild from transaction-linked operational state
+- idempotent command submission and receiver application
+- fail-closed dependency gating and controlled resume
 
 Validation approach:
-- replay tests produce identical projection checksums
-- duplicate transaction replay does not mutate effective state
+- a second projection-worker pass reports no additional source work
+- duplicate command submission does not mutate effective state
+- duplicate receiver delivery produces one receipt and no duplicate acknowledgement
 
 ## G2: Full Reconstructability
 
 Definition:
-- Historical state at time T can be derived from transaction history.
+- Every represented critical state can be explained through its linked command, origin, evidence, custody, valuation, ledger, and settlement chain.
 
 Enforcement:
 - immutable transaction envelopes
 - timestamped origin and dependency metadata
-- deterministic projection builders
-- trace endpoint and replay endpoint (`/trace/*`, `/reconstruct/settlement/*`) for operator-visible proof chains
+- current-state command pointers on converter, box, queue, and shipment aggregates
+- deterministic projection builders over a repeatable-read database snapshot
+- trace and settlement-reconstruction endpoints (`/trace/*`, `/reconstruct/settlement/*`) for operator-visible proof chains
 
 Validation approach:
-- snapshot-at-time tests for selected workflows
+- guarantee scans verify transaction, current custody state, evidence, mass, valuation, hedge, ledger, settlement, invoice, and reconciliation lineage
+- trace and reconstruction projections are exercised by the API integration workflow
+
+Implementation boundary:
+- this public implementation does not claim generic event-store replay or arbitrary state-at-time reconstruction
 
 ## G3: Immutable Truth with Additive Correction
 
@@ -37,11 +43,12 @@ Definition:
 - truth-bearing records are never destructively edited.
 
 Enforcement:
-- no update/delete mutation paths for critical history tables
+- database triggers reject update/delete operations on protected history tables
+- accepted command payload, origin, and idempotency identity are protected after insertion
 - correction events and offset ledger entries only
 
 Validation approach:
-- API rejects destructive mutation commands
+- state audit verifies protected ledger history and command payloads cannot be changed, and reconciliation cannot skip its investigation transition
 
 ## G4: Controlled Origin
 
@@ -59,15 +66,18 @@ Validation approach:
 ## G5: Deterministic Replication/Application
 
 Definition:
-- same transaction set always yields same effective state.
+- the same accepted command is applied at most once locally and at most once per receiver stream.
 
 Enforcement:
-- idempotency key uniqueness
-- dependency refs in envelope
-- pending state for unresolved dependencies
+- deterministic transaction identity from idempotency key
+- payload checksum conflict detection for reused idempotency keys
+- dependency references in the envelope
+- awaiting-validation state for unresolved dependencies
+- unique receiver receipts and stream acknowledgements
 
 Validation approach:
-- shuffled-order apply tests converge on same result
+- unresolved work is blocked, resumed after its dependency exists, and applied exactly once
+- receipt redelivery does not create a second receiver application
 
 ## G6: Evidence-backed Critical State
 
@@ -91,9 +101,11 @@ Enforcement:
 - required source operational ref on ledger postings
 - settlement references queue/lot scope and assay basis
 - account pairing and purpose-code controls
+- distinct approving and executing actors for funding advances
+- hedge openings, settlement controls, final invoices, and reconciliation transitions retain direct source-command foreign keys
 
 Validation approach:
-- orphan-ledger detection queries must return zero rows
+- orphan-ledger and financial-control lineage queries must return zero rows
 
 ## G8: Continuous Validation
 
@@ -114,9 +126,9 @@ Definition:
 - no data exists without contextual chain linkage.
 
 Enforcement:
-- strict foreign keys and typed reference constraints
+- foreign keys, uniqueness constraints, and typed reference constraints on covered critical records
 - envelope dependency model
-- provenance fields on all critical records
+- transaction and evidence provenance on custody and mass records
 
 Validation approach:
 - periodic orphan scans in CI checks
@@ -140,7 +152,7 @@ Validation approach:
 - `packages/contracts`: strict command/event schema validation
 - `packages/event-log`: immutable envelope persistence
 - `packages/replication`: deterministic apply and dependency management
-- `packages/projections`: replay-derived state
+- `packages/projections`: rebuildable read models and proof-chain reconstruction
 - `packages/db`: FK integrity and immutable table policies
 - `apps/api`: controlled command entry points and authorization
 - `apps/operator-web`: visibility and drill-down, not authoritative state mutation

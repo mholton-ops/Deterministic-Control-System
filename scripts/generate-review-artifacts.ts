@@ -146,16 +146,7 @@ async function exportFixtures(): Promise<string | null> {
 }
 
 async function captureScreenshots(firstSettlementId: string | null): Promise<boolean> {
-  let chromium: {
-    launch: (options: { headless: boolean }) => Promise<{
-      newPage: (options: { viewport: { width: number; height: number } }) => Promise<{
-        goto: (url: string, options: { waitUntil: "networkidle" }) => Promise<void>;
-        screenshot: (options: { path: string; fullPage: boolean }) => Promise<void>;
-        close: () => Promise<void>;
-      }>;
-      close: () => Promise<void>;
-    }>;
-  } | null = null;
+  let chromium: (typeof import("playwright"))["chromium"] | null = null;
 
   try {
     const playwrightModule = await import("playwright");
@@ -169,6 +160,13 @@ async function captureScreenshots(firstSettlementId: string | null): Promise<boo
 
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  const browserErrors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") browserErrors.push(`console: ${message.text()}`);
+  });
+  page.on("pageerror", (error) => {
+    browserErrors.push(`page: ${error.message}`);
+  });
 
   const pages: Array<{ path: string; file: string }> = [
     { path: "/", file: "overview.png" },
@@ -181,8 +179,6 @@ async function captureScreenshots(firstSettlementId: string | null): Promise<boo
     { path: "/customer", file: "customer-visibility.png" },
     { path: "/finance-ledger", file: "finance-ledger.png" },
     { path: "/reconciliation", file: "reconciliation.png" },
-    { path: "/settlements", file: "settlements.png" },
-    { path: "/audit", file: "audit.png" },
   ];
 
   if (firstSettlementId) {
@@ -206,6 +202,31 @@ async function captureScreenshots(firstSettlementId: string | null): Promise<boo
       path: resolve(SCREENSHOT_DIR, item.file),
       fullPage: true,
     });
+
+    if (item.path === "/") {
+      await page.getByRole("button", { name: "Detail", exact: true }).first().click();
+      await page.getByRole("dialog").waitFor({ state: "visible" });
+      if ((await page.getByRole("button", { name: "Retry", exact: true }).count()) > 0) {
+        throw new Error("Truth detail panel loaded an error state.");
+      }
+      await page.screenshot({
+        path: resolve(SCREENSHOT_DIR, "truth-detail-panel.png"),
+        fullPage: true,
+      });
+    }
+  }
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${WEB_BASE_URL}/analytics`, { waitUntil: "networkidle" });
+  await page.getByRole("button", { name: "Detail", exact: true }).first().waitFor({ state: "visible" });
+  await page.getByRole("link", { name: "Trace", exact: true }).first().waitFor({ state: "visible" });
+  await page.screenshot({
+    path: resolve(SCREENSHOT_DIR, "analytics-mobile.png"),
+    fullPage: true,
+  });
+
+  if (browserErrors.length > 0) {
+    throw new Error(`Browser verification reported errors:\n${browserErrors.join("\n")}`);
   }
 
   await page.close();

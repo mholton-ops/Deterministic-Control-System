@@ -1,9 +1,28 @@
 import { createHash, randomUUID } from "node:crypto";
 import assert from "node:assert/strict";
 
-import { eq } from "drizzle-orm";
-import { createDb, createPool, devices, users } from "@dcs/db";
-import { CommandProcessor, type CommandSubmission } from "@dcs/replication";
+import { eq, sql } from "drizzle-orm";
+import {
+  boxes,
+  createDb,
+  createPool,
+  devices,
+  evidenceArtifacts,
+  evidenceBundles,
+  ledgerEntries,
+  queues,
+  reconciliationCases,
+  replicationQueue,
+  replicationReceipts,
+  sites,
+  transactionEnvelopes,
+  users,
+} from "@dcs/db";
+import {
+  CommandProcessor,
+  processReplicationTransaction,
+  type CommandSubmission,
+} from "@dcs/replication";
 
 function normalizeToUuid(value: string): string {
   const uuidRegex =
@@ -82,6 +101,108 @@ export async function runStateTransitionAudit(): Promise<void> {
     const boxCode = `BOX-AUDIT-${suffix}`;
     const shipmentCode = `SHIP-AUDIT-${suffix}`;
 
+    const unauthorizedIdempotencyKey = `audit-unauthorized-origin-${suffix}`;
+    await expectFailure(
+      processor,
+      {
+        idempotencyKey: unauthorizedIdempotencyKey,
+        origin: {
+          ...origin,
+          userId: randomUUID(),
+          deviceId: randomUUID(),
+        },
+        createdAt: new Date("2026-02-15T08:00:10.000Z").toISOString(),
+        dependencies: [],
+        command: {
+          commandType: "reconciliation.open_case",
+          commandId: randomUUID(),
+          triggerType: "sequence_violation",
+          severity: "low",
+          relatedScopeType: "queue",
+          relatedScopeId: queueCode,
+        },
+      },
+      /unknown or inactive/i,
+    );
+    const unauthorizedEnvelope = await db
+      .select({ transactionId: transactionEnvelopes.transactionId })
+      .from(transactionEnvelopes)
+      .where(eq(transactionEnvelopes.idempotencyKey, unauthorizedIdempotencyKey));
+    assert.equal(unauthorizedEnvelope.length, 0, "Unauthorized origins must not create accepted history.");
+
+    const foreignUserId = normalizeToUuid(`state-audit-foreign-user-${suffix}`);
+    const foreignDeviceId = normalizeToUuid(`state-audit-foreign-device-${suffix}`);
+    await ensureOrigin(db, foreignUserId, foreignDeviceId);
+    const foreignEvidenceBundleId = randomUUID();
+    await db.insert(evidenceBundles).values({
+      evidenceBundleId: foreignEvidenceBundleId,
+      createdByUserId: foreignUserId,
+      createdByDeviceId: foreignDeviceId,
+      capturedAt: new Date("2026-02-15T08:00:20.000Z"),
+      gpsLat: "34.215000",
+      gpsLon: "-118.494000",
+      gpsAccuracyM: "9.000",
+    });
+    await db.insert(evidenceArtifacts).values(
+      (["image", "gps"] as const).map((evidenceType) => {
+        const artifactId = randomUUID();
+        const uri = `dcs-proof://${evidenceType}/${foreignEvidenceBundleId}/${artifactId}`;
+        return {
+          artifactId,
+          evidenceBundleId: foreignEvidenceBundleId,
+          evidenceType,
+          uri,
+          sha256: createHash("sha256").update(uri).digest("hex"),
+          synthetic: true,
+          capturedAt: new Date("2026-02-15T08:00:20.000Z"),
+        };
+      }),
+    );
+
+    const atomicBoxCode = `ATOMIC-BOX-${suffix}`;
+    const atomicFailureKey = `audit-atomic-failure-${suffix}`;
+    await expectFailure(
+      processor,
+      {
+        idempotencyKey: atomicFailureKey,
+        origin,
+        createdAt: new Date("2026-02-15T08:00:30.000Z").toISOString(),
+        dependencies: [],
+        command: {
+          commandType: "field.capture_converter",
+          commandId: randomUUID(),
+          yardId: "YARD-SIM-01",
+          boxId: atomicBoxCode,
+          vinOrSerial: `VIN-ATOMIC-${suffix}`,
+          capturedAt: new Date("2026-02-15T08:00:30.000Z").toISOString(),
+          location: { lat: 34.215, lon: -118.494, accuracyM: 9 },
+          evidence: {
+            evidenceBundleId: foreignEvidenceBundleId,
+            requiredTypesPresent: ["image", "gps"],
+          },
+        },
+      },
+      /belongs to a different origin/i,
+    );
+    const rolledBackBoxes = await db
+      .select({ boxId: boxes.boxId })
+      .from(boxes)
+      .where(eq(boxes.externalCode, atomicBoxCode));
+    assert.equal(rolledBackBoxes.length, 0, "A failed command must roll back box creation.");
+
+    const failedEnvelopeRows = await db
+      .select()
+      .from(transactionEnvelopes)
+      .where(eq(transactionEnvelopes.idempotencyKey, atomicFailureKey))
+      .limit(1);
+    assert.equal(failedEnvelopeRows[0]?.validationState, "failed");
+    assert.equal(failedEnvelopeRows[0]?.originCapturedAt.toISOString(), origin.capturedAt);
+    const failedQueueRows = await db
+      .select({ status: replicationQueue.status })
+      .from(replicationQueue)
+      .where(eq(replicationQueue.transactionId, failedEnvelopeRows[0]!.transactionId));
+    assert.ok(failedQueueRows.length > 0 && failedQueueRows.every((row) => row.status === "failed"));
+
     const openCase = await apply(processor, {
       idempotencyKey: `audit-open-case-${suffix}`,
       origin,
@@ -116,6 +237,90 @@ export async function runStateTransitionAudit(): Promise<void> {
       /cannot transition from open to resolved/i,
     );
 
+    const dependencySiteId = randomUUID();
+    const blockedScopeId = `BLOCKED-${suffix}`;
+    const blocked = await processor.process({
+      idempotencyKey: `audit-dependency-blocked-${suffix}`,
+      origin,
+      createdAt: new Date("2026-02-15T08:02:10.000Z").toISOString(),
+      dependencies: [
+        { entityType: "site", entityId: dependencySiteId, requiredState: "exists" },
+      ],
+      command: {
+        commandType: "reconciliation.open_case",
+        commandId: randomUUID(),
+        triggerType: "ledger_orphan",
+        severity: "low",
+        relatedScopeType: "queue",
+        relatedScopeId: blockedScopeId,
+      },
+    });
+    assert.equal(blocked.status, "awaiting_validation");
+    const prematureCases = await db
+      .select({ caseId: reconciliationCases.reconciliationCaseId })
+      .from(reconciliationCases)
+      .where(eq(reconciliationCases.scopeId, blockedScopeId));
+    assert.equal(prematureCases.length, 0, "Dependency-blocked commands must not mutate domain state.");
+
+    await db.insert(sites).values({
+      siteId: dependencySiteId,
+      siteCode: `DEP-${suffix}`,
+      name: "State Audit Dependency Site",
+      siteType: "test_fixture",
+      createdAt: new Date("2026-02-15T08:02:20.000Z"),
+    });
+    const resumed = await processor.resumeAwaitingValidation(
+      blocked.transactionId,
+      new Date("2026-02-15T08:02:30.000Z"),
+    );
+    assert.equal(resumed.status, "applied");
+    const resumedCaseId = String(resumed.effects.reconciliationCaseId);
+    const resumedCases = await db
+      .select({ caseId: reconciliationCases.reconciliationCaseId })
+      .from(reconciliationCases)
+      .where(eq(reconciliationCases.reconciliationCaseId, resumedCaseId));
+    assert.equal(resumedCases.length, 1, "A resolved dependency must allow exactly one domain application.");
+    await assert.rejects(
+      async () => {
+        await db
+          .update(reconciliationCases)
+          .set({
+            status: "resolved",
+            closureRationale: "Direct state rewrite must be rejected.",
+            closedAt: new Date("2026-02-15T08:02:45.000Z"),
+            closedByTransactionId: resumed.transactionId,
+            lastTransitionTransactionId: resumed.transactionId,
+          })
+          .where(eq(reconciliationCases.reconciliationCaseId, resumedCaseId));
+      },
+      /invalid reconciliation status transition/i,
+      "Reconciliation state must not skip the controlled investigation transition.",
+    );
+
+    const receiptCountBeforeRedelivery = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(replicationReceipts)
+      .where(eq(replicationReceipts.transactionId, blocked.transactionId));
+    assert.equal(
+      receiptCountBeforeRedelivery[0]?.count,
+      1,
+      "A resumed dependency-blocked command must reach receiver acknowledgement.",
+    );
+    await processReplicationTransaction(
+      db,
+      blocked.transactionId,
+      new Date("2026-02-15T08:02:40.000Z"),
+    );
+    const receiptCountAfterRedelivery = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(replicationReceipts)
+      .where(eq(replicationReceipts.transactionId, blocked.transactionId));
+    assert.equal(
+      receiptCountAfterRedelivery[0]?.count,
+      receiptCountBeforeRedelivery[0]?.count,
+      "Receiver redelivery must not create duplicate receipts.",
+    );
+
     await apply(processor, {
       idempotencyKey: `audit-capture-${suffix}`,
       origin,
@@ -133,7 +338,7 @@ export async function runStateTransitionAudit(): Promise<void> {
       },
     });
 
-    await apply(processor, {
+    const queueAssignment = await apply(processor, {
       idempotencyKey: `audit-assign-box-to-queue-${suffix}`,
       origin,
       createdAt: new Date("2026-02-15T08:04:00.000Z").toISOString(),
@@ -145,6 +350,14 @@ export async function runStateTransitionAudit(): Promise<void> {
         queueId: queueCode,
       },
     });
+    const queueId = String(queueAssignment.effects.queueId);
+    await assert.rejects(
+      async () => {
+        await db.update(queues).set({ state: "processing" }).where(eq(queues.queueId, queueId));
+      },
+      /requires a new source transaction/i,
+      "Queue state must not change without a controlling command transaction.",
+    );
 
     await expectFailure(
       processor,
@@ -160,7 +373,7 @@ export async function runStateTransitionAudit(): Promise<void> {
           step: "invoice_finalized",
         },
       },
-      /expected step/i,
+      /system-derived|expected step/i,
     );
 
     const ledgerPosting = await apply(processor, {
@@ -182,6 +395,37 @@ export async function runStateTransitionAudit(): Promise<void> {
     });
     const targetLedgerEntryId = String(ledgerPosting.effects.ledgerEntryId);
 
+    await assert.rejects(
+      async () => {
+        await db
+          .update(ledgerEntries)
+          .set({ amountUsd: "101.00" })
+          .where(eq(ledgerEntries.ledgerEntryId, targetLedgerEntryId));
+      },
+      /append-only/i,
+      "Accepted ledger history must reject in-place mutation.",
+    );
+    await assert.rejects(
+      async () => {
+        await db
+          .update(transactionEnvelopes)
+          .set({ payload: { tampered: true } })
+          .where(eq(transactionEnvelopes.transactionId, ledgerPosting.transactionId));
+      },
+      /immutable/i,
+      "Accepted transaction payloads must reject in-place mutation.",
+    );
+    await assert.rejects(
+      async () => {
+        await db
+          .update(transactionEnvelopes)
+          .set({ validationState: "pending" })
+          .where(eq(transactionEnvelopes.transactionId, ledgerPosting.transactionId));
+      },
+      /status transition/i,
+      "Confirmed transaction status must not move backward.",
+    );
+
     await expectFailure(
       processor,
       {
@@ -202,6 +446,68 @@ export async function runStateTransitionAudit(): Promise<void> {
       },
       /non-zero delta/i,
     );
+
+    await expectFailure(
+      processor,
+      {
+        idempotencyKey: `audit-funding-sod-${suffix}`,
+        origin,
+        createdAt: new Date("2026-02-15T08:07:10.000Z").toISOString(),
+        dependencies: [],
+        command: {
+          commandType: "finance.post_ledger_entry",
+          commandId: randomUUID(),
+          debitAccountId: "internal_funding_pool",
+          creditAccountId: "buyer_alpha",
+          amount: { amount: "25.00", currency: "USD" },
+          purposeCode: "funding_advance",
+          sourceOperationalRef: queueCode,
+          approvedByUserId: origin.userId,
+          notes: "Invalid same-actor funding approval",
+          evidence: { evidenceBundleId: randomUUID(), requiredTypesPresent: ["note"] },
+        },
+      },
+      /must be different users/i,
+    );
+
+    const idempotencySubmission = {
+      idempotencyKey: `audit-idempotent-command-${suffix}`,
+      origin,
+      createdAt: new Date("2026-02-15T08:07:20.000Z").toISOString(),
+      dependencies: [],
+      command: {
+        commandType: "reconciliation.open_case" as const,
+        commandId: randomUUID(),
+        triggerType: "custody_mismatch",
+        severity: "low" as const,
+        relatedScopeType: "queue" as const,
+        relatedScopeId: queueCode,
+      },
+    } satisfies CommandSubmission;
+    const firstIdempotentResult = await apply(processor, idempotencySubmission);
+    const duplicateIdempotentResult = await processor.process(idempotencySubmission);
+    assert.equal(duplicateIdempotentResult.status, "duplicate");
+    assert.equal(duplicateIdempotentResult.transactionId, firstIdempotentResult.transactionId);
+    await expectFailure(
+      processor,
+      {
+        ...idempotencySubmission,
+        command: { ...idempotencySubmission.command, severity: "high" },
+      },
+      /already bound to a different command payload/i,
+    );
+
+    await apply(processor, {
+      idempotencyKey: `audit-close-box-${suffix}`,
+      origin,
+      createdAt: new Date("2026-02-15T08:07:30.000Z").toISOString(),
+      dependencies: [],
+      command: {
+        commandType: "custody.close_box",
+        commandId: randomUUID(),
+        boxId: boxCode,
+      },
+    });
 
     await apply(processor, {
       idempotencyKey: `audit-create-shipment-${suffix}`,

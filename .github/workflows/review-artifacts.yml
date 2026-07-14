@@ -53,6 +53,9 @@ jobs:
       - name: Install Playwright Chromium
         run: npm run playwright:install
 
+      - name: Run migrations
+        run: npm run db:migrate
+
       - name: Generate deterministic reviewer artifacts
         run: npm run review:artifacts
 

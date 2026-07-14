@@ -15,6 +15,6 @@ Pages:
 - Audit / Evidence Explorer
 
 Runtime:
-- defaults to control API at `http://localhost:3001`
+- defaults to control API at `http://127.0.0.1:3001`
 - set `DCS_API_BASE_URL` to override
 - run `npm run dev --workspace @dcs/operator-web`
