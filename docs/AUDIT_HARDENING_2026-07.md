@@ -14,7 +14,7 @@ All represented records are deterministic synthetic data. This repository demons
 | Idempotency | Reused keys did not prove payload identity | Transaction IDs are deterministic and duplicate payloads are checksum-verified; conflicting reuse fails explicitly |
 | Origin control | UUID shape alone did not establish authority | Active user, active device, assignment, role, and source checks now fail closed; captured-at provenance is retained |
 | Dependencies | Deferred work lacked a governed apply path | Recognized dependencies are validated, unresolved work is retained, and controlled resume revalidates then applies once |
-| Replication | Sync evidence was primarily presentational | Record/image outboxes, checksums, attempts, retry timing, receiver receipts, acknowledgements, and status projections now come from stored mechanics |
+| Replication | Sync evidence was primarily presentational | Record/image outboxes, checksums, attempts, retry timing, receiver receipts, acknowledgements, site-level convergence, and status projections now come from stored mechanics; the operator movement table remains intentionally bounded |
 | Custody | Queue locking and shipment transitions allowed weak material continuity, and current aggregate state did not retain its controlling command | Queue lock requires linked boxes; membership freezes after lock; boxes close before shipment; receipt requires in-transit state; converter, box, queue, shipment, and shipment-membership records retain direct current-state command lineage |
 | Measurement | Custody, sample, and mass observations lacked complete command lineage | Typed commands now carry transaction and evidence provenance into custody events, analytical samples, and mass measurements; in-transit sampling and post-lock mass changes fail closed |
 | Evidence | Note-only evidence could imply location and artifact proof | GPS is nullable, artifacts carry checksums, and synthetic artifacts are labeled explicitly |
@@ -36,7 +36,9 @@ All represented records are deterministic synthetic data. This repository demons
 
 ## Verification coverage
 
-The automated gate covers type checking, lint, build, integration flow, API mutation authorization, state-transition audit, guarantee scans, migrations, projection materialization, idempotency, deferred dependency application, receiver deduplication, append-only triggers, funding separation of duty, direct financial/correction lineage, and settlement sequence enforcement.
+The automated gate covers type checking, lint, build, integration flow, API mutation authorization, state-transition audit, guarantee scans, migrations, projection materialization, idempotency, deferred dependency application, receiver deduplication, site-level sync evidence, append-only triggers, funding separation of duty, direct financial/correction lineage, and settlement sequence enforcement.
+
+The reviewer artifact workflow additionally verifies evidence-critical operator routes, a clean browser console, successful truth-detail retrieval, and visible Detail and Trace actions at a 390-pixel viewport. It emits exactly 15 deterministic screenshots.
 
 ## Intentionally abstracted
 
@@ -59,7 +61,7 @@ The production dependency gate reports two moderate PostCSS advisories nested un
 3. Add concurrency, retry-storm, network-partition, and sustained-load testing around command and receiver locks.
 4. Connect outbox streams to a real transport adapter and verify acknowledgement semantics across separate database nodes.
 5. Add OpenTelemetry traces, structured security events, service-level objectives, and operator alert routing.
-6. Add automated accessibility scans and browser screenshots at desktop, tablet, and narrow mobile breakpoints.
+6. Add automated accessibility scans and tablet-specific visual coverage; the current reviewer workflow covers desktop views, the truth dialog, and narrow mobile action access.
 7. Define retention, archival, legal-hold, encryption-key rotation, backup, and recovery objectives.
 8. Version projection schemas and rehearse blue/green projection rebuilds before deployment use.
 9. Implement controlled hedge application and close commands before representing hedge execution as complete lifecycle coverage.
