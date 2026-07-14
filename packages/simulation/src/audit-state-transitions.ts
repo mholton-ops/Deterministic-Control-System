@@ -67,18 +67,38 @@ async function apply(processor: CommandProcessor, command: CommandSubmission) {
   return result;
 }
 
+function errorChainMatches(error: unknown, reasonPattern: RegExp): boolean {
+  const seen = new Set<unknown>();
+  let current = error;
+
+  while (current instanceof Error && !seen.has(current)) {
+    seen.add(current);
+    reasonPattern.lastIndex = 0;
+    if (reasonPattern.test(current.message)) {
+      return true;
+    }
+    current = current.cause;
+  }
+
+  return false;
+}
+
 async function expectFailure(
   processor: CommandProcessor,
   command: CommandSubmission,
   reasonPattern: RegExp,
 ) {
-  await assert.rejects(() => processor.process(command), (error: unknown) => {
-    if (!(error instanceof Error)) {
-      return false;
-    }
+  await assert.rejects(() => processor.process(command), (error: unknown) =>
+    errorChainMatches(error, reasonPattern),
+  );
+}
 
-    return reasonPattern.test(error.message);
-  });
+async function expectDatabaseRejection(
+  operation: () => Promise<unknown>,
+  reasonPattern: RegExp,
+  message: string,
+) {
+  await assert.rejects(operation, (error: unknown) => errorChainMatches(error, reasonPattern), message);
 }
 
 export async function runStateTransitionAudit(): Promise<void> {
@@ -280,7 +300,7 @@ export async function runStateTransitionAudit(): Promise<void> {
       .from(reconciliationCases)
       .where(eq(reconciliationCases.reconciliationCaseId, resumedCaseId));
     assert.equal(resumedCases.length, 1, "A resolved dependency must allow exactly one domain application.");
-    await assert.rejects(
+    await expectDatabaseRejection(
       async () => {
         await db
           .update(reconciliationCases)
@@ -351,7 +371,7 @@ export async function runStateTransitionAudit(): Promise<void> {
       },
     });
     const queueId = String(queueAssignment.effects.queueId);
-    await assert.rejects(
+    await expectDatabaseRejection(
       async () => {
         await db.update(queues).set({ state: "processing" }).where(eq(queues.queueId, queueId));
       },
@@ -395,7 +415,7 @@ export async function runStateTransitionAudit(): Promise<void> {
     });
     const targetLedgerEntryId = String(ledgerPosting.effects.ledgerEntryId);
 
-    await assert.rejects(
+    await expectDatabaseRejection(
       async () => {
         await db
           .update(ledgerEntries)
@@ -405,7 +425,7 @@ export async function runStateTransitionAudit(): Promise<void> {
       /append-only/i,
       "Accepted ledger history must reject in-place mutation.",
     );
-    await assert.rejects(
+    await expectDatabaseRejection(
       async () => {
         await db
           .update(transactionEnvelopes)
@@ -415,7 +435,7 @@ export async function runStateTransitionAudit(): Promise<void> {
       /immutable/i,
       "Accepted transaction payloads must reject in-place mutation.",
     );
-    await assert.rejects(
+    await expectDatabaseRejection(
       async () => {
         await db
           .update(transactionEnvelopes)
