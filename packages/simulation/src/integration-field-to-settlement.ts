@@ -396,7 +396,12 @@ export async function runFieldToSettlementIntegration(): Promise<void> {
       .where(eq(converters.vinOrSerial, converterVin))
       .limit(1);
     assert.equal(converterRows.length, 1, "Converter should be present.");
-    assert.equal(converterRows[0].state, "received", "Converter should be in received state.");
+    assert.equal(converterRows[0].state, "settled", "Converter should reach settled state.");
+    assert.equal(
+      converterRows[0].lastTransitionTransactionId,
+      finalization.transactionId,
+      "Settled converter should reference the settlement finalization transaction.",
+    );
 
     const boxRows = await db.select().from(boxes).where(eq(boxes.externalCode, boxCode)).limit(1);
     assert.equal(boxRows.length, 1, "Box should exist.");
@@ -412,6 +417,12 @@ export async function runFieldToSettlementIntegration(): Promise<void> {
 
     const queueRows = await db.select().from(queues).where(eq(queues.queueCode, queueCode)).limit(1);
     assert.equal(queueRows.length, 1, "Queue should exist for integration scope.");
+    assert.equal(queueRows[0].state, "settled", "Queue should reach settled state.");
+    assert.equal(
+      queueRows[0].lastTransitionTransactionId,
+      finalization.transactionId,
+      "Settled queue should reference the settlement finalization transaction.",
+    );
 
     const queueBoxRows = await db
       .select()
