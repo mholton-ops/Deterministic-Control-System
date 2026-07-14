@@ -156,8 +156,22 @@ export async function runApiIntegrationWorkflow(): Promise<void> {
     const readiness = await fetch(`${BASE_URL}/ready`);
     assert.equal(readiness.status, 200, "Readiness must include a successful database check.");
 
-    const replicationProjection = await getJson<{ movement: unknown[] }>("/workbench/replication-sync");
+    const replicationProjection = await getJson<{
+      summary: { localCreated: number; localPersisted: number };
+      siteSync: { siteCode: string; lastSyncAt: string }[];
+      movement: { targetNode: string }[];
+    }>("/workbench/replication-sync");
     assert.ok(Array.isArray(replicationProjection.movement), "Replication projection should expose movement rows.");
+    assert.ok(replicationProjection.siteSync.length > 0, "Replication projection should expose site sync evidence.");
+    assert.equal(
+      replicationProjection.summary.localPersisted,
+      replicationProjection.summary.localCreated,
+      "Every stored command envelope should count as locally persisted.",
+    );
+    assert.ok(
+      replicationProjection.movement.every((row) => row.targetNode.length > 0),
+      "Replication movement rows should identify their receiver target.",
+    );
 
     const smartLibraryProjection = await getJson<{ rows: unknown[] }>("/workbench/smart-library-detail");
     assert.ok(Array.isArray(smartLibraryProjection.rows), "Smart Library projection should expose detail rows.");

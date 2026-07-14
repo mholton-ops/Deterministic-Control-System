@@ -210,9 +210,9 @@ async function captureScreenshots(firstSettlementId: string | null): Promise<boo
       if ((await page.getByRole("button", { name: "Retry", exact: true }).count()) > 0) {
         throw new Error("Truth detail panel loaded an error state.");
       }
+      await page.evaluate(() => window.scrollTo({ top: 0, left: 0, behavior: "auto" }));
       await page.screenshot({
         path: resolve(SCREENSHOT_DIR, "truth-detail-panel.png"),
-        fullPage: true,
       });
     }
   }

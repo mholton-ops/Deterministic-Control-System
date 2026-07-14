@@ -237,8 +237,7 @@ export async function buildReplicationSyncProjection(db: DcsDb): Promise<Replica
         eq(replicationReceipts.streamType, replicationQueue.streamType),
       ),
     )
-    .orderBy(desc(transactionEnvelopes.createdAt))
-    .limit(160);
+    .orderBy(desc(transactionEnvelopes.createdAt));
 
   const siteRows = await db
     .select({
@@ -301,23 +300,24 @@ export async function buildReplicationSyncProjection(db: DcsDb): Promise<Replica
       siteRefs: payloadSiteRefs(row.payload),
     };
   });
-  const movement = movementWithSites.map(({ siteRefs: _siteRefs, ...row }) => row);
+  const allMovement = movementWithSites.map(({ siteRefs: _siteRefs, ...row }) => row);
+  const movement = allMovement.slice(0, 160);
 
   const byStatus = (status: ReplicationLegState) =>
-    movement.filter((row) => row.transmissionStatus === status).length;
-  const recordRows = movement.filter((row) => row.streamType === "record_stream");
-  const imageRows = movement.filter((row) => row.streamType === "image_stream");
+    allMovement.filter((row) => row.transmissionStatus === status).length;
+  const recordRows = allMovement.filter((row) => row.streamType === "record_stream");
+  const imageRows = allMovement.filter((row) => row.streamType === "image_stream");
 
   return {
     generatedAt: new Date().toISOString(),
     framing: "Deterministic demo data. Public abstraction of the ALIGN control model.",
     summary: {
       localCreated: totalTransactions,
-      localPersisted: rows.filter((row) => Boolean(row.createdAt)).length,
-      outboundQueued: movement.filter((row) => row.transmissionStatus !== "confirmed").length,
+      localPersisted: totalTransactions,
+      outboundQueued: allMovement.filter((row) => row.transmissionStatus !== "confirmed").length,
       transmitting: byStatus("retrying"),
-      receiverValidated: movement.filter((row) => row.receiverValidation === "receiver checksum validated").length,
-      idempotentApplied: movement.filter((row) => row.idempotentApply === "unique receiver receipt stored").length,
+      receiverValidated: allMovement.filter((row) => row.receiverValidation === "receiver checksum validated").length,
+      idempotentApplied: allMovement.filter((row) => row.idempotentApply === "unique receiver receipt stored").length,
       acknowledged: rows.filter((row) => Boolean(row.acknowledgedAt)).length,
       confirmed: byStatus("confirmed"),
       failed: byStatus("failed"),
