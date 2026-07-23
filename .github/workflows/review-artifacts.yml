@@ -60,7 +60,7 @@ jobs:
         run: npm run review:artifacts
 
       - name: Upload fixture artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: fixtures-${{ github.run_id }}
           path: docs/fixtures/latest
@@ -68,7 +68,7 @@ jobs:
           retention-days: ${{ fromJSON(inputs.retention_days) }}
 
       - name: Upload screenshot artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: screenshots-${{ github.run_id }}
           path: docs/screenshots/latest
