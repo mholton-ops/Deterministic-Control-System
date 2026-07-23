@@ -1,5 +1,5 @@
 import { spawn, spawnSync } from "node:child_process";
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, readdir, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -11,6 +11,23 @@ const WEB_BASE_URL = `http://localhost:${WEB_PORT}`;
 const FIXTURE_DIR = resolve(ROOT_DIR, "docs", "fixtures", "latest");
 const SCREENSHOT_DIR = resolve(ROOT_DIR, "docs", "screenshots", "latest");
 const NPM_EXECUTABLE = process.platform === "win32" ? "npm.cmd" : "npm";
+const EXPECTED_SCREENSHOT_FILES = [
+  "analytics-mobile.png",
+  "analytics.png",
+  "custody.png",
+  "customer-visibility.png",
+  "finance-ledger.png",
+  "grading.png",
+  "intake.png",
+  "overview.png",
+  "pricing-exposure.png",
+  "reconciliation.png",
+  "replication-sync.png",
+  "settlement-detail.png",
+  "settlement-reconstruct.png",
+  "trace-settlement.png",
+  "truth-detail-panel.png",
+] as const;
 
 interface FixtureItem {
   readonly name: string;
@@ -34,6 +51,20 @@ const FIXTURE_PATHS: FixtureItem[] = [
   { name: "evidence", path: "/workbench/evidence?mode=materialized" },
   { name: "transactions", path: "/workbench/transactions?mode=materialized&limit=200" },
 ];
+const EXPECTED_FIXTURE_FILES = [
+  ...FIXTURE_PATHS.map((fixture) => `${fixture.name}.json`),
+  "settlement-drilldown.json",
+].sort();
+
+async function assertExactArtifactSet(directory: string, expectedFiles: readonly string[]): Promise<void> {
+  const actualFiles = (await readdir(directory)).sort();
+  const expected = [...expectedFiles].sort();
+  if (JSON.stringify(actualFiles) !== JSON.stringify(expected)) {
+    throw new Error(
+      `Reviewer artifact set mismatch in ${directory}. Expected ${expected.join(", ")}; received ${actualFiles.join(", ")}.`,
+    );
+  }
+}
 
 function resolveCommand(command: string, args: string[]): { executable: string; args: string[] } {
   if (process.platform === "win32") {
@@ -118,7 +149,7 @@ async function fetchJson(path: string): Promise<unknown> {
   return response.json();
 }
 
-async function exportFixtures(): Promise<string | null> {
+async function exportFixtures(): Promise<string> {
   await rm(FIXTURE_DIR, { recursive: true, force: true });
   await mkdir(FIXTURE_DIR, { recursive: true });
 
@@ -130,23 +161,44 @@ async function exportFixtures(): Promise<string | null> {
 
   const settlements = (await fetchJson("/workbench/settlements?mode=materialized")) as Array<{
     settlementId: string;
+    status: string;
+    finalValueUsd: string | null;
+    finalizedAt: string | null;
+    invoiceCount: number;
+    chainCompleteness: {
+      complete: number;
+      total: number;
+      missing: readonly string[];
+    };
   }>;
-  const firstSettlementId = settlements[0]?.settlementId ?? null;
-  if (firstSettlementId) {
-    const detail = await fetchJson(
-      `/projections/settlement/${encodeURIComponent(firstSettlementId)}?mode=materialized`,
-    );
-    await writeFile(
-      resolve(FIXTURE_DIR, "settlement-drilldown.json"),
-      JSON.stringify(detail, null, 2),
-      "utf-8",
-    );
+  const reviewerSettlement = settlements.find(
+    (settlement) =>
+      settlement.status === "finalized" &&
+      settlement.finalValueUsd !== null &&
+      settlement.finalizedAt !== null &&
+      settlement.invoiceCount > 0 &&
+      settlement.chainCompleteness.total > 0 &&
+      settlement.chainCompleteness.complete === settlement.chainCompleteness.total &&
+      settlement.chainCompleteness.missing.length === 0,
+  );
+  if (!reviewerSettlement) {
+    throw new Error("Reviewer artifacts require a finalized settlement with a complete proof chain and invoice.");
   }
 
-  return firstSettlementId;
+  const detail = await fetchJson(
+    `/projections/settlement/${encodeURIComponent(reviewerSettlement.settlementId)}?mode=materialized`,
+  );
+  await writeFile(
+    resolve(FIXTURE_DIR, "settlement-drilldown.json"),
+    JSON.stringify(detail, null, 2),
+    "utf-8",
+  );
+  await assertExactArtifactSet(FIXTURE_DIR, EXPECTED_FIXTURE_FILES);
+
+  return reviewerSettlement.settlementId;
 }
 
-async function captureScreenshots(firstSettlementId: string | null): Promise<boolean> {
+async function captureScreenshots(reviewerSettlementId: string): Promise<boolean> {
   let chromium: (typeof import("playwright"))["chromium"] | null = null;
 
   try {
@@ -169,36 +221,41 @@ async function captureScreenshots(firstSettlementId: string | null): Promise<boo
     browserErrors.push(`page: ${error.message}`);
   });
 
-  const pages: Array<{ path: string; file: string }> = [
-    { path: "/", file: "overview.png" },
-    { path: "/intake", file: "intake.png" },
-    { path: "/replication", file: "replication-sync.png" },
-    { path: "/custody", file: "custody.png" },
-    { path: "/grading", file: "grading.png" },
-    { path: "/analytics", file: "analytics.png" },
-    { path: "/pricing-exposure", file: "pricing-exposure.png" },
-    { path: "/customer", file: "customer-visibility.png" },
-    { path: "/finance-ledger", file: "finance-ledger.png" },
-    { path: "/reconciliation", file: "reconciliation.png" },
+  const pages: Array<{ path: string; file: string; heading: string }> = [
+    { path: "/", file: "overview.png", heading: "Operations Command Surface" },
+    { path: "/intake", file: "intake.png", heading: "Field Intake" },
+    { path: "/replication", file: "replication-sync.png", heading: "Replication / Sync" },
+    { path: "/custody", file: "custody.png", heading: "Inventory and Custody" },
+    { path: "/grading", file: "grading.png", heading: "Grading Workbench" },
+    { path: "/analytics", file: "analytics.png", heading: "Analytical Results" },
+    { path: "/pricing-exposure", file: "pricing-exposure.png", heading: "Pricing and Exposure" },
+    { path: "/customer", file: "customer-visibility.png", heading: "Customer Visibility" },
+    { path: "/finance-ledger", file: "finance-ledger.png", heading: "Financial Ledger" },
+    { path: "/reconciliation", file: "reconciliation.png", heading: "Reconciliation" },
   ];
 
-  if (firstSettlementId) {
-    pages.push({
-      path: `/settlements/${encodeURIComponent(firstSettlementId)}`,
-      file: "settlement-detail.png",
-    });
-    pages.push({
-      path: `/settlements/${encodeURIComponent(firstSettlementId)}/reconstruct`,
-      file: "settlement-reconstruct.png",
-    });
-    pages.push({
-      path: `/trace/settlement/${encodeURIComponent(firstSettlementId)}`,
-      file: "trace-settlement.png",
-    });
-  }
+  pages.push({
+    path: `/settlements/${encodeURIComponent(reviewerSettlementId)}`,
+    file: "settlement-detail.png",
+    heading: "Settlement Detail",
+  });
+  pages.push({
+    path: `/settlements/${encodeURIComponent(reviewerSettlementId)}/reconstruct`,
+    file: "settlement-reconstruct.png",
+    heading: "Settlement Reconstruction",
+  });
+  pages.push({
+    path: `/trace/settlement/${encodeURIComponent(reviewerSettlementId)}`,
+    file: "trace-settlement.png",
+    heading: "Trace View",
+  });
 
   for (const item of pages) {
     await page.goto(`${WEB_BASE_URL}${item.path}`, { waitUntil: "networkidle" });
+    await page.getByRole("heading", { name: item.heading, exact: true, level: 1 }).waitFor({ state: "visible" });
+    if ((await page.getByText("Unable to query control API:", { exact: false }).count()) > 0) {
+      throw new Error(`Reviewer route ${item.path} rendered an API failure state.`);
+    }
     await page.screenshot({
       path: resolve(SCREENSHOT_DIR, item.file),
       fullPage: true,
@@ -219,6 +276,9 @@ async function captureScreenshots(firstSettlementId: string | null): Promise<boo
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${WEB_BASE_URL}/analytics`, { waitUntil: "networkidle" });
+  await page
+    .getByRole("heading", { name: "Analytical Results", exact: true, level: 1 })
+    .waitFor({ state: "visible" });
   await page.getByRole("button", { name: "Detail", exact: true }).first().waitFor({ state: "visible" });
   await page.getByRole("link", { name: "Trace", exact: true }).first().waitFor({ state: "visible" });
   await page.screenshot({
@@ -229,6 +289,8 @@ async function captureScreenshots(firstSettlementId: string | null): Promise<boo
   if (browserErrors.length > 0) {
     throw new Error(`Browser verification reported errors:\n${browserErrors.join("\n")}`);
   }
+
+  await assertExactArtifactSet(SCREENSHOT_DIR, EXPECTED_SCREENSHOT_FILES);
 
   await page.close();
   await browser.close();
@@ -290,15 +352,11 @@ async function main(): Promise<void> {
     await waitFor(`${API_BASE_URL}/health`, 25_000);
     await waitFor(`${WEB_BASE_URL}/`, 70_000);
 
-    const firstSettlementId = await exportFixtures();
-    const captured = await captureScreenshots(firstSettlementId);
+    const reviewerSettlementId = await exportFixtures();
+    const captured = await captureScreenshots(reviewerSettlementId);
 
     console.log(`Fixtures exported to ${FIXTURE_DIR}`);
-    if (firstSettlementId) {
-      console.log(`Included settlement drilldown for ${firstSettlementId}`);
-    } else {
-      console.log("No settlements found for drilldown fixture export.");
-    }
+    console.log(`Included finalized settlement drilldown for ${reviewerSettlementId}`);
 
     if (captured) {
       console.log(`Screenshots exported to ${SCREENSHOT_DIR}`);

@@ -52,7 +52,7 @@ The reviewer artifact workflow additionally verifies evidence-critical operator 
 
 ## Known dependency advisory
 
-The production dependency gate reports two moderate PostCSS advisories nested under the current stable Next.js release. No high or critical production advisory remains. npm currently offers only an unsafe forced downgrade path, so the CI gate records the risk and Dependabot watches for a compatible upstream resolution.
+The supported-runtime dependency gate reports two moderate PostCSS advisories nested under the current stable Next.js release. No high or critical advisory remains in that runtime surface. The operator web does not use Next.js image optimization and explicitly disables it, so the gate omits optional dependencies rather than treating the unused Sharp package as deployed functionality. npm currently offers only unsafe forced downgrade paths for the remaining nested advisory, so the CI gate records the risk and Dependabot watches for compatible upstream resolutions.
 
 ## Recommended production follow-up
 

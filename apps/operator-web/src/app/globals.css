@@ -164,7 +164,7 @@ a {
   z-index: 3;
   min-width: 92px;
   width: 92px;
-  background: rgba(10, 17, 26, 0.98);
+  background: #0a111a;
 }
 
 .haldn-table-sticky-actions-1 th:last-child,

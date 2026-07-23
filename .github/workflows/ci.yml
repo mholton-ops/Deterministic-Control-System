@@ -68,7 +68,7 @@ jobs:
         run: npm run lint
 
       - name: Audit production dependencies
-        run: npm audit --omit=dev --audit-level=high
+        run: npm audit --omit=dev --omit=optional --audit-level=high
 
       - name: Processor integration workflow
         run: npm run test:integration

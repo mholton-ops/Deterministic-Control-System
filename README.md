@@ -148,7 +148,7 @@ npm run test:state-audit
 npm run verify:guarantees
 npm run typecheck
 npm run lint
-npm audit --omit=dev --audit-level=high
+npm audit --omit=dev --omit=optional --audit-level=high
 npm run build
 ~~~
 
