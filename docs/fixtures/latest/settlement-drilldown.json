@@ -3,47 +3,47 @@
     {
       "stepName": "lot_selected",
       "stepOrder": 1,
-      "recordedAt": "2026-04-23T20:44:52.795Z"
+      "recordedAt": "2026-03-02T14:52:00.000Z"
     },
     {
       "stepName": "contents_reviewed",
       "stepOrder": 2,
-      "recordedAt": "2026-04-23T20:44:52.797Z"
+      "recordedAt": "2026-03-02T14:53:00.000Z"
     },
     {
       "stepName": "sample_data_recorded",
       "stepOrder": 3,
-      "recordedAt": "2026-04-23T20:44:52.799Z"
+      "recordedAt": "2026-03-02T14:54:00.000Z"
     },
     {
       "stepName": "adjustments_recorded",
       "stepOrder": 4,
-      "recordedAt": "2026-04-23T20:44:52.801Z"
+      "recordedAt": "2026-03-02T14:55:00.000Z"
     },
     {
       "stepName": "weight_basis_locked",
       "stepOrder": 5,
-      "recordedAt": "2026-04-23T20:44:52.803Z"
+      "recordedAt": "2026-03-02T14:56:00.000Z"
     },
     {
       "stepName": "hedges_applied",
       "stepOrder": 6,
-      "recordedAt": "2026-04-23T20:44:52.805Z"
+      "recordedAt": "2026-03-02T14:57:00.000Z"
     },
     {
       "stepName": "financial_context_applied",
       "stepOrder": 7,
-      "recordedAt": "2026-04-23T20:44:52.807Z"
+      "recordedAt": "2026-03-02T14:58:00.000Z"
     },
     {
       "stepName": "final_value_calculated",
       "stepOrder": 8,
-      "recordedAt": "2026-04-23T20:44:52.809Z"
+      "recordedAt": "2026-03-02T14:59:00.000Z"
     },
     {
       "stepName": "invoice_finalized",
       "stepOrder": 9,
-      "recordedAt": "2026-04-23T20:44:52.811Z"
+      "recordedAt": "2026-03-02T14:59:00.000Z"
     }
   ],
   "invoices": [
@@ -51,22 +51,22 @@
       "lines": [
         {
           "lineType": "net_payout",
-          "amountUsd": "2038.41",
+          "amountUsd": "86530.00",
           "sortOrder": 1,
           "description": "Final net payout from assay finalization"
         }
       ],
-      "issuedAt": "2026-04-23T20:44:52.816Z",
-      "invoiceId": "6d14ea75-f17f-4a9b-9750-916e6928a339",
-      "invoiceNumber": "INV-F0A1378B"
+      "issuedAt": "2026-03-02T14:59:00.000Z",
+      "invoiceId": "ea025c99-291b-5242-8e50-7dd9db30c81a",
+      "invoiceNumber": "INV-42F9514D"
     }
   ],
   "settlement": {
     "status": "finalized",
-    "finalizedAt": "2026-04-23T20:44:52.813Z",
-    "varianceUsd": "1038.41",
-    "settlementId": "f0a1378b-ebfd-4b89-b8aa-ed8370986666",
-    "finalValueUsd": "2038.41",
-    "estimatedValueUsd": "1000.00"
+    "finalizedAt": "2026-03-02T14:59:00.000Z",
+    "varianceUsd": "1530.00",
+    "settlementId": "42f9514d-c988-5804-8ee1-4700c960047e",
+    "finalValueUsd": "86530.00",
+    "estimatedValueUsd": "85000.00"
   }
 }

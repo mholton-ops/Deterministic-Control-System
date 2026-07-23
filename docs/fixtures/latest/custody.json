@@ -1,23 +1,2225 @@
 {
   "boxes": [
     {
-      "boxId": "08ea8cf1-10d5-45bb-a02b-4c7bd6d59360",
-      "state": "received",
-      "boxCode": "BOX-SIM-01",
-      "createdAt": "2026-04-23T20:44:52.649Z",
-      "materialType": "converter_mix",
+      "boxId": "8a461e8c-6e25-5f57-8bb9-b80d65c793b4",
+      "state": "active",
+      "boxCode": "WC-BOX-050",
+      "createdAt": "2026-03-01T11:26:00.000Z",
+      "materialType": "whole_converter",
       "converterCount": 2,
       "evidenceArtifactCount": 2,
       "representativeEvidence": [
         {
-          "uri": "placeholder://image/70acc11e-1941-49c4-a8a2-09f902964676",
-          "artifactId": "f48428d4-a159-4957-94e8-c3deb581bb06",
+          "uri": "dcs-proof://gps/c44c6b22-e018-4785-a87e-8ae15766d06c/9b96727f-9e4f-55cc-8c35-73f4b02c437c",
+          "artifactId": "9b96727f-9e4f-55cc-8c35-73f4b02c437c",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/c44c6b22-e018-4785-a87e-8ae15766d06c/cae8c9c9-7fb3-5af4-8b6b-9e836093ed6b",
+          "artifactId": "cae8c9c9-7fb3-5af4-8b6b-9e836093ed6b",
+          "evidenceType": "image"
+        }
+      ]
+    },
+    {
+      "boxId": "0f3d7a6e-a81e-5055-8d3b-fffdf6114048",
+      "state": "active",
+      "boxCode": "WC-BOX-046",
+      "createdAt": "2026-03-01T11:19:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 2,
+      "evidenceArtifactCount": 2,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/7075cee4-de14-472b-a2c8-d39719575b5e/8ec67ceb-35fd-5756-8fac-6f767bd7b220",
+          "artifactId": "8ec67ceb-35fd-5756-8fac-6f767bd7b220",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/7075cee4-de14-472b-a2c8-d39719575b5e/8bdf67c6-0cdc-5b03-82ca-3b88c4013b85",
+          "artifactId": "8bdf67c6-0cdc-5b03-82ca-3b88c4013b85",
+          "evidenceType": "image"
+        }
+      ]
+    },
+    {
+      "boxId": "0ffae534-2f74-5719-8d66-02083168be25",
+      "state": "received",
+      "boxCode": "PC-BOX-020",
+      "createdAt": "2026-03-01T10:51:00.000Z",
+      "materialType": "processed_catalyst",
+      "converterCount": 2,
+      "evidenceArtifactCount": 2,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/2bbda2f0-7d5f-40da-a4f3-db53d550664a/02620c49-b557-59ab-8410-f59c2ee15ede",
+          "artifactId": "02620c49-b557-59ab-8410-f59c2ee15ede",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/2bbda2f0-7d5f-40da-a4f3-db53d550664a/c5ad4f3f-43db-5741-875f-d082298e90bd",
+          "artifactId": "c5ad4f3f-43db-5741-875f-d082298e90bd",
+          "evidenceType": "image"
+        }
+      ]
+    },
+    {
+      "boxId": "7366bf5c-1a68-523c-88ae-393863444de0",
+      "state": "received",
+      "boxCode": "PC-BOX-019",
+      "createdAt": "2026-03-01T10:42:00.000Z",
+      "materialType": "processed_catalyst",
+      "converterCount": 2,
+      "evidenceArtifactCount": 2,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/42d6c632-3408-4114-a4a7-bfebf7a35898/7ca03407-3cfc-5c72-8967-4a6c115881f4",
+          "artifactId": "7ca03407-3cfc-5c72-8967-4a6c115881f4",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/42d6c632-3408-4114-a4a7-bfebf7a35898/3dd32524-749c-53bc-8784-f14bfa247403",
+          "artifactId": "3dd32524-749c-53bc-8784-f14bfa247403",
+          "evidenceType": "image"
+        }
+      ]
+    },
+    {
+      "boxId": "7c9052b0-256c-560f-83e0-7207ee7019c3",
+      "state": "received",
+      "boxCode": "DR-BOX-010",
+      "createdAt": "2026-03-01T10:41:00.000Z",
+      "materialType": "dust_recovery",
+      "converterCount": 4,
+      "evidenceArtifactCount": 4,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/743fe2e7-9dcb-483a-ae85-23d73c1c3a8c/89b96725-21f2-505e-8868-7d241fd988fd",
+          "artifactId": "89b96725-21f2-505e-8868-7d241fd988fd",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/743fe2e7-9dcb-483a-ae85-23d73c1c3a8c/2b442032-2d46-519d-827c-123837e17ffc",
+          "artifactId": "2b442032-2d46-519d-827c-123837e17ffc",
           "evidenceType": "image"
         },
         {
-          "uri": "placeholder://gps/70acc11e-1941-49c4-a8a2-09f902964676",
-          "artifactId": "fa458403-921a-48f3-aabc-5ef9704c674c",
+          "uri": "dcs-proof://gps/d4c40db1-a0f3-43ce-ac20-568816e3b7c5/1c44a99e-e8c9-5ea5-822e-7bd7536780e9",
+          "artifactId": "1c44a99e-e8c9-5ea5-822e-7bd7536780e9",
           "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "be611483-2320-5f25-855b-9d15094f0184",
+      "state": "received",
+      "boxCode": "PC-BOX-018",
+      "createdAt": "2026-03-01T10:33:00.000Z",
+      "materialType": "processed_catalyst",
+      "converterCount": 2,
+      "evidenceArtifactCount": 2,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/56db3f08-7b31-42d4-a96b-7f77e73b2e0d/1df8cf9a-7412-5828-8b54-b4c4ec828878",
+          "artifactId": "1df8cf9a-7412-5828-8b54-b4c4ec828878",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/56db3f08-7b31-42d4-a96b-7f77e73b2e0d/e518418a-eff5-52f8-8dd9-fa918c2fb8f0",
+          "artifactId": "e518418a-eff5-52f8-8dd9-fa918c2fb8f0",
+          "evidenceType": "image"
+        }
+      ]
+    },
+    {
+      "boxId": "5a50b1a0-d514-5e45-8d5b-1480b3937a1e",
+      "state": "received",
+      "boxCode": "PC-BOX-017",
+      "createdAt": "2026-03-01T10:24:00.000Z",
+      "materialType": "processed_catalyst",
+      "converterCount": 2,
+      "evidenceArtifactCount": 2,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/4c8c9efd-0525-4c91-a622-a5cea6e8207c/a57317d9-096d-57da-8300-ba6650e7494c",
+          "artifactId": "a57317d9-096d-57da-8300-ba6650e7494c",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/4c8c9efd-0525-4c91-a622-a5cea6e8207c/b5e3d9ad-bc95-5dde-831f-ab1bef5e3538",
+          "artifactId": "b5e3d9ad-bc95-5dde-831f-ab1bef5e3538",
+          "evidenceType": "image"
+        }
+      ]
+    },
+    {
+      "boxId": "77614c07-d7a8-5586-83fc-cd74d724f624",
+      "state": "received",
+      "boxCode": "PC-BOX-016",
+      "createdAt": "2026-03-01T10:15:00.000Z",
+      "materialType": "processed_catalyst",
+      "converterCount": 2,
+      "evidenceArtifactCount": 2,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://image/aa2dcfde-a2f9-439e-a0d4-d0fce75458ae/df16bc0f-8a8e-5cef-8c65-c6308c31b320",
+          "artifactId": "df16bc0f-8a8e-5cef-8c65-c6308c31b320",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/aa2dcfde-a2f9-439e-a0d4-d0fce75458ae/090fa608-5699-5abc-805d-2922f7529959",
+          "artifactId": "090fa608-5699-5abc-805d-2922f7529959",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "481a4201-e490-5b86-8a9c-17709c283287",
+      "state": "received",
+      "boxCode": "PC-BOX-015",
+      "createdAt": "2026-03-01T10:06:00.000Z",
+      "materialType": "processed_catalyst",
+      "converterCount": 2,
+      "evidenceArtifactCount": 2,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/c15216d0-a18a-4388-af7f-b4f466247423/adfbdd37-4922-5344-8add-ad1425ee2e18",
+          "artifactId": "adfbdd37-4922-5344-8add-ad1425ee2e18",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/c15216d0-a18a-4388-af7f-b4f466247423/314d01e7-565d-5c8f-83c3-6dd5b15eaefe",
+          "artifactId": "314d01e7-565d-5c8f-83c3-6dd5b15eaefe",
+          "evidenceType": "image"
+        }
+      ]
+    },
+    {
+      "boxId": "8d53f32f-47f7-559b-8e8a-ea186c7b8236",
+      "state": "received",
+      "boxCode": "PC-BOX-014",
+      "createdAt": "2026-03-01T09:57:00.000Z",
+      "materialType": "processed_catalyst",
+      "converterCount": 2,
+      "evidenceArtifactCount": 2,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/8d292acf-8ed0-40eb-ac85-df67e02eb0e5/1aeb7d76-aa7f-5500-8a2c-9d4a76d943c2",
+          "artifactId": "1aeb7d76-aa7f-5500-8a2c-9d4a76d943c2",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/8d292acf-8ed0-40eb-ac85-df67e02eb0e5/bf2694da-813f-5214-8ac9-f9e09d21a25a",
+          "artifactId": "bf2694da-813f-5214-8ac9-f9e09d21a25a",
+          "evidenceType": "image"
+        }
+      ]
+    },
+    {
+      "boxId": "26a25ab9-78b6-5fa0-8fa7-2d569a2050ee",
+      "state": "received",
+      "boxCode": "PC-BOX-013",
+      "createdAt": "2026-03-01T09:48:00.000Z",
+      "materialType": "processed_catalyst",
+      "converterCount": 2,
+      "evidenceArtifactCount": 2,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/3356a848-e3a0-47b1-a030-6475164c3e08/9b59baa5-2f11-55b0-80a1-37e48d1fc433",
+          "artifactId": "9b59baa5-2f11-55b0-80a1-37e48d1fc433",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/3356a848-e3a0-47b1-a030-6475164c3e08/9e81d44c-ee49-501c-8e67-9c105c5ac52c",
+          "artifactId": "9e81d44c-ee49-501c-8e67-9c105c5ac52c",
+          "evidenceType": "image"
+        }
+      ]
+    },
+    {
+      "boxId": "8fdcae38-1dea-57f2-8547-6954b2065d5b",
+      "state": "active",
+      "boxCode": "WC-BOX-054",
+      "createdAt": "2026-03-01T09:46:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 8,
+      "evidenceArtifactCount": 8,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/63181ef1-ccc5-4c77-ae5a-f85d5f1ce361/773a4330-0742-5417-8fc7-a0cce5caff6b",
+          "artifactId": "773a4330-0742-5417-8fc7-a0cce5caff6b",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/63181ef1-ccc5-4c77-ae5a-f85d5f1ce361/2a91d3e3-9a25-589c-85ec-e6b2192d28ef",
+          "artifactId": "2a91d3e3-9a25-589c-85ec-e6b2192d28ef",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/ffc1975c-0e61-49f9-a18f-c29cf4c652f7/1f171496-6a5f-59a6-84e2-0a142c0da92a",
+          "artifactId": "1f171496-6a5f-59a6-84e2-0a142c0da92a",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "90784ecf-38cf-5188-8fc5-395d4c18bcbf",
+      "state": "active",
+      "boxCode": "WC-BOX-053",
+      "createdAt": "2026-03-01T09:44:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 6,
+      "evidenceArtifactCount": 6,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/b18f9558-63f9-4373-a344-2340fe6a9be9/a9258492-e657-5f22-8ade-3ed793f0ec8f",
+          "artifactId": "a9258492-e657-5f22-8ade-3ed793f0ec8f",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/b18f9558-63f9-4373-a344-2340fe6a9be9/a0aa5cbc-ff2f-5868-8ac4-2753cf68ac04",
+          "artifactId": "a0aa5cbc-ff2f-5868-8ac4-2753cf68ac04",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/d0b371f1-e115-4952-adb3-c4e58a34eb23/8b98b9ad-317e-5663-8455-881eedf50d31",
+          "artifactId": "8b98b9ad-317e-5663-8455-881eedf50d31",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "4ec83cb7-942f-5d1d-8371-b8f77fa646aa",
+      "state": "active",
+      "boxCode": "WC-BOX-052",
+      "createdAt": "2026-03-01T09:42:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 6,
+      "evidenceArtifactCount": 6,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/b62674fa-1c75-4c74-a522-fc78fb6425a3/608a3edc-eb42-50ac-8ed2-43c21a2282de",
+          "artifactId": "608a3edc-eb42-50ac-8ed2-43c21a2282de",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/b62674fa-1c75-4c74-a522-fc78fb6425a3/b4508edb-34b2-5139-88b3-eef1c22ba2c0",
+          "artifactId": "b4508edb-34b2-5139-88b3-eef1c22ba2c0",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/25307acc-a8cd-42d3-ae83-f998f15db274/e32b7a63-3262-5347-88ef-201ad8738e6d",
+          "artifactId": "e32b7a63-3262-5347-88ef-201ad8738e6d",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "e3c8e80f-36bc-5a1a-8710-05b2d9844545",
+      "state": "active",
+      "boxCode": "WC-BOX-051",
+      "createdAt": "2026-03-01T09:40:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 8,
+      "evidenceArtifactCount": 8,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/9d279fe8-aa71-4986-a3c0-d9496003f111/faab1ec7-a2c8-5de3-8b7e-dbbc56565ce8",
+          "artifactId": "faab1ec7-a2c8-5de3-8b7e-dbbc56565ce8",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/9d279fe8-aa71-4986-a3c0-d9496003f111/674cdd35-e190-5768-81f7-71eb0a661dff",
+          "artifactId": "674cdd35-e190-5768-81f7-71eb0a661dff",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/b53ad679-22d0-4da9-a161-2b3d6d138171/6aba49e8-88ee-5f8d-8e53-762004f2fef1",
+          "artifactId": "6aba49e8-88ee-5f8d-8e53-762004f2fef1",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "70942805-ee1a-5105-8ced-f79b5537434a",
+      "state": "received",
+      "boxCode": "PC-BOX-012",
+      "createdAt": "2026-03-01T09:39:00.000Z",
+      "materialType": "processed_catalyst",
+      "converterCount": 2,
+      "evidenceArtifactCount": 2,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/8bd62944-83f8-437b-aee0-d4c459e4dc68/acabcd11-0faa-5e1d-8006-b1f5c2f9dee6",
+          "artifactId": "acabcd11-0faa-5e1d-8006-b1f5c2f9dee6",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/8bd62944-83f8-437b-aee0-d4c459e4dc68/284fa016-c5f6-5178-8e1f-9e42237f6ba2",
+          "artifactId": "284fa016-c5f6-5178-8e1f-9e42237f6ba2",
+          "evidenceType": "image"
+        }
+      ]
+    },
+    {
+      "boxId": "e78c69d4-5500-5d02-87bb-aef2266428d4",
+      "state": "received",
+      "boxCode": "DR-BOX-001",
+      "createdAt": "2026-03-01T09:38:00.000Z",
+      "materialType": "dust_recovery",
+      "converterCount": 4,
+      "evidenceArtifactCount": 4,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/28b9f853-65c9-4810-a4e1-988d2b1c53be/c6178cbb-64de-55a1-8d64-eebc4b7a964d",
+          "artifactId": "c6178cbb-64de-55a1-8d64-eebc4b7a964d",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/28b9f853-65c9-4810-a4e1-988d2b1c53be/bd9c73b3-6f8d-52f7-84f0-7eb192575331",
+          "artifactId": "bd9c73b3-6f8d-52f7-84f0-7eb192575331",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://image/b5354b15-92cb-4dd9-a32a-d618d4d960a2/a6e85e4d-6ccc-5b2a-818c-8b2ba948e227",
+          "artifactId": "a6e85e4d-6ccc-5b2a-818c-8b2ba948e227",
+          "evidenceType": "image"
+        }
+      ]
+    },
+    {
+      "boxId": "9cdcf2c9-01c7-51d2-8679-1b150497c3a5",
+      "state": "active",
+      "boxCode": "WC-BOX-049",
+      "createdAt": "2026-03-01T09:36:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 8,
+      "evidenceArtifactCount": 8,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/797e1380-46d0-4dbb-a102-81f4a7782ca6/97f194f8-3506-5825-8770-aa462e09d6f0",
+          "artifactId": "97f194f8-3506-5825-8770-aa462e09d6f0",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/797e1380-46d0-4dbb-a102-81f4a7782ca6/d224fc2e-2557-5af4-8891-d721b25588f1",
+          "artifactId": "d224fc2e-2557-5af4-8891-d721b25588f1",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://image/5dbcd2db-236b-46fd-aeae-409b90b3af46/ba02499e-5676-578f-8179-6d85811d5300",
+          "artifactId": "ba02499e-5676-578f-8179-6d85811d5300",
+          "evidenceType": "image"
+        }
+      ]
+    },
+    {
+      "boxId": "789ed438-d45c-5528-8906-fe2079b51975",
+      "state": "active",
+      "boxCode": "WC-BOX-048",
+      "createdAt": "2026-03-01T09:34:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 6,
+      "evidenceArtifactCount": 6,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/37652ef3-3393-46d4-a011-7c3d9081693b/39fd0c76-6397-58fa-8b97-7733e665eab5",
+          "artifactId": "39fd0c76-6397-58fa-8b97-7733e665eab5",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/37652ef3-3393-46d4-a011-7c3d9081693b/8f30b26a-caee-514e-8212-23a2151a36df",
+          "artifactId": "8f30b26a-caee-514e-8212-23a2151a36df",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/1aba0a51-6990-4e0f-a9f9-82015405be9f/04bcd052-c862-535b-8e62-1fc7fdaf8fb4",
+          "artifactId": "04bcd052-c862-535b-8e62-1fc7fdaf8fb4",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "5ad34e6d-95f5-5bff-87ab-7eefd23a3fac",
+      "state": "active",
+      "boxCode": "WC-BOX-047",
+      "createdAt": "2026-03-01T09:32:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 8,
+      "evidenceArtifactCount": 8,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/67e24e5d-07dd-4faa-a844-a171b0310de5/e107d04c-d974-5a6f-8399-572cde5d8f58",
+          "artifactId": "e107d04c-d974-5a6f-8399-572cde5d8f58",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/67e24e5d-07dd-4faa-a844-a171b0310de5/b0b119dd-08d7-5520-862c-7201d66d9589",
+          "artifactId": "b0b119dd-08d7-5520-862c-7201d66d9589",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://image/c5156bad-33b1-473d-af8d-f2435a9a8f4e/4c1e8a16-0ae7-5d65-8ddc-d1c1da0f470d",
+          "artifactId": "4c1e8a16-0ae7-5d65-8ddc-d1c1da0f470d",
+          "evidenceType": "image"
+        }
+      ]
+    },
+    {
+      "boxId": "c543bd7a-68f3-5028-8ce1-89182f521a77",
+      "state": "received",
+      "boxCode": "DR-BOX-014",
+      "createdAt": "2026-03-01T09:31:00.000Z",
+      "materialType": "dust_recovery",
+      "converterCount": 2,
+      "evidenceArtifactCount": 2,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/b3d51365-4777-4620-a079-54fbb17089bb/b2df5435-39b7-5b1c-84e6-cfbb301b4e7e",
+          "artifactId": "b2df5435-39b7-5b1c-84e6-cfbb301b4e7e",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/b3d51365-4777-4620-a079-54fbb17089bb/9e79552f-c062-5489-8182-7ed39957da52",
+          "artifactId": "9e79552f-c062-5489-8182-7ed39957da52",
+          "evidenceType": "image"
+        }
+      ]
+    },
+    {
+      "boxId": "0dbad8a8-300e-568b-806d-e6167ec5ef33",
+      "state": "received",
+      "boxCode": "PC-BOX-011",
+      "createdAt": "2026-03-01T09:30:00.000Z",
+      "materialType": "processed_catalyst",
+      "converterCount": 2,
+      "evidenceArtifactCount": 2,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/cb9887ba-19fb-49e0-a3b0-7347aec96e9f/03ec0b4b-3c28-5b18-80e2-c957c7baaf4f",
+          "artifactId": "03ec0b4b-3c28-5b18-80e2-c957c7baaf4f",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/cb9887ba-19fb-49e0-a3b0-7347aec96e9f/1a699e26-3743-5c50-8aea-53d9fa4a6d1a",
+          "artifactId": "1a699e26-3743-5c50-8aea-53d9fa4a6d1a",
+          "evidenceType": "image"
+        }
+      ]
+    },
+    {
+      "boxId": "d1484167-9ab9-5ee1-87f2-067c54b3550e",
+      "state": "active",
+      "boxCode": "WC-BOX-045",
+      "createdAt": "2026-03-01T09:28:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 6,
+      "evidenceArtifactCount": 6,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/4fa209bb-9fcd-4f3e-a0ac-44e1d23a06de/d5889e97-0358-5db5-8a43-2d74ca32b654",
+          "artifactId": "d5889e97-0358-5db5-8a43-2d74ca32b654",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/4fa209bb-9fcd-4f3e-a0ac-44e1d23a06de/3e97e4e8-c732-5f18-8005-ae40e65d3a17",
+          "artifactId": "3e97e4e8-c732-5f18-8005-ae40e65d3a17",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/dac8044a-09ca-4ed0-ab43-7c67923d4989/b8f3fab2-1395-56c7-874b-de94cce9f055",
+          "artifactId": "b8f3fab2-1395-56c7-874b-de94cce9f055",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "e9135ae9-f360-55f4-89aa-9e3dd9203fe2",
+      "state": "active",
+      "boxCode": "WC-BOX-044",
+      "createdAt": "2026-03-01T09:26:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 8,
+      "evidenceArtifactCount": 8,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/53bc4027-f888-4542-aef6-624c5188290d/fff6463b-d429-5600-87a8-9b24093617e0",
+          "artifactId": "fff6463b-d429-5600-87a8-9b24093617e0",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/53bc4027-f888-4542-aef6-624c5188290d/7205c15e-53b7-544c-8fd9-0ab9875d13b5",
+          "artifactId": "7205c15e-53b7-544c-8fd9-0ab9875d13b5",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/b915391b-4757-4190-ac49-6d7ce5ed03ee/50284c75-9a46-5107-8e4d-c304c576db15",
+          "artifactId": "50284c75-9a46-5107-8e4d-c304c576db15",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "bc32a445-3ba9-581f-801e-829460242fd5",
+      "state": "active",
+      "boxCode": "WC-BOX-043",
+      "createdAt": "2026-03-01T09:25:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 6,
+      "evidenceArtifactCount": 6,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/0b07dad7-0f31-4bf4-a488-238d95e555eb/ba20e960-0f7d-5a90-8239-948ab8130324",
+          "artifactId": "ba20e960-0f7d-5a90-8239-948ab8130324",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/0b07dad7-0f31-4bf4-a488-238d95e555eb/8f6dda45-6834-5b04-8b92-75fd7106de1c",
+          "artifactId": "8f6dda45-6834-5b04-8b92-75fd7106de1c",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/3d0fbde0-aa6a-4a2f-a062-ca732e12742b/3043a4cc-e6f6-5b78-8c3a-28b885182e18",
+          "artifactId": "3043a4cc-e6f6-5b78-8c3a-28b885182e18",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "43a42180-d599-53aa-81bb-0ff3b9db61ef",
+      "state": "received",
+      "boxCode": "DR-BOX-013",
+      "createdAt": "2026-03-01T09:24:00.000Z",
+      "materialType": "dust_recovery",
+      "converterCount": 4,
+      "evidenceArtifactCount": 4,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/eb4f1668-26b8-4e85-a8f5-8feb760a2fdb/2da38c2b-ebe2-513f-821d-bea1563d1f71",
+          "artifactId": "2da38c2b-ebe2-513f-821d-bea1563d1f71",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/eb4f1668-26b8-4e85-a8f5-8feb760a2fdb/38bcc7b3-0754-5e99-8515-bed24c8726d7",
+          "artifactId": "38bcc7b3-0754-5e99-8515-bed24c8726d7",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/3a4949c1-9007-4e8c-a886-1b3993e5fedb/cf13c798-68e6-5519-8859-9d8ce7b98d5b",
+          "artifactId": "cf13c798-68e6-5519-8859-9d8ce7b98d5b",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "4c6abf9e-8032-5463-8053-7ff94b199d64",
+      "state": "active",
+      "boxCode": "WC-BOX-042",
+      "createdAt": "2026-03-01T09:22:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 8,
+      "evidenceArtifactCount": 8,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/03e68b28-342c-41b8-a671-b2502bfefe73/6aa54f05-4614-5f60-883f-d826cab9fac1",
+          "artifactId": "6aa54f05-4614-5f60-883f-d826cab9fac1",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/03e68b28-342c-41b8-a671-b2502bfefe73/4c70a010-19cc-5ef3-89f7-7239c3af2048",
+          "artifactId": "4c70a010-19cc-5ef3-89f7-7239c3af2048",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/6bc39e1c-6582-4cfc-a993-978ca99a6958/06578cd5-6869-5395-80a9-3109e875c481",
+          "artifactId": "06578cd5-6869-5395-80a9-3109e875c481",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "9f488236-98c8-5054-800e-bf6c0cd04f73",
+      "state": "received",
+      "boxCode": "PC-BOX-010",
+      "createdAt": "2026-03-01T09:21:00.000Z",
+      "materialType": "processed_catalyst",
+      "converterCount": 4,
+      "evidenceArtifactCount": 4,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/4d9ceda9-84c7-42a4-ac99-ee8b06288ca9/f09c427c-4a50-59b1-8d8a-f2cb11b055e6",
+          "artifactId": "f09c427c-4a50-59b1-8d8a-f2cb11b055e6",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/4d9ceda9-84c7-42a4-ac99-ee8b06288ca9/b08374b6-bd06-5511-8759-7951b0bbc160",
+          "artifactId": "b08374b6-bd06-5511-8759-7951b0bbc160",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://image/8ecb0b38-c0ec-42d1-a587-bf912bcc206a/c6c10f6b-e22b-578f-8dcd-51e478f61eec",
+          "artifactId": "c6c10f6b-e22b-578f-8dcd-51e478f61eec",
+          "evidenceType": "image"
+        }
+      ]
+    },
+    {
+      "boxId": "1da3dc3d-1f41-5e3e-826d-9cd77e6388fd",
+      "state": "active",
+      "boxCode": "WC-BOX-041",
+      "createdAt": "2026-03-01T09:20:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 4,
+      "evidenceArtifactCount": 4,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/04f972ca-b741-46eb-a015-ed1efb15ecfc/24901c36-0a57-5a3c-8524-a5e5a32e59d4",
+          "artifactId": "24901c36-0a57-5a3c-8524-a5e5a32e59d4",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/04f972ca-b741-46eb-a015-ed1efb15ecfc/73e4dd52-94f9-5582-8a95-5238b0b654d0",
+          "artifactId": "73e4dd52-94f9-5582-8a95-5238b0b654d0",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/e4c5ce57-82c4-4b12-a755-d571678c3c0f/9bf91993-a17d-50aa-8d9b-ca1bafdd12d7",
+          "artifactId": "9bf91993-a17d-50aa-8d9b-ca1bafdd12d7",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "b7e23910-9c9c-5560-84ca-e7d92fd682dd",
+      "state": "active",
+      "boxCode": "WC-BOX-040",
+      "createdAt": "2026-03-01T09:18:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 8,
+      "evidenceArtifactCount": 8,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/ee4d7321-cd80-4d99-ac27-7a36fb035c58/810d0de2-6df3-5182-8d5f-e8f1c2258355",
+          "artifactId": "810d0de2-6df3-5182-8d5f-e8f1c2258355",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/ee4d7321-cd80-4d99-ac27-7a36fb035c58/f0f0c568-24f8-510a-8e63-1e4650365f9b",
+          "artifactId": "f0f0c568-24f8-510a-8e63-1e4650365f9b",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/bf61d1a4-0fec-4cb9-ad7c-bb09c4ba0033/5d5d42dd-2476-5ffc-8a9c-8d0e9436c3c9",
+          "artifactId": "5d5d42dd-2476-5ffc-8a9c-8d0e9436c3c9",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "7a40a298-72cb-5ef9-8b6e-3c40344c4552",
+      "state": "received",
+      "boxCode": "DR-BOX-012",
+      "createdAt": "2026-03-01T09:17:00.000Z",
+      "materialType": "dust_recovery",
+      "converterCount": 4,
+      "evidenceArtifactCount": 4,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/c9ac1197-7aff-4115-a17d-47faff3acaa4/d1e7393b-1678-5ae1-8c7d-5543e2ed20f3",
+          "artifactId": "d1e7393b-1678-5ae1-8c7d-5543e2ed20f3",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/c9ac1197-7aff-4115-a17d-47faff3acaa4/8afcabf1-79f3-59a4-87bb-ac9f1f7102b7",
+          "artifactId": "8afcabf1-79f3-59a4-87bb-ac9f1f7102b7",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/e57ed064-95e9-4937-a201-4ba4da7c7bdf/30fbccd8-789c-5591-8b7d-dce88a097b57",
+          "artifactId": "30fbccd8-789c-5591-8b7d-dce88a097b57",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "2be3971c-2ec2-5c42-8c61-b95e63a9379b",
+      "state": "active",
+      "boxCode": "WC-BOX-039",
+      "createdAt": "2026-03-01T09:16:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 6,
+      "evidenceArtifactCount": 6,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/32491d78-6210-4dca-accb-7ffc723468f0/cc12ac9e-0c62-51bd-84d3-d28c0787b9fa",
+          "artifactId": "cc12ac9e-0c62-51bd-84d3-d28c0787b9fa",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/32491d78-6210-4dca-accb-7ffc723468f0/311c5e70-878f-5fcf-889a-cbdc93d8a5bb",
+          "artifactId": "311c5e70-878f-5fcf-889a-cbdc93d8a5bb",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/34b527f9-866d-438d-a3f0-c2652710fefd/02362b69-7b56-5631-8fd8-40a22bd3d9b4",
+          "artifactId": "02362b69-7b56-5631-8fd8-40a22bd3d9b4",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "c20b0d64-d547-5977-84e4-3b59d95b8ad9",
+      "state": "active",
+      "boxCode": "WC-BOX-038",
+      "createdAt": "2026-03-01T09:14:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 6,
+      "evidenceArtifactCount": 6,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://image/031fbe08-559c-469d-a36a-d8bceda4d461/45aed5cb-80da-5c2d-8f0a-e77ee504a9fe",
+          "artifactId": "45aed5cb-80da-5c2d-8f0a-e77ee504a9fe",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/031fbe08-559c-469d-a36a-d8bceda4d461/0bc1df51-0e36-5cbd-88e0-0a4951498c40",
+          "artifactId": "0bc1df51-0e36-5cbd-88e0-0a4951498c40",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://gps/6b97a245-cb6b-42e8-a8cd-565ec650d4d7/c39a2a56-3e4b-5918-8f0e-2b5e150589c9",
+          "artifactId": "c39a2a56-3e4b-5918-8f0e-2b5e150589c9",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "2b2a8a43-0ce7-5922-8e36-0f893455748f",
+      "state": "active",
+      "boxCode": "WC-BOX-037",
+      "createdAt": "2026-03-01T09:13:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 4,
+      "evidenceArtifactCount": 4,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/c81b3ea6-c103-4da4-abe1-fc3a8c4f8130/e86d2b86-06a3-5d5a-898f-382442395069",
+          "artifactId": "e86d2b86-06a3-5d5a-898f-382442395069",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/c81b3ea6-c103-4da4-abe1-fc3a8c4f8130/c0008f03-d805-5db2-8fac-df7fc7725900",
+          "artifactId": "c0008f03-d805-5db2-8fac-df7fc7725900",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/99867e25-0b27-43f7-a397-2920b54571c6/e4a5c2dc-536c-5a1d-8bb7-c0863ce93a0d",
+          "artifactId": "e4a5c2dc-536c-5a1d-8bb7-c0863ce93a0d",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "d4c53b37-a838-5596-81ee-28b922d85ceb",
+      "state": "received",
+      "boxCode": "PC-BOX-009",
+      "createdAt": "2026-03-01T09:12:00.000Z",
+      "materialType": "processed_catalyst",
+      "converterCount": 4,
+      "evidenceArtifactCount": 4,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/0bdcf585-c52f-44bc-aa8e-23d72dbbae76/ee4efcb5-288d-5c3d-8a73-055ec91bcbd1",
+          "artifactId": "ee4efcb5-288d-5c3d-8a73-055ec91bcbd1",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/0bdcf585-c52f-44bc-aa8e-23d72dbbae76/00d5159a-9d67-5fb7-8c6f-322ef911bab9",
+          "artifactId": "00d5159a-9d67-5fb7-8c6f-322ef911bab9",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/ad33b625-78fa-46f1-a92e-2f5ffc7c4324/e6f30ce2-ad0f-506c-8d5e-03528eadee37",
+          "artifactId": "e6f30ce2-ad0f-506c-8d5e-03528eadee37",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "5c2bb8a7-5a52-5bc5-8d83-cc59ad836944",
+      "state": "active",
+      "boxCode": "WC-BOX-036",
+      "createdAt": "2026-03-01T09:11:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 6,
+      "evidenceArtifactCount": 6,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/9472c80f-5a65-4dba-ac5b-aff26ad556fa/f99c2a40-52b7-5c70-8e93-8a6953536c07",
+          "artifactId": "f99c2a40-52b7-5c70-8e93-8a6953536c07",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/9472c80f-5a65-4dba-ac5b-aff26ad556fa/01620eec-e7b0-5dfb-8069-c2a43f57462e",
+          "artifactId": "01620eec-e7b0-5dfb-8069-c2a43f57462e",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/03f20229-0b00-46f8-af7c-0ec5215502f2/62cc3fff-d3fc-5bfc-8dad-1a1f4f4df2e7",
+          "artifactId": "62cc3fff-d3fc-5bfc-8dad-1a1f4f4df2e7",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "57b95e3d-f810-53ea-8541-edf92af73379",
+      "state": "received",
+      "boxCode": "DR-BOX-011",
+      "createdAt": "2026-03-01T09:10:00.000Z",
+      "materialType": "dust_recovery",
+      "converterCount": 6,
+      "evidenceArtifactCount": 6,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/da7db085-2f94-4c0c-aec6-2a924d3d3cd3/4196a721-02ea-5fc3-838b-15937982ebb0",
+          "artifactId": "4196a721-02ea-5fc3-838b-15937982ebb0",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/da7db085-2f94-4c0c-aec6-2a924d3d3cd3/4cf6cb09-746b-5026-8a02-0ba34dd7d654",
+          "artifactId": "4cf6cb09-746b-5026-8a02-0ba34dd7d654",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/41c4cc5e-4fbd-4416-a465-38bd44182de1/4c206fc6-bd1b-5959-8418-e4a0edf6717f",
+          "artifactId": "4c206fc6-bd1b-5959-8418-e4a0edf6717f",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "c334e085-7e44-5b59-8bac-3b43efef103e",
+      "state": "active",
+      "boxCode": "WC-BOX-035",
+      "createdAt": "2026-03-01T09:08:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 8,
+      "evidenceArtifactCount": 8,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/02275564-1048-46fa-a38d-37c3d1772b36/a425d12b-1ee9-5a2c-8190-39b18d83c484",
+          "artifactId": "a425d12b-1ee9-5a2c-8190-39b18d83c484",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/02275564-1048-46fa-a38d-37c3d1772b36/860aeb5e-8dc4-5873-8a5a-78c0cd13ef0c",
+          "artifactId": "860aeb5e-8dc4-5873-8a5a-78c0cd13ef0c",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/46a0cb43-1cbf-4f19-adf6-f897949c972b/41913dec-6675-592d-8af6-8d0ec35be46c",
+          "artifactId": "41913dec-6675-592d-8af6-8d0ec35be46c",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "5d193a3c-9201-52b8-8765-09eb9377bf3b",
+      "state": "active",
+      "boxCode": "WC-BOX-034",
+      "createdAt": "2026-03-01T09:06:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 6,
+      "evidenceArtifactCount": 6,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/ae90d1d7-e609-4880-a5c8-f32f5a4b97bc/ab6cdb33-c6ab-5721-8b5f-12203203bfbf",
+          "artifactId": "ab6cdb33-c6ab-5721-8b5f-12203203bfbf",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/ae90d1d7-e609-4880-a5c8-f32f5a4b97bc/3223e77b-edc1-5fa9-8efd-b936d0d920ef",
+          "artifactId": "3223e77b-edc1-5fa9-8efd-b936d0d920ef",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/345aedc9-827f-47b6-af10-8afac140fb55/96f1f81e-b1a4-598c-81da-3da5ce49c009",
+          "artifactId": "96f1f81e-b1a4-598c-81da-3da5ce49c009",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "196f8975-18e5-5886-8735-9dda3007a160",
+      "state": "active",
+      "boxCode": "WC-BOX-033",
+      "createdAt": "2026-03-01T09:04:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 8,
+      "evidenceArtifactCount": 8,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/706d9004-6fe5-437b-a0ef-12672ae9f4c4/52985d3f-bbac-5a98-82e8-be27952ac7b2",
+          "artifactId": "52985d3f-bbac-5a98-82e8-be27952ac7b2",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/706d9004-6fe5-437b-a0ef-12672ae9f4c4/47154ddd-8358-5d21-88b5-e6a637a3a025",
+          "artifactId": "47154ddd-8358-5d21-88b5-e6a637a3a025",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/327100a8-5e6c-47f3-a004-4ab688cf31d8/cbd7980e-f598-539d-87ea-f3585c87b865",
+          "artifactId": "cbd7980e-f598-539d-87ea-f3585c87b865",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "dec24660-3bf9-52c3-8cf4-b7c96891148a",
+      "state": "received",
+      "boxCode": "PC-BOX-008",
+      "createdAt": "2026-03-01T09:03:00.000Z",
+      "materialType": "processed_catalyst",
+      "converterCount": 4,
+      "evidenceArtifactCount": 4,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/0fd97777-312a-40af-aead-c07d14e013fc/2fefeb0e-2c79-5198-80a3-6cc99e3d97d1",
+          "artifactId": "2fefeb0e-2c79-5198-80a3-6cc99e3d97d1",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/0fd97777-312a-40af-aead-c07d14e013fc/197d2296-89d5-519b-8ddc-518125a7104d",
+          "artifactId": "197d2296-89d5-519b-8ddc-518125a7104d",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/a6ad1970-ee2e-464c-a88b-ee5dfa8dcc55/b923dfea-45ca-5306-8855-c8dfbef89948",
+          "artifactId": "b923dfea-45ca-5306-8855-c8dfbef89948",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "b6245124-843b-5e20-8d92-3c21358b9559",
+      "state": "active",
+      "boxCode": "WC-BOX-032",
+      "createdAt": "2026-03-01T09:02:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 4,
+      "evidenceArtifactCount": 4,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://image/4b2993c0-27d8-474a-a442-eb2f1eb0e960/752ff255-eaad-52f0-807c-89a8337f6b02",
+          "artifactId": "752ff255-eaad-52f0-807c-89a8337f6b02",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/4b2993c0-27d8-474a-a442-eb2f1eb0e960/9c0f899c-9e13-5705-86c8-5b2d76c6b42e",
+          "artifactId": "9c0f899c-9e13-5705-86c8-5b2d76c6b42e",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://gps/53f1e4e9-b57b-4a31-a4ab-e5e060c400e4/f4aa6a99-ecf9-55b4-80d4-aca6ce0263d8",
+          "artifactId": "f4aa6a99-ecf9-55b4-80d4-aca6ce0263d8",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "ae3e6679-3152-5c1b-83af-45799e54e4b9",
+      "state": "active",
+      "boxCode": "WC-BOX-031",
+      "createdAt": "2026-03-01T09:00:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 6,
+      "evidenceArtifactCount": 6,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/9d0937ba-9b56-4703-a8f8-f1b3ae580e0b/f2b53d27-b158-5b00-8a2c-f7662c95d4ca",
+          "artifactId": "f2b53d27-b158-5b00-8a2c-f7662c95d4ca",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/9d0937ba-9b56-4703-a8f8-f1b3ae580e0b/8c7ab3cb-f307-5b62-8b6b-80c859468bec",
+          "artifactId": "8c7ab3cb-f307-5b62-8b6b-80c859468bec",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/cc181bf5-03c9-45bf-a83e-3b09e22579d6/635342c3-85c7-541e-82ac-ea3f79ff3a23",
+          "artifactId": "635342c3-85c7-541e-82ac-ea3f79ff3a23",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "7ce4869e-0c37-505c-8129-2820c0f94ee9",
+      "state": "active",
+      "boxCode": "WC-BOX-030",
+      "createdAt": "2026-03-01T08:58:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 8,
+      "evidenceArtifactCount": 8,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/8820e3d7-494a-4ccd-a01b-ab83b23eacf7/76a7badd-4884-5d91-837b-1adf2e14b8cd",
+          "artifactId": "76a7badd-4884-5d91-837b-1adf2e14b8cd",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/8820e3d7-494a-4ccd-a01b-ab83b23eacf7/b68a4fa8-d4db-5624-8dbc-8fe57c5c84ca",
+          "artifactId": "b68a4fa8-d4db-5624-8dbc-8fe57c5c84ca",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://image/e263a0fe-4885-49e2-a796-8d36972116db/9c95235a-595c-5ebb-8533-99b7456fe2c6",
+          "artifactId": "9c95235a-595c-5ebb-8533-99b7456fe2c6",
+          "evidenceType": "image"
+        }
+      ]
+    },
+    {
+      "boxId": "d871c959-da82-57f4-8c7e-9a953c544caa",
+      "state": "active",
+      "boxCode": "WC-BOX-029",
+      "createdAt": "2026-03-01T08:57:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 6,
+      "evidenceArtifactCount": 6,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/16fe48db-50d1-47aa-ae5f-229ffb063a08/52ed6ea5-bfd6-5f07-83b7-a0b4cc4d5edd",
+          "artifactId": "52ed6ea5-bfd6-5f07-83b7-a0b4cc4d5edd",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/16fe48db-50d1-47aa-ae5f-229ffb063a08/beff58e7-7e31-5401-8546-cfdee1e86cf3",
+          "artifactId": "beff58e7-7e31-5401-8546-cfdee1e86cf3",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/93d04a01-d533-42ea-a37f-796f333cf013/9537248e-3a06-508f-8f0d-d2a606ad458d",
+          "artifactId": "9537248e-3a06-508f-8f0d-d2a606ad458d",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "985f1a44-5b4f-5298-8c0a-6bb102678449",
+      "state": "received",
+      "boxCode": "DR-BOX-009",
+      "createdAt": "2026-03-01T08:56:00.000Z",
+      "materialType": "dust_recovery",
+      "converterCount": 4,
+      "evidenceArtifactCount": 4,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/0abccdbf-8689-47f8-a8bb-8e88b4505657/eda776f7-9d47-58be-849c-e3e8f71b7422",
+          "artifactId": "eda776f7-9d47-58be-849c-e3e8f71b7422",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/0abccdbf-8689-47f8-a8bb-8e88b4505657/f50bd5e2-6d2d-5099-8e5b-95a17de553b4",
+          "artifactId": "f50bd5e2-6d2d-5099-8e5b-95a17de553b4",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/f8e777e8-5fcb-4428-abbd-5b1b70348610/8730fa14-7545-5eb4-846a-23252b905132",
+          "artifactId": "8730fa14-7545-5eb4-846a-23252b905132",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "a3acffbe-93d4-5a2a-8425-bd8b7ef8b2ff",
+      "state": "shipped",
+      "boxCode": "WC-BOX-028",
+      "createdAt": "2026-03-01T08:55:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 4,
+      "evidenceArtifactCount": 4,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/4b811221-28a8-49e8-af06-64df82e040bc/954d0edb-ee3a-527c-89cc-b567cbd0c739",
+          "artifactId": "954d0edb-ee3a-527c-89cc-b567cbd0c739",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/4b811221-28a8-49e8-af06-64df82e040bc/6224e7f8-3757-562e-8783-c2d4716ac60b",
+          "artifactId": "6224e7f8-3757-562e-8783-c2d4716ac60b",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/7c78b955-2070-4f1c-ac36-05527559b7f1/5e7f2375-c84b-5062-80ce-82ed5c975d39",
+          "artifactId": "5e7f2375-c84b-5062-80ce-82ed5c975d39",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "e4e47316-3aef-5277-8871-b96929585ac3",
+      "state": "received",
+      "boxCode": "PC-BOX-007",
+      "createdAt": "2026-03-01T08:54:00.000Z",
+      "materialType": "processed_catalyst",
+      "converterCount": 4,
+      "evidenceArtifactCount": 4,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://image/c8cd1b98-c1a0-4161-a243-900797e1641c/19095864-845f-52bc-85d7-dbb6e3e0bd7c",
+          "artifactId": "19095864-845f-52bc-85d7-dbb6e3e0bd7c",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/c8cd1b98-c1a0-4161-a243-900797e1641c/af610c9e-d3e0-5042-87ae-2d7416c5f5e0",
+          "artifactId": "af610c9e-d3e0-5042-87ae-2d7416c5f5e0",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://gps/b4a39ca4-6482-447a-a7c4-8cb0216d3a67/a2d92b53-754e-5f80-84b8-8b055106b2ec",
+          "artifactId": "a2d92b53-754e-5f80-84b8-8b055106b2ec",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "1dfcbaf9-327d-53bd-8c6a-41de30290ef1",
+      "state": "shipped",
+      "boxCode": "WC-BOX-027",
+      "createdAt": "2026-03-01T08:52:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 10,
+      "evidenceArtifactCount": 10,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/77d2c4bf-7813-4b85-a482-1bb3e83f3b8d/c97866b9-dccb-5deb-8eb4-88e709b906d0",
+          "artifactId": "c97866b9-dccb-5deb-8eb4-88e709b906d0",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/77d2c4bf-7813-4b85-a482-1bb3e83f3b8d/ce52a451-7198-555d-8b0a-fd000f3e0128",
+          "artifactId": "ce52a451-7198-555d-8b0a-fd000f3e0128",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/8f677685-9f00-4486-a16d-e18ea9ddad65/a6654cc8-053a-5fc5-886a-7a7877348963",
+          "artifactId": "a6654cc8-053a-5fc5-886a-7a7877348963",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "a8149c7c-de7d-5400-88d6-850fefd9ddf9",
+      "state": "shipped",
+      "boxCode": "WC-BOX-026",
+      "createdAt": "2026-03-01T08:50:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 10,
+      "evidenceArtifactCount": 10,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://image/128cf788-d63a-4562-a9a6-473c763ccdfa/1a373006-dab8-5bf5-8620-8061ba168cc1",
+          "artifactId": "1a373006-dab8-5bf5-8620-8061ba168cc1",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/128cf788-d63a-4562-a9a6-473c763ccdfa/0ea8aa94-175e-5d6c-8dd1-b73ec693b1d3",
+          "artifactId": "0ea8aa94-175e-5d6c-8dd1-b73ec693b1d3",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://gps/f30a5e0a-d2a0-4e26-a0f9-d69e075ef1fb/ad107a4b-a48f-586b-84a6-94c5cb61401c",
+          "artifactId": "ad107a4b-a48f-586b-84a6-94c5cb61401c",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "b82aeddd-ad95-5392-876f-a303c4e01232",
+      "state": "received",
+      "boxCode": "DR-BOX-008",
+      "createdAt": "2026-03-01T08:49:00.000Z",
+      "materialType": "dust_recovery",
+      "converterCount": 6,
+      "evidenceArtifactCount": 6,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/fcd0d1be-f8e9-4856-a56d-2249023b1e9a/9ce4b076-0a8f-5124-886d-0b9c4b417379",
+          "artifactId": "9ce4b076-0a8f-5124-886d-0b9c4b417379",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/fcd0d1be-f8e9-4856-a56d-2249023b1e9a/733c5b71-27f9-5fc2-88b4-a6e1d0892f7c",
+          "artifactId": "733c5b71-27f9-5fc2-88b4-a6e1d0892f7c",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/4234a5e5-b7f9-4689-a7c3-474b6f215f11/940ea880-dd76-574e-8fd6-b6dbab3d4629",
+          "artifactId": "940ea880-dd76-574e-8fd6-b6dbab3d4629",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "85678291-dfa4-5ad6-86e1-f34cf7ddc9d4",
+      "state": "received",
+      "boxCode": "WC-BOX-025",
+      "createdAt": "2026-03-01T08:48:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 10,
+      "evidenceArtifactCount": 10,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/4fec6f75-2895-4908-abdf-a1c99d06505e/fcb66fec-a4b8-53fa-8339-10df31a3e88c",
+          "artifactId": "fcb66fec-a4b8-53fa-8339-10df31a3e88c",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/4fec6f75-2895-4908-abdf-a1c99d06505e/d38679f0-afe8-5129-82d8-3994969b6f3a",
+          "artifactId": "d38679f0-afe8-5129-82d8-3994969b6f3a",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/539feb8b-8baa-4a74-aea8-931c7b6af209/0291d645-71d9-59de-81f5-89deec694d89",
+          "artifactId": "0291d645-71d9-59de-81f5-89deec694d89",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "3c14765f-2f22-597d-8d15-2f7d5a3cb246",
+      "state": "received",
+      "boxCode": "WC-BOX-024",
+      "createdAt": "2026-03-01T08:46:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 10,
+      "evidenceArtifactCount": 10,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/1a4fa328-29d1-4bbb-a568-8a403f3520f0/7ea6d3e9-5227-5079-8e74-4d2a29c52351",
+          "artifactId": "7ea6d3e9-5227-5079-8e74-4d2a29c52351",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/1a4fa328-29d1-4bbb-a568-8a403f3520f0/08949860-8f84-5c34-8b1e-1f49502ce90e",
+          "artifactId": "08949860-8f84-5c34-8b1e-1f49502ce90e",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/1ee58f62-c175-4687-a83f-f5be7b2e2981/790bc543-7ac7-5876-8b2b-86f2ca1f1825",
+          "artifactId": "790bc543-7ac7-5876-8b2b-86f2ca1f1825",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "be69b9d7-0766-529e-8511-422b6821e8b4",
+      "state": "received",
+      "boxCode": "PC-BOX-006",
+      "createdAt": "2026-03-01T08:45:00.000Z",
+      "materialType": "processed_catalyst",
+      "converterCount": 4,
+      "evidenceArtifactCount": 4,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/c07632c9-e5bb-475a-a126-7cb45065aec1/eac3bf8b-c790-5f1d-87d8-71930d476262",
+          "artifactId": "eac3bf8b-c790-5f1d-87d8-71930d476262",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/c07632c9-e5bb-475a-a126-7cb45065aec1/c9bc5278-d8fd-5327-8785-e2bdf43fa46d",
+          "artifactId": "c9bc5278-d8fd-5327-8785-e2bdf43fa46d",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/3139d241-b89f-491c-ac85-cbb0adc677da/58c3b7c7-17df-5c11-8497-c38bb3142f9d",
+          "artifactId": "58c3b7c7-17df-5c11-8497-c38bb3142f9d",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "ad18a752-1d69-57cb-813c-9a602c0306a1",
+      "state": "received",
+      "boxCode": "WC-BOX-023",
+      "createdAt": "2026-03-01T08:44:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 6,
+      "evidenceArtifactCount": 6,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/930d653f-8af1-41ff-ac96-010b6aeaef3a/fb17c7e0-e8b7-5d9b-8d1a-dbefaa1ae676",
+          "artifactId": "fb17c7e0-e8b7-5d9b-8d1a-dbefaa1ae676",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/930d653f-8af1-41ff-ac96-010b6aeaef3a/ffafbb7b-c85b-5a51-8e0d-11bbfd8cc8a3",
+          "artifactId": "ffafbb7b-c85b-5a51-8e0d-11bbfd8cc8a3",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/d12cfa46-7c11-4234-a5d7-f5e8cf645539/716feb8f-80e7-590b-8200-418346815ce6",
+          "artifactId": "716feb8f-80e7-590b-8200-418346815ce6",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "7088d272-7e63-5796-8375-33be2e29267d",
+      "state": "received",
+      "boxCode": "WC-BOX-022",
+      "createdAt": "2026-03-01T08:43:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 8,
+      "evidenceArtifactCount": 8,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/02fa44e3-1636-4fb8-a75a-73b8833fc408/c2a54b60-70ba-5fd6-861f-456624e5896f",
+          "artifactId": "c2a54b60-70ba-5fd6-861f-456624e5896f",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/02fa44e3-1636-4fb8-a75a-73b8833fc408/9445a72f-e9c4-5a66-886f-a2e3820f41ce",
+          "artifactId": "9445a72f-e9c4-5a66-886f-a2e3820f41ce",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/65bb8bb1-8584-4a0e-a819-c88444154628/19a6a666-0b94-53e4-8afd-39709b5df620",
+          "artifactId": "19a6a666-0b94-53e4-8afd-39709b5df620",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "f902f6bf-0952-5f1f-8291-60dd9bceca0b",
+      "state": "received",
+      "boxCode": "DR-BOX-007",
+      "createdAt": "2026-03-01T08:42:00.000Z",
+      "materialType": "dust_recovery",
+      "converterCount": 6,
+      "evidenceArtifactCount": 6,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/30db3ca8-0cf4-4b4a-a335-ed352369b0cc/664e3c69-718d-520d-8400-f6b5f8293760",
+          "artifactId": "664e3c69-718d-520d-8400-f6b5f8293760",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/30db3ca8-0cf4-4b4a-a335-ed352369b0cc/3348f5ad-cdcd-5c0c-8ec2-53d0aa51a243",
+          "artifactId": "3348f5ad-cdcd-5c0c-8ec2-53d0aa51a243",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/c76420fc-6607-4242-ad91-a6ebd099a396/7cc995ea-295c-585e-885e-f4be9825054b",
+          "artifactId": "7cc995ea-295c-585e-885e-f4be9825054b",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "3e275c59-e0db-5c93-8f02-42d4f76a0720",
+      "state": "received",
+      "boxCode": "WC-BOX-021",
+      "createdAt": "2026-03-01T08:40:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 12,
+      "evidenceArtifactCount": 12,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/920c640c-c87b-4330-a702-f8f58b8d8192/62188984-f33d-5669-86bc-63db651ed01f",
+          "artifactId": "62188984-f33d-5669-86bc-63db651ed01f",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/920c640c-c87b-4330-a702-f8f58b8d8192/c27e3667-e568-50e9-8bdc-3d501ae5af1e",
+          "artifactId": "c27e3667-e568-50e9-8bdc-3d501ae5af1e",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/fc932c08-98dd-464f-a07e-da1b1a2fabb4/07c982c6-9a8f-5461-8b45-1781f27f037b",
+          "artifactId": "07c982c6-9a8f-5461-8b45-1781f27f037b",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "2ab23fe9-6f18-51ad-846f-e7f7652ca2d4",
+      "state": "received",
+      "boxCode": "WC-BOX-020",
+      "createdAt": "2026-03-01T08:38:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 10,
+      "evidenceArtifactCount": 10,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/b214c080-aca2-4674-ac32-9bb0dd1d0749/27c9d46e-d01d-5426-8a27-e57ec123daf4",
+          "artifactId": "27c9d46e-d01d-5426-8a27-e57ec123daf4",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/b214c080-aca2-4674-ac32-9bb0dd1d0749/e9f8c43e-66c3-54bd-8286-41a755458021",
+          "artifactId": "e9f8c43e-66c3-54bd-8286-41a755458021",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://image/8bb09a7e-4bf4-43a5-aabd-04b76d48b1b2/1e338eae-cf66-5031-81cb-be2c7c4daf69",
+          "artifactId": "1e338eae-cf66-5031-81cb-be2c7c4daf69",
+          "evidenceType": "image"
+        }
+      ]
+    },
+    {
+      "boxId": "04c35f09-c84b-54b3-8edb-1ef153548161",
+      "state": "received",
+      "boxCode": "WC-BOX-019",
+      "createdAt": "2026-03-01T08:37:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 6,
+      "evidenceArtifactCount": 6,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/26bee798-0958-412c-a250-62060c3c8d7a/eea4775d-c5b6-5d6f-8238-295aa8ddead7",
+          "artifactId": "eea4775d-c5b6-5d6f-8238-295aa8ddead7",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/26bee798-0958-412c-a250-62060c3c8d7a/8b925eb4-bade-5181-8797-aa7e24b8936d",
+          "artifactId": "8b925eb4-bade-5181-8797-aa7e24b8936d",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/50c906b5-a46d-4855-af6b-e738f84ba318/af633332-4f88-551b-8bf4-604645e9634d",
+          "artifactId": "af633332-4f88-551b-8bf4-604645e9634d",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "e2a60f96-5a67-5453-833b-8747fee6c7c6",
+      "state": "received",
+      "boxCode": "PC-BOX-005",
+      "createdAt": "2026-03-01T08:36:00.000Z",
+      "materialType": "processed_catalyst",
+      "converterCount": 4,
+      "evidenceArtifactCount": 4,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/7e59d112-e9d6-4cae-aab1-63dcf8d2ae8e/96879051-d091-5f94-8253-5bef3db54a87",
+          "artifactId": "96879051-d091-5f94-8253-5bef3db54a87",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/7e59d112-e9d6-4cae-aab1-63dcf8d2ae8e/7bdcdb53-5413-5d9b-86ec-f9546953c6e0",
+          "artifactId": "7bdcdb53-5413-5d9b-86ec-f9546953c6e0",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/3b11403e-b00a-48bf-aa15-a91b802a7525/5eff3be9-6a33-56ce-8153-8ab02f15fc03",
+          "artifactId": "5eff3be9-6a33-56ce-8153-8ab02f15fc03",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "f5f99a4b-6b78-5f74-8541-33ec124d62ca",
+      "state": "received",
+      "boxCode": "DR-BOX-006",
+      "createdAt": "2026-03-01T08:35:00.000Z",
+      "materialType": "dust_recovery",
+      "converterCount": 6,
+      "evidenceArtifactCount": 6,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/d901d3e2-f9a9-47e9-a76a-f974c2c74213/106bb9d5-de95-560e-8489-585d9d1cc574",
+          "artifactId": "106bb9d5-de95-560e-8489-585d9d1cc574",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/d901d3e2-f9a9-47e9-a76a-f974c2c74213/3476ec1a-d9e6-5c2e-8f81-ece75ed32934",
+          "artifactId": "3476ec1a-d9e6-5c2e-8f81-ece75ed32934",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/13e324f8-e5d3-44e5-a61f-5a231d5668bf/0a7f0b1b-ad9b-5413-869a-db12823409d0",
+          "artifactId": "0a7f0b1b-ad9b-5413-869a-db12823409d0",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "d7b5c31f-2d30-526f-801e-2ef8e0b3d999",
+      "state": "received",
+      "boxCode": "WC-BOX-018",
+      "createdAt": "2026-03-01T08:34:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 10,
+      "evidenceArtifactCount": 10,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://image/8f8eaa58-e33e-4c41-ab7d-dad4d122f731/4ed967e5-558b-514c-8065-587f2b035d24",
+          "artifactId": "4ed967e5-558b-514c-8065-587f2b035d24",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/8f8eaa58-e33e-4c41-ab7d-dad4d122f731/1e983ee2-30a9-5703-8766-240340f76ce0",
+          "artifactId": "1e983ee2-30a9-5703-8766-240340f76ce0",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://gps/5f146f36-b8b4-406a-a654-2b7980d35ca3/ab1b2e97-48e5-554b-85a7-e2b3989039c3",
+          "artifactId": "ab1b2e97-48e5-554b-85a7-e2b3989039c3",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "619bf9e4-17c8-5ea3-8536-7881b2df1820",
+      "state": "received",
+      "boxCode": "WC-BOX-017",
+      "createdAt": "2026-03-01T08:32:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 10,
+      "evidenceArtifactCount": 10,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/8e97c1f2-fd4c-4b48-ac2d-94765e7a5f33/007dfafd-8bf3-50ea-8026-30fb925df6fd",
+          "artifactId": "007dfafd-8bf3-50ea-8026-30fb925df6fd",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/8e97c1f2-fd4c-4b48-ac2d-94765e7a5f33/93ea6715-a8b5-5e88-878b-22cc861e7175",
+          "artifactId": "93ea6715-a8b5-5e88-878b-22cc861e7175",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/db31a212-9007-4cd9-ae6a-551ba56017c4/421cbd96-1113-5c79-8709-5c35cf18b0c7",
+          "artifactId": "421cbd96-1113-5c79-8709-5c35cf18b0c7",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "709af79d-aa98-548e-8e2c-a2672f4f9f31",
+      "state": "shipped",
+      "boxCode": "WC-BOX-016",
+      "createdAt": "2026-03-01T08:30:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 12,
+      "evidenceArtifactCount": 12,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/0439e9d6-6b60-4358-ad29-5d33efa5e160/27d26f46-7755-5222-8a44-0e5a59fc6fc9",
+          "artifactId": "27d26f46-7755-5222-8a44-0e5a59fc6fc9",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/0439e9d6-6b60-4358-ad29-5d33efa5e160/6e9d4625-17b8-5263-890b-b06354d656ff",
+          "artifactId": "6e9d4625-17b8-5263-890b-b06354d656ff",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/2604c5d9-ed9e-4998-a100-5ee5d88c466f/4e594c97-e049-5e91-8438-c126d73cb40f",
+          "artifactId": "4e594c97-e049-5e91-8438-c126d73cb40f",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "2cfd6b78-5646-5f89-8c83-ea8e0ec5de47",
+      "state": "shipped",
+      "boxCode": "WC-BOX-015",
+      "createdAt": "2026-03-01T08:29:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 8,
+      "evidenceArtifactCount": 8,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/b23742dc-ff4c-49dd-a3d5-407b3751bea1/7148221d-930d-5667-8f1d-cda0f72ab23a",
+          "artifactId": "7148221d-930d-5667-8f1d-cda0f72ab23a",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/b23742dc-ff4c-49dd-a3d5-407b3751bea1/50ce993b-7675-5b3e-8c3a-8ebcde39742b",
+          "artifactId": "50ce993b-7675-5b3e-8c3a-8ebcde39742b",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/a71785aa-57d0-406b-af30-61c415f3d3da/ee79a834-b7c3-5b66-8bed-21dceca66573",
+          "artifactId": "ee79a834-b7c3-5b66-8bed-21dceca66573",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "f4e5c880-2cda-5ac5-81fa-4bb798e9449c",
+      "state": "received",
+      "boxCode": "DR-BOX-005",
+      "createdAt": "2026-03-01T08:28:00.000Z",
+      "materialType": "dust_recovery",
+      "converterCount": 4,
+      "evidenceArtifactCount": 4,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/fb098ecf-3399-47ab-aa4e-c425642a93f0/e1928421-6768-561c-8cec-4a9b98c1115b",
+          "artifactId": "e1928421-6768-561c-8cec-4a9b98c1115b",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/fb098ecf-3399-47ab-aa4e-c425642a93f0/582a1611-7997-5823-86e0-d7000ec88915",
+          "artifactId": "582a1611-7997-5823-86e0-d7000ec88915",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/5403b1e4-f9e8-485b-a9b7-de2b45489b47/55b1c205-9942-577f-8982-10562f6991d3",
+          "artifactId": "55b1c205-9942-577f-8982-10562f6991d3",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "2da17d80-3fcc-5574-85c0-0777eaba3ff1",
+      "state": "received",
+      "boxCode": "PC-BOX-004",
+      "createdAt": "2026-03-01T08:27:00.000Z",
+      "materialType": "processed_catalyst",
+      "converterCount": 4,
+      "evidenceArtifactCount": 4,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/a4b321ff-bb23-4134-a153-1481520b3166/d493c934-d8b2-5306-87fb-1a2c76988ab2",
+          "artifactId": "d493c934-d8b2-5306-87fb-1a2c76988ab2",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/a4b321ff-bb23-4134-a153-1481520b3166/dfc0ca38-1c2e-5099-8311-3b84592bbdae",
+          "artifactId": "dfc0ca38-1c2e-5099-8311-3b84592bbdae",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/eac80797-d48a-429f-a64f-0aac53b58190/9cb5f0c4-801a-5420-8a76-7d28a98d096e",
+          "artifactId": "9cb5f0c4-801a-5420-8a76-7d28a98d096e",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "0c685ca5-b15e-5b12-814d-80d191d37836",
+      "state": "shipped",
+      "boxCode": "WC-BOX-014",
+      "createdAt": "2026-03-01T08:26:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 6,
+      "evidenceArtifactCount": 6,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/67099619-225b-4f88-ad61-df12d6f36667/28636808-8526-5d31-8657-3a33dc521e89",
+          "artifactId": "28636808-8526-5d31-8657-3a33dc521e89",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/67099619-225b-4f88-ad61-df12d6f36667/2b834989-b470-50c8-89b2-f15b22bd7870",
+          "artifactId": "2b834989-b470-50c8-89b2-f15b22bd7870",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/3bba2f04-58f3-4e7a-ad4b-8669722ec9c1/1f4fb27c-a4bf-51ee-80fe-8352db94d8e7",
+          "artifactId": "1f4fb27c-a4bf-51ee-80fe-8352db94d8e7",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "8a19b8f8-d163-56cb-8fa3-ad53a1ade996",
+      "state": "received",
+      "boxCode": "WC-BOX-013",
+      "createdAt": "2026-03-01T08:24:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 10,
+      "evidenceArtifactCount": 10,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/463334c1-541b-4f53-af51-d73f5cfe666b/84b9ea7d-c7ed-5c44-878f-26b73e3c0581",
+          "artifactId": "84b9ea7d-c7ed-5c44-878f-26b73e3c0581",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/463334c1-541b-4f53-af51-d73f5cfe666b/ccccc7fb-25da-5260-82b3-5847f82a4942",
+          "artifactId": "ccccc7fb-25da-5260-82b3-5847f82a4942",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/be385cc9-2edb-4411-ab2e-a1a33b7682cf/bbb9a897-a0ed-59c4-8310-8ae1691c44f3",
+          "artifactId": "bbb9a897-a0ed-59c4-8310-8ae1691c44f3",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "82fe13ab-8a13-5214-8fb2-8e4ddb420792",
+      "state": "received",
+      "boxCode": "WC-BOX-012",
+      "createdAt": "2026-03-01T08:22:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 10,
+      "evidenceArtifactCount": 10,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/eda888da-8483-4679-a0c0-891bdb6b1913/3c1a22f4-ac31-5ba3-88ed-89fae8707e8d",
+          "artifactId": "3c1a22f4-ac31-5ba3-88ed-89fae8707e8d",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/eda888da-8483-4679-a0c0-891bdb6b1913/9c65d77b-07cb-5b21-88d4-237e300c2ae4",
+          "artifactId": "9c65d77b-07cb-5b21-88d4-237e300c2ae4",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/b10d2282-8760-4e9e-a5f9-d85c458feabb/d2dad458-7c3c-597f-8bc7-df03f7f02469",
+          "artifactId": "d2dad458-7c3c-597f-8bc7-df03f7f02469",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "a82d323c-1853-5d22-8129-2448cafd4ba9",
+      "state": "received",
+      "boxCode": "DR-BOX-004",
+      "createdAt": "2026-03-01T08:21:00.000Z",
+      "materialType": "dust_recovery",
+      "converterCount": 6,
+      "evidenceArtifactCount": 6,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://image/4a5d58ea-028b-4e13-a4d3-2c54133ecbd2/d9d4087c-3642-5dfd-835c-908f89d80ec4",
+          "artifactId": "d9d4087c-3642-5dfd-835c-908f89d80ec4",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/4a5d58ea-028b-4e13-a4d3-2c54133ecbd2/95e4143c-ad6d-5e27-8429-b2c3757a82f7",
+          "artifactId": "95e4143c-ad6d-5e27-8429-b2c3757a82f7",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://gps/4fe33ed1-34cc-4bfe-a206-8a439d607363/b233f778-f28a-5f19-83b4-f5d8f3fef882",
+          "artifactId": "b233f778-f28a-5f19-83b4-f5d8f3fef882",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "0b5f58e9-cff4-5f2e-890a-98cc2ab3d148",
+      "state": "received",
+      "boxCode": "WC-BOX-011",
+      "createdAt": "2026-03-01T08:20:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 10,
+      "evidenceArtifactCount": 10,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://image/21a00f31-b623-4b85-a2dc-8391f78260b5/b0e375be-e48e-545e-800f-0390187327ba",
+          "artifactId": "b0e375be-e48e-545e-800f-0390187327ba",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/21a00f31-b623-4b85-a2dc-8391f78260b5/1fb0ccc7-9556-5a21-888f-2aaeabd50b8d",
+          "artifactId": "1fb0ccc7-9556-5a21-888f-2aaeabd50b8d",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://gps/04df29f2-63df-4f26-a019-18562618cf11/fc45ce3e-01d0-53d8-8829-ee25ee7afbad",
+          "artifactId": "fc45ce3e-01d0-53d8-8829-ee25ee7afbad",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "00fb7dbd-ed7b-5b88-832e-02b1375cb7f3",
+      "state": "received",
+      "boxCode": "WC-BOX-010",
+      "createdAt": "2026-03-01T08:19:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 6,
+      "evidenceArtifactCount": 6,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/ae97d401-1199-428a-a307-ec5f14001fb9/1a8fdf13-a0b2-5a83-81ff-e46117670ea5",
+          "artifactId": "1a8fdf13-a0b2-5a83-81ff-e46117670ea5",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/ae97d401-1199-428a-a307-ec5f14001fb9/844ad631-3e10-5389-8adf-4f55771ab511",
+          "artifactId": "844ad631-3e10-5389-8adf-4f55771ab511",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/bb78f2b8-b516-4cec-ae51-010e822f89de/aa304ffc-7194-5a33-8db1-ada9520a9868",
+          "artifactId": "aa304ffc-7194-5a33-8db1-ada9520a9868",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "a46e06d7-90b6-5b40-81d1-93cbef9488b6",
+      "state": "received",
+      "boxCode": "PC-BOX-003",
+      "createdAt": "2026-03-01T08:18:00.000Z",
+      "materialType": "processed_catalyst",
+      "converterCount": 4,
+      "evidenceArtifactCount": 4,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/0db75c79-5baf-4dae-ad82-8723363bbf76/bd3af118-5170-51cb-83f4-b68f736ab39b",
+          "artifactId": "bd3af118-5170-51cb-83f4-b68f736ab39b",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/0db75c79-5baf-4dae-ad82-8723363bbf76/10997a91-b8b9-5347-8ff5-7a8f4ad1c16a",
+          "artifactId": "10997a91-b8b9-5347-8ff5-7a8f4ad1c16a",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/a8820084-4c66-4013-a3e3-8a220fef34c0/832f9fde-d53f-567e-8428-927ec0951ae1",
+          "artifactId": "832f9fde-d53f-567e-8428-927ec0951ae1",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "8bb7ebbb-2d73-596f-8ac0-b52a42298220",
+      "state": "received",
+      "boxCode": "WC-BOX-009",
+      "createdAt": "2026-03-01T08:16:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 12,
+      "evidenceArtifactCount": 12,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/9e261364-7cc7-4c8f-a174-47575223b7b8/ce3069cc-7174-5f15-8c75-5b93aebd7de6",
+          "artifactId": "ce3069cc-7174-5f15-8c75-5b93aebd7de6",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/9e261364-7cc7-4c8f-a174-47575223b7b8/177e8465-ffc5-5c59-8426-9ba09d31c6a0",
+          "artifactId": "177e8465-ffc5-5c59-8426-9ba09d31c6a0",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/0c6b58aa-98f9-41c3-aa61-0380ea1f977b/2de08ce7-ad74-5b6d-830c-c82dc095fc5e",
+          "artifactId": "2de08ce7-ad74-5b6d-830c-c82dc095fc5e",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "c6f15b8a-91b3-5739-80b9-4e6235e4ec2b",
+      "state": "received",
+      "boxCode": "WC-BOX-008",
+      "createdAt": "2026-03-01T08:15:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 8,
+      "evidenceArtifactCount": 8,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/6188f451-50df-47f0-a4cd-d3086100684b/3df37d00-bb68-596e-8333-cf0d04fb2460",
+          "artifactId": "3df37d00-bb68-596e-8333-cf0d04fb2460",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/6188f451-50df-47f0-a4cd-d3086100684b/c1075d3f-6230-5e84-8417-c681adb89ada",
+          "artifactId": "c1075d3f-6230-5e84-8417-c681adb89ada",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/e3b68ace-ad5b-4324-a7bb-581e8047279c/20973b55-8a48-5f7c-80db-bfc6bb023865",
+          "artifactId": "20973b55-8a48-5f7c-80db-bfc6bb023865",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "686c309a-b1e3-5fc6-8247-94b697c158e8",
+      "state": "received",
+      "boxCode": "DR-BOX-003",
+      "createdAt": "2026-03-01T08:14:00.000Z",
+      "materialType": "dust_recovery",
+      "converterCount": 6,
+      "evidenceArtifactCount": 6,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/5f980f20-644c-4231-a1a5-138e2d13bc14/017f6654-6598-569e-8922-53fd1df554c8",
+          "artifactId": "017f6654-6598-569e-8922-53fd1df554c8",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/5f980f20-644c-4231-a1a5-138e2d13bc14/796e1fac-f3c9-5572-87d3-60e0581424c9",
+          "artifactId": "796e1fac-f3c9-5572-87d3-60e0581424c9",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/f5817f6b-c65d-4a90-a5bd-cf02c2a8c45b/91e6b783-68ee-5047-81c8-d8aa7a9a9874",
+          "artifactId": "91e6b783-68ee-5047-81c8-d8aa7a9a9874",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "c556b6b5-0a9f-5f7e-8e7f-e14b2b7a5955",
+      "state": "received",
+      "boxCode": "WC-BOX-007",
+      "createdAt": "2026-03-01T08:12:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 12,
+      "evidenceArtifactCount": 12,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/c49714de-1a9e-4043-a017-30a26fbb68dd/60c6696f-4338-570f-816d-008dae6ab76e",
+          "artifactId": "60c6696f-4338-570f-816d-008dae6ab76e",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/c49714de-1a9e-4043-a017-30a26fbb68dd/11880906-bee3-5777-8e43-19a857016421",
+          "artifactId": "11880906-bee3-5777-8e43-19a857016421",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/b68265ad-7637-48c5-ae46-a71820a866d8/f105de91-3b51-555d-8d64-5d6755a53164",
+          "artifactId": "f105de91-3b51-555d-8d64-5d6755a53164",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "a7b18045-24ea-52ef-8d7a-a19692e9f947",
+      "state": "received",
+      "boxCode": "WC-BOX-006",
+      "createdAt": "2026-03-01T08:10:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 10,
+      "evidenceArtifactCount": 10,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/471bc528-1d4c-475a-ac65-6793e07fe93e/f9cf970e-67a9-5f12-8256-da2121b1ab57",
+          "artifactId": "f9cf970e-67a9-5f12-8256-da2121b1ab57",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/471bc528-1d4c-475a-ac65-6793e07fe93e/da5b23fa-f0cb-5236-873b-74afbbd5e01a",
+          "artifactId": "da5b23fa-f0cb-5236-873b-74afbbd5e01a",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/f341ea4d-3723-4070-abd7-eb858eb5fdb0/967c3246-6392-575e-88f4-e3bb63168bab",
+          "artifactId": "967c3246-6392-575e-88f4-e3bb63168bab",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "98423ac3-9b1a-5c15-854e-1588ae8589fb",
+      "state": "received",
+      "boxCode": "PC-BOX-002",
+      "createdAt": "2026-03-01T08:09:00.000Z",
+      "materialType": "processed_catalyst",
+      "converterCount": 4,
+      "evidenceArtifactCount": 4,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/95b84bf2-56b9-4b0e-acd8-9372f1064127/21220284-ee41-5df4-85a9-778f8d426ac2",
+          "artifactId": "21220284-ee41-5df4-85a9-778f8d426ac2",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/95b84bf2-56b9-4b0e-acd8-9372f1064127/2c95ed76-70ac-565a-81c9-f04057b36ddd",
+          "artifactId": "2c95ed76-70ac-565a-81c9-f04057b36ddd",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/527aa371-9eb7-4593-a650-8f758f69a6e7/aedf0238-2afd-5c4e-8285-64f9adc31be3",
+          "artifactId": "aedf0238-2afd-5c4e-8285-64f9adc31be3",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "3312b7e3-a346-59b3-86f8-c97a2d434110",
+      "state": "received",
+      "boxCode": "WC-BOX-005",
+      "createdAt": "2026-03-01T08:08:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 4,
+      "evidenceArtifactCount": 4,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/ac838ae5-c39e-4f18-a95d-e931c411b9c5/011dcf6f-df03-5f18-83c1-22bc32abf386",
+          "artifactId": "011dcf6f-df03-5f18-83c1-22bc32abf386",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/ac838ae5-c39e-4f18-a95d-e931c411b9c5/2ebf33db-d72b-58d6-86b8-1b052105903f",
+          "artifactId": "2ebf33db-d72b-58d6-86b8-1b052105903f",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/8dea9caf-6b47-4417-aad6-757e23e29147/9eb889fc-cff7-5281-8ccc-85fa14721927",
+          "artifactId": "9eb889fc-cff7-5281-8ccc-85fa14721927",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "95dddba3-a2bd-55c1-8be1-2d2f32cb0420",
+      "state": "received",
+      "boxCode": "DR-BOX-002",
+      "createdAt": "2026-03-01T08:07:00.000Z",
+      "materialType": "dust_recovery",
+      "converterCount": 6,
+      "evidenceArtifactCount": 6,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://image/80c12b00-80ad-453b-a9dc-420b172786d3/cadd33f4-90eb-586f-87a4-d766348c2d7a",
+          "artifactId": "cadd33f4-90eb-586f-87a4-d766348c2d7a",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/80c12b00-80ad-453b-a9dc-420b172786d3/0ee8785c-4de1-5299-83ce-bc040bb74640",
+          "artifactId": "0ee8785c-4de1-5299-83ce-bc040bb74640",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://gps/75cfab3f-131a-4413-a558-48b9d384afbb/6922fd4d-8252-5217-8928-1fc2d0522e2e",
+          "artifactId": "6922fd4d-8252-5217-8928-1fc2d0522e2e",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "b2ce556c-e80e-5152-88b5-50d7937afbab",
+      "state": "shipped",
+      "boxCode": "WC-BOX-004",
+      "createdAt": "2026-03-01T08:06:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 10,
+      "evidenceArtifactCount": 10,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/f28c6fa9-7183-431c-a464-31414eb0bdae/ccca0c35-f63b-587a-815f-cc2f8cdce803",
+          "artifactId": "ccca0c35-f63b-587a-815f-cc2f8cdce803",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/f28c6fa9-7183-431c-a464-31414eb0bdae/f050e99b-aba8-5c97-8f5a-392b9b10b9aa",
+          "artifactId": "f050e99b-aba8-5c97-8f5a-392b9b10b9aa",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/e97cd7ca-5c9e-453e-acd7-93e781fbbbd5/8a4deaf7-941e-5670-8d66-18e3a78cb9a4",
+          "artifactId": "8a4deaf7-941e-5670-8d66-18e3a78cb9a4",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "2536de08-1e32-5526-8418-19ff9b84aa6b",
+      "state": "shipped",
+      "boxCode": "WC-BOX-003",
+      "createdAt": "2026-03-01T08:04:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 10,
+      "evidenceArtifactCount": 10,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/daa03a5e-9929-4767-a1e9-eb8797d122a9/c07201ac-dc8a-5e6c-8d8c-5c94ad3394b9",
+          "artifactId": "c07201ac-dc8a-5e6c-8d8c-5c94ad3394b9",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/daa03a5e-9929-4767-a1e9-eb8797d122a9/0e3c43ef-a812-5453-8661-747195eb88be",
+          "artifactId": "0e3c43ef-a812-5453-8661-747195eb88be",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/b91bfeef-8645-40dc-a1da-4dbb901e8dd8/344f1812-502c-5da3-8c77-db06ca009a7d",
+          "artifactId": "344f1812-502c-5da3-8c77-db06ca009a7d",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "6b03082d-ed4e-5063-8d44-a4ce604361a5",
+      "state": "received",
+      "boxCode": "WC-BOX-002",
+      "createdAt": "2026-03-01T08:02:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 12,
+      "evidenceArtifactCount": 12,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/2c439b05-5c40-4aa2-a8f8-ec217f4326b6/3f310e92-1e8b-5040-81fc-a6f544cc3463",
+          "artifactId": "3f310e92-1e8b-5040-81fc-a6f544cc3463",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/2c439b05-5c40-4aa2-a8f8-ec217f4326b6/7f10c1a4-ffda-5f3a-8452-79c429735f4e",
+          "artifactId": "7f10c1a4-ffda-5f3a-8452-79c429735f4e",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/4f3035b3-3e7d-4f7c-a395-c7660d79240a/7ca09d68-a87e-5129-8761-5cba5bafe279",
+          "artifactId": "7ca09d68-a87e-5129-8761-5cba5bafe279",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "1426e2a8-29a0-5b75-897b-a6fc6b30b10c",
+      "state": "received",
+      "boxCode": "WC-BOX-001",
+      "createdAt": "2026-03-01T08:01:00.000Z",
+      "materialType": "whole_converter",
+      "converterCount": 4,
+      "evidenceArtifactCount": 4,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/44eed053-405b-49d9-ace1-9d0b1a6fe60f/f6e3fae1-cf0a-5499-8767-118f1c820596",
+          "artifactId": "f6e3fae1-cf0a-5499-8767-118f1c820596",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/44eed053-405b-49d9-ace1-9d0b1a6fe60f/c26d387b-b217-5def-870f-07a1cf9a502a",
+          "artifactId": "c26d387b-b217-5def-870f-07a1cf9a502a",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://gps/bd9fc95b-d5e9-4ea0-a497-931c3a416291/f22adf1b-03f3-5fb0-8ad5-215aad887494",
+          "artifactId": "f22adf1b-03f3-5fb0-8ad5-215aad887494",
+          "evidenceType": "gps"
+        }
+      ]
+    },
+    {
+      "boxId": "36e2fad0-47a3-544d-8180-ce0bdcffecfe",
+      "state": "received",
+      "boxCode": "PC-BOX-001",
+      "createdAt": "2026-03-01T08:00:00.000Z",
+      "materialType": "processed_catalyst",
+      "converterCount": 4,
+      "evidenceArtifactCount": 4,
+      "representativeEvidence": [
+        {
+          "uri": "dcs-proof://gps/11f56fdf-c529-4df6-af69-17f9cc4adabf/4839406d-1e8a-51bb-8489-cad1480036af",
+          "artifactId": "4839406d-1e8a-51bb-8489-cad1480036af",
+          "evidenceType": "gps"
+        },
+        {
+          "uri": "dcs-proof://image/11f56fdf-c529-4df6-af69-17f9cc4adabf/6f1cb36f-10d7-5470-8664-f1cd2f879bdc",
+          "artifactId": "6f1cb36f-10d7-5470-8664-f1cd2f879bdc",
+          "evidenceType": "image"
+        },
+        {
+          "uri": "dcs-proof://image/d3a96621-588d-4e19-a7e8-19d93bd2e7d3/cf15deee-dde2-5074-8bb0-05a4b9f4cbd2",
+          "artifactId": "cf15deee-dde2-5074-8bb0-05a4b9f4cbd2",
+          "evidenceType": "image"
         }
       ]
     }
@@ -25,24 +2227,1242 @@
   "queues": [
     {
       "state": "processing",
-      "queueId": "5955a235-1f02-4907-9e5e-b0e5a75e414c",
-      "boxCount": 0,
-      "createdAt": "2026-04-23T20:44:52.672Z",
-      "queueCode": "QUEUE-SIM-01",
-      "estimatedValueUsd": "1943.18",
-      "lockedForProcessing": true
+      "queueId": "290d18a8-d5f8-5908-8ab3-9e41b75279a7",
+      "boxCount": 3,
+      "createdAt": "2026-03-01T16:21:00.000Z",
+      "queueCode": "QUEUE-SIM-038",
+      "materialMix": "whole_converter",
+      "sampleCount": 0,
+      "converterCount": 12,
+      "exposedValueUsd": "75000.00",
+      "catalystWeightKg": "841.000",
+      "ledgerEntryCount": 1,
+      "settlementStatus": null,
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [
+          "sample",
+          "hedge",
+          "settlement_started",
+          "finalization"
+        ],
+        "complete": 7
+      },
+      "estimatedValueUsd": "75000.00",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": "19500.00",
+      "evidenceArtifactCount": 24,
+      "linkedLedgerAmountUsd": "146500.00",
+      "openReconciliationCount": 0
+    },
+    {
+      "state": "processing",
+      "queueId": "0f784971-a683-5615-80ec-49b696dade94",
+      "boxCount": 3,
+      "createdAt": "2026-03-01T16:20:00.000Z",
+      "queueCode": "QUEUE-SIM-037",
+      "materialMix": "whole_converter",
+      "sampleCount": 0,
+      "converterCount": 12,
+      "exposedValueUsd": "75000.00",
+      "catalystWeightKg": "844.000",
+      "ledgerEntryCount": 1,
+      "settlementStatus": null,
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [
+          "sample",
+          "hedge",
+          "settlement_started",
+          "finalization"
+        ],
+        "complete": 7
+      },
+      "estimatedValueUsd": "75000.00",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": "19500.00",
+      "evidenceArtifactCount": 24,
+      "linkedLedgerAmountUsd": "128000.00",
+      "openReconciliationCount": 0
+    },
+    {
+      "state": "processing",
+      "queueId": "ac9dcfe0-1ba1-52ca-8aff-969eb3d24966",
+      "boxCount": 3,
+      "createdAt": "2026-03-01T16:19:00.000Z",
+      "queueCode": "QUEUE-SIM-036",
+      "materialMix": "whole_converter",
+      "sampleCount": 0,
+      "converterCount": 12,
+      "exposedValueUsd": "75000.00",
+      "catalystWeightKg": "818.000",
+      "ledgerEntryCount": 2,
+      "settlementStatus": null,
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [
+          "sample",
+          "hedge",
+          "settlement_started",
+          "finalization"
+        ],
+        "complete": 7
+      },
+      "estimatedValueUsd": "75000.00",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": "19500.00",
+      "evidenceArtifactCount": 24,
+      "linkedLedgerAmountUsd": "129750.00",
+      "openReconciliationCount": 0
+    },
+    {
+      "state": "processing",
+      "queueId": "0960138e-8705-5de3-8054-2bb9f6677e69",
+      "boxCount": 3,
+      "createdAt": "2026-03-01T16:18:00.000Z",
+      "queueCode": "QUEUE-SIM-035",
+      "materialMix": "whole_converter",
+      "sampleCount": 0,
+      "converterCount": 12,
+      "exposedValueUsd": "75000.00",
+      "catalystWeightKg": "816.000",
+      "ledgerEntryCount": 1,
+      "settlementStatus": null,
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [
+          "sample",
+          "hedge",
+          "settlement_started",
+          "finalization"
+        ],
+        "complete": 7
+      },
+      "estimatedValueUsd": "75000.00",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": "19500.00",
+      "evidenceArtifactCount": 24,
+      "linkedLedgerAmountUsd": "91000.00",
+      "openReconciliationCount": 0
+    },
+    {
+      "state": "processing",
+      "queueId": "311cf7b9-90a7-563d-8717-3bb331c8d227",
+      "boxCount": 3,
+      "createdAt": "2026-03-01T16:17:00.000Z",
+      "queueCode": "QUEUE-SIM-034",
+      "materialMix": "whole_converter",
+      "sampleCount": 0,
+      "converterCount": 6,
+      "exposedValueUsd": "75000.00",
+      "catalystWeightKg": "782.500",
+      "ledgerEntryCount": 2,
+      "settlementStatus": "draft",
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [
+          "sample",
+          "hedge",
+          "finalization"
+        ],
+        "complete": 8
+      },
+      "estimatedValueUsd": "75000.00",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": "19500.00",
+      "evidenceArtifactCount": 12,
+      "linkedLedgerAmountUsd": "323000.00",
+      "openReconciliationCount": 0
+    },
+    {
+      "state": "processing",
+      "queueId": "fa7d8a8b-2f96-54b3-8336-d45819195d4d",
+      "boxCount": 3,
+      "createdAt": "2026-03-01T16:16:00.000Z",
+      "queueCode": "QUEUE-SIM-033",
+      "materialMix": "whole_converter",
+      "sampleCount": 0,
+      "converterCount": 12,
+      "exposedValueUsd": "75000.00",
+      "catalystWeightKg": "788.000",
+      "ledgerEntryCount": 1,
+      "settlementStatus": "draft",
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [
+          "sample",
+          "hedge",
+          "finalization"
+        ],
+        "complete": 8
+      },
+      "estimatedValueUsd": "75000.00",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": "19500.00",
+      "evidenceArtifactCount": 24,
+      "linkedLedgerAmountUsd": "54000.00",
+      "openReconciliationCount": 0
+    },
+    {
+      "state": "processing",
+      "queueId": "f4632177-a9bc-5896-84fa-e7da8da87c2b",
+      "boxCount": 3,
+      "createdAt": "2026-03-01T16:15:00.000Z",
+      "queueCode": "QUEUE-SIM-032",
+      "materialMix": "whole_converter",
+      "sampleCount": 0,
+      "converterCount": 12,
+      "exposedValueUsd": "75000.00",
+      "catalystWeightKg": "759.500",
+      "ledgerEntryCount": 1,
+      "settlementStatus": "draft",
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [
+          "sample",
+          "hedge",
+          "finalization"
+        ],
+        "complete": 8
+      },
+      "estimatedValueUsd": "75000.00",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": "19500.00",
+      "evidenceArtifactCount": 24,
+      "linkedLedgerAmountUsd": "176250.00",
+      "openReconciliationCount": 0
+    },
+    {
+      "state": "processing",
+      "queueId": "721b690e-4655-52f8-81a1-046bb0b94964",
+      "boxCount": 3,
+      "createdAt": "2026-03-01T16:14:00.000Z",
+      "queueCode": "QUEUE-SIM-031",
+      "materialMix": "whole_converter",
+      "sampleCount": 0,
+      "converterCount": 12,
+      "exposedValueUsd": "75000.00",
+      "catalystWeightKg": "760.000",
+      "ledgerEntryCount": 3,
+      "settlementStatus": "draft",
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [
+          "sample",
+          "hedge",
+          "finalization"
+        ],
+        "complete": 8
+      },
+      "estimatedValueUsd": "75000.00",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": "19500.00",
+      "evidenceArtifactCount": 24,
+      "linkedLedgerAmountUsd": "410750.00",
+      "openReconciliationCount": 0
+    },
+    {
+      "state": "processing",
+      "queueId": "51e614ea-1826-5c70-89d7-81f9966fe952",
+      "boxCount": 3,
+      "createdAt": "2026-03-01T16:13:00.000Z",
+      "queueCode": "QUEUE-SIM-030",
+      "materialMix": "whole_converter",
+      "sampleCount": 0,
+      "converterCount": 6,
+      "exposedValueUsd": "75000.00",
+      "catalystWeightKg": "1705.000",
+      "ledgerEntryCount": 1,
+      "settlementStatus": null,
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [
+          "sample",
+          "hedge",
+          "settlement_started",
+          "finalization"
+        ],
+        "complete": 7
+      },
+      "estimatedValueUsd": "75000.00",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": "19500.00",
+      "evidenceArtifactCount": 12,
+      "linkedLedgerAmountUsd": "139250.00",
+      "openReconciliationCount": 0
+    },
+    {
+      "state": "processing",
+      "queueId": "01153d8c-1390-5b51-8ef7-04301debfad8",
+      "boxCount": 3,
+      "createdAt": "2026-03-01T16:12:00.000Z",
+      "queueCode": "QUEUE-SIM-029",
+      "materialMix": "whole_converter",
+      "sampleCount": 0,
+      "converterCount": 14,
+      "exposedValueUsd": "75000.00",
+      "catalystWeightKg": "1716.000",
+      "ledgerEntryCount": 1,
+      "settlementStatus": null,
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [
+          "sample",
+          "settlement_started",
+          "finalization"
+        ],
+        "complete": 8
+      },
+      "estimatedValueUsd": "75000.00",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": "19500.00",
+      "evidenceArtifactCount": 28,
+      "linkedLedgerAmountUsd": "120750.00",
+      "openReconciliationCount": 0
+    },
+    {
+      "state": "processing",
+      "queueId": "6b0ea77f-4c90-5cca-8709-7f08867afc43",
+      "boxCount": 3,
+      "createdAt": "2026-03-01T16:11:00.000Z",
+      "queueCode": "QUEUE-SIM-028",
+      "materialMix": "whole_converter",
+      "sampleCount": 0,
+      "converterCount": 13,
+      "exposedValueUsd": "75000.00",
+      "catalystWeightKg": "1659.000",
+      "ledgerEntryCount": 2,
+      "settlementStatus": null,
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [
+          "sample",
+          "settlement_started",
+          "finalization"
+        ],
+        "complete": 8
+      },
+      "estimatedValueUsd": "75000.00",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": "19500.00",
+      "evidenceArtifactCount": 26,
+      "linkedLedgerAmountUsd": "321750.00",
+      "openReconciliationCount": 0
+    },
+    {
+      "state": "processing",
+      "queueId": "37a75bec-9f7e-5550-820a-0e0393ac786f",
+      "boxCount": 3,
+      "createdAt": "2026-03-01T16:10:00.000Z",
+      "queueCode": "QUEUE-SIM-027",
+      "materialMix": "whole_converter",
+      "sampleCount": 0,
+      "converterCount": 14,
+      "exposedValueUsd": "75000.00",
+      "catalystWeightKg": "1660.000",
+      "ledgerEntryCount": 1,
+      "settlementStatus": null,
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [
+          "sample",
+          "settlement_started",
+          "finalization"
+        ],
+        "complete": 8
+      },
+      "estimatedValueUsd": "75000.00",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": "19500.00",
+      "evidenceArtifactCount": 28,
+      "linkedLedgerAmountUsd": "83750.00",
+      "openReconciliationCount": 0
+    },
+    {
+      "state": "processing",
+      "queueId": "4c82177d-45b6-5938-899f-33c7fdff2294",
+      "boxCount": 3,
+      "createdAt": "2026-03-01T16:09:00.000Z",
+      "queueCode": "QUEUE-SIM-026",
+      "materialMix": "whole_converter",
+      "sampleCount": 0,
+      "converterCount": 14,
+      "exposedValueUsd": "75000.00",
+      "catalystWeightKg": "1600.500",
+      "ledgerEntryCount": 2,
+      "settlementStatus": null,
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [
+          "sample",
+          "settlement_started",
+          "finalization"
+        ],
+        "complete": 8
+      },
+      "estimatedValueUsd": "75000.00",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": "19500.00",
+      "evidenceArtifactCount": 28,
+      "linkedLedgerAmountUsd": "81000.00",
+      "openReconciliationCount": 0
+    },
+    {
+      "state": "processing",
+      "queueId": "1f6ee064-39bd-5ff5-8a84-915361ac3d74",
+      "boxCount": 3,
+      "createdAt": "2026-03-01T16:08:00.000Z",
+      "queueCode": "QUEUE-SIM-025",
+      "materialMix": "whole_converter",
+      "sampleCount": 0,
+      "converterCount": 7,
+      "exposedValueUsd": "75000.00",
+      "catalystWeightKg": "1604.000",
+      "ledgerEntryCount": 2,
+      "settlementStatus": null,
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [
+          "sample",
+          "settlement_started",
+          "finalization"
+        ],
+        "complete": 8
+      },
+      "estimatedValueUsd": "75000.00",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": "19500.00",
+      "evidenceArtifactCount": 14,
+      "linkedLedgerAmountUsd": "250750.00",
+      "openReconciliationCount": 0
+    },
+    {
+      "state": "processing",
+      "queueId": "78f987ea-d569-57bb-84db-902baea02974",
+      "boxCount": 3,
+      "createdAt": "2026-03-01T16:07:00.000Z",
+      "queueCode": "QUEUE-SIM-024",
+      "materialMix": "whole_converter",
+      "sampleCount": 0,
+      "converterCount": 13,
+      "exposedValueUsd": "75000.00",
+      "catalystWeightKg": "1542.000",
+      "ledgerEntryCount": 1,
+      "settlementStatus": null,
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [
+          "sample",
+          "settlement_started",
+          "finalization"
+        ],
+        "complete": 8
+      },
+      "estimatedValueUsd": "75000.00",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": "19500.00",
+      "evidenceArtifactCount": 26,
+      "linkedLedgerAmountUsd": "169000.00",
+      "openReconciliationCount": 0
+    },
+    {
+      "state": "processing",
+      "queueId": "b8ecd18d-f0e4-5be8-8b83-092c4b2b9659",
+      "boxCount": 3,
+      "createdAt": "2026-03-01T16:06:00.000Z",
+      "queueCode": "QUEUE-SIM-023",
+      "materialMix": "whole_converter",
+      "sampleCount": 0,
+      "converterCount": 14,
+      "exposedValueUsd": "75000.00",
+      "catalystWeightKg": "1548.000",
+      "ledgerEntryCount": 1,
+      "settlementStatus": null,
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [
+          "sample",
+          "settlement_started",
+          "finalization"
+        ],
+        "complete": 8
+      },
+      "estimatedValueUsd": "75000.00",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": "19500.00",
+      "evidenceArtifactCount": 28,
+      "linkedLedgerAmountUsd": "150500.00",
+      "openReconciliationCount": 0
+    },
+    {
+      "state": "processing",
+      "queueId": "a4c05590-df3a-5fb1-8fa1-77a02c618b2d",
+      "boxCount": 3,
+      "createdAt": "2026-03-01T16:05:00.000Z",
+      "queueCode": "QUEUE-SIM-022",
+      "materialMix": "whole_converter",
+      "sampleCount": 0,
+      "converterCount": 14,
+      "exposedValueUsd": "75000.00",
+      "catalystWeightKg": "1483.500",
+      "ledgerEntryCount": 2,
+      "settlementStatus": null,
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [
+          "sample",
+          "settlement_started",
+          "finalization"
+        ],
+        "complete": 8
+      },
+      "estimatedValueUsd": "75000.00",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": "19500.00",
+      "evidenceArtifactCount": 28,
+      "linkedLedgerAmountUsd": "320500.00",
+      "openReconciliationCount": 0
+    },
+    {
+      "state": "processing",
+      "queueId": "e4e35cac-d4a5-5a8c-8e5f-d8643ddee543",
+      "boxCount": 3,
+      "createdAt": "2026-03-01T16:04:00.000Z",
+      "queueCode": "QUEUE-SIM-021",
+      "materialMix": "whole_converter",
+      "sampleCount": 0,
+      "converterCount": 7,
+      "exposedValueUsd": "75000.00",
+      "catalystWeightKg": "1492.000",
+      "ledgerEntryCount": 2,
+      "settlementStatus": null,
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [
+          "sample",
+          "settlement_started",
+          "finalization"
+        ],
+        "complete": 8
+      },
+      "estimatedValueUsd": "75000.00",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": "19500.00",
+      "evidenceArtifactCount": 14,
+      "linkedLedgerAmountUsd": "127000.00",
+      "openReconciliationCount": 0
+    },
+    {
+      "state": "settled",
+      "queueId": "afec21ad-4e64-51fe-882e-a0efd0f371f4",
+      "boxCount": 1,
+      "createdAt": "2026-03-01T15:59:00.000Z",
+      "queueCode": "QUEUE-SIM-020",
+      "materialMix": "dust_recovery",
+      "sampleCount": 3,
+      "converterCount": 2,
+      "exposedValueUsd": "0.00",
+      "catalystWeightKg": null,
+      "ledgerEntryCount": 1,
+      "settlementStatus": "finalized",
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [],
+        "complete": 11
+      },
+      "estimatedValueUsd": "85000.00",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": null,
+      "evidenceArtifactCount": 4,
+      "linkedLedgerAmountUsd": "95000.00",
+      "openReconciliationCount": 1
+    },
+    {
+      "state": "settled",
+      "queueId": "b550d9a1-0581-5eeb-893a-f3204c7c6a80",
+      "boxCount": 1,
+      "createdAt": "2026-03-01T15:58:00.000Z",
+      "queueCode": "QUEUE-SIM-019",
+      "materialMix": "dust_recovery",
+      "sampleCount": 4,
+      "converterCount": 2,
+      "exposedValueUsd": "0.00",
+      "catalystWeightKg": null,
+      "ledgerEntryCount": 2,
+      "settlementStatus": "finalized",
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [],
+        "complete": 11
+      },
+      "estimatedValueUsd": "85000.00",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": null,
+      "evidenceArtifactCount": 4,
+      "linkedLedgerAmountUsd": "249500.00",
+      "openReconciliationCount": 0
+    },
+    {
+      "state": "settled",
+      "queueId": "8d1b9074-982e-5e9a-8dca-1074f67ea411",
+      "boxCount": 1,
+      "createdAt": "2026-03-01T15:57:00.000Z",
+      "queueCode": "QUEUE-SIM-018",
+      "materialMix": "dust_recovery",
+      "sampleCount": 3,
+      "converterCount": 3,
+      "exposedValueUsd": "0.00",
+      "catalystWeightKg": null,
+      "ledgerEntryCount": 1,
+      "settlementStatus": "finalized",
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [],
+        "complete": 11
+      },
+      "estimatedValueUsd": "85000.00",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": null,
+      "evidenceArtifactCount": 6,
+      "linkedLedgerAmountUsd": "58000.00",
+      "openReconciliationCount": 1
+    },
+    {
+      "state": "settled",
+      "queueId": "19ff9a60-4b2b-55e8-869f-7807b05b8e16",
+      "boxCount": 1,
+      "createdAt": "2026-03-01T15:56:00.000Z",
+      "queueCode": "QUEUE-SIM-017",
+      "materialMix": "dust_recovery",
+      "sampleCount": 2,
+      "converterCount": 3,
+      "exposedValueUsd": "0.00",
+      "catalystWeightKg": null,
+      "ledgerEntryCount": 1,
+      "settlementStatus": "finalized",
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [],
+        "complete": 11
+      },
+      "estimatedValueUsd": "85000.00",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": null,
+      "evidenceArtifactCount": 6,
+      "linkedLedgerAmountUsd": "39500.00",
+      "openReconciliationCount": 0
+    },
+    {
+      "state": "settled",
+      "queueId": "f27b50ea-4233-5b38-804c-fc034f7c52f9",
+      "boxCount": 1,
+      "createdAt": "2026-03-01T15:55:00.000Z",
+      "queueCode": "QUEUE-SIM-016",
+      "materialMix": "dust_recovery",
+      "sampleCount": 4,
+      "converterCount": 3,
+      "exposedValueUsd": "0.00",
+      "catalystWeightKg": null,
+      "ledgerEntryCount": 3,
+      "settlementStatus": "finalized",
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [],
+        "complete": 11
+      },
+      "estimatedValueUsd": "85000.00",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": null,
+      "evidenceArtifactCount": 6,
+      "linkedLedgerAmountUsd": "330500.00",
+      "openReconciliationCount": 0
+    },
+    {
+      "state": "settled",
+      "queueId": "9b80bf9a-b247-545c-8c78-99cbbc92405a",
+      "boxCount": 1,
+      "createdAt": "2026-03-01T15:54:00.000Z",
+      "queueCode": "QUEUE-SIM-015",
+      "materialMix": "dust_recovery",
+      "sampleCount": 3,
+      "converterCount": 2,
+      "exposedValueUsd": "0.00",
+      "catalystWeightKg": null,
+      "ledgerEntryCount": 1,
+      "settlementStatus": "finalized",
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [],
+        "complete": 11
+      },
+      "estimatedValueUsd": "85000.00",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": null,
+      "evidenceArtifactCount": 4,
+      "linkedLedgerAmountUsd": "143250.00",
+      "openReconciliationCount": 0
+    },
+    {
+      "state": "settled",
+      "queueId": "d8c2ea5a-4a08-5b9d-89ca-ce283cc27654",
+      "boxCount": 2,
+      "createdAt": "2026-03-01T15:53:00.000Z",
+      "queueCode": "QUEUE-SIM-014",
+      "materialMix": "dust_recovery",
+      "sampleCount": 3,
+      "converterCount": 4,
+      "exposedValueUsd": "0.00",
+      "catalystWeightKg": null,
+      "ledgerEntryCount": 1,
+      "settlementStatus": "finalized",
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [],
+        "complete": 11
+      },
+      "estimatedValueUsd": "96351.54",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": null,
+      "evidenceArtifactCount": 8,
+      "linkedLedgerAmountUsd": "124750.00",
+      "openReconciliationCount": 1
+    },
+    {
+      "state": "settled",
+      "queueId": "905060db-17ab-51bb-8ae5-338b8443027c",
+      "boxCount": 2,
+      "createdAt": "2026-03-01T15:52:00.000Z",
+      "queueCode": "QUEUE-SIM-013",
+      "materialMix": "dust_recovery",
+      "sampleCount": 3,
+      "converterCount": 5,
+      "exposedValueUsd": "0.00",
+      "catalystWeightKg": null,
+      "ledgerEntryCount": 2,
+      "settlementStatus": "finalized",
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [],
+        "complete": 11
+      },
+      "estimatedValueUsd": "99888.49",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": null,
+      "evidenceArtifactCount": 10,
+      "linkedLedgerAmountUsd": "248250.00",
+      "openReconciliationCount": 0
+    },
+    {
+      "state": "settled",
+      "queueId": "db97ca15-74e3-5232-8106-8458cd45690b",
+      "boxCount": 2,
+      "createdAt": "2026-03-01T15:51:00.000Z",
+      "queueCode": "QUEUE-SIM-012",
+      "materialMix": "dust_recovery",
+      "sampleCount": 3,
+      "converterCount": 5,
+      "exposedValueUsd": "0.00",
+      "catalystWeightKg": null,
+      "ledgerEntryCount": 1,
+      "settlementStatus": "finalized",
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [],
+        "complete": 11
+      },
+      "estimatedValueUsd": "102468.01",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": null,
+      "evidenceArtifactCount": 10,
+      "linkedLedgerAmountUsd": "87750.00",
+      "openReconciliationCount": 1
+    },
+    {
+      "state": "settled",
+      "queueId": "b491e199-b676-5b6d-80a3-6afb7fb9eb32",
+      "boxCount": 2,
+      "createdAt": "2026-03-01T15:50:00.000Z",
+      "queueCode": "QUEUE-SIM-011",
+      "materialMix": "dust_recovery",
+      "sampleCount": 3,
+      "converterCount": 5,
+      "exposedValueUsd": "0.00",
+      "catalystWeightKg": null,
+      "ledgerEntryCount": 2,
+      "settlementStatus": "finalized",
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [],
+        "complete": 11
+      },
+      "estimatedValueUsd": "99273.89",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": null,
+      "evidenceArtifactCount": 10,
+      "linkedLedgerAmountUsd": "78250.00",
+      "openReconciliationCount": 0
+    },
+    {
+      "state": "settled",
+      "queueId": "59aefe0f-9810-536b-8e02-68e35ca2fde2",
+      "boxCount": 2,
+      "createdAt": "2026-03-01T15:39:00.000Z",
+      "queueCode": "QUEUE-SIM-010",
+      "materialMix": "processed_catalyst",
+      "sampleCount": 4,
+      "converterCount": 3,
+      "exposedValueUsd": "0.00",
+      "catalystWeightKg": null,
+      "ledgerEntryCount": 2,
+      "settlementStatus": "finalized",
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [],
+        "complete": 11
+      },
+      "estimatedValueUsd": "293909.66",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": null,
+      "evidenceArtifactCount": 6,
+      "linkedLedgerAmountUsd": "177250.00",
+      "openReconciliationCount": 1
+    },
+    {
+      "state": "settled",
+      "queueId": "dcb83fe7-0a23-50bd-8f52-5d6f895f0e83",
+      "boxCount": 2,
+      "createdAt": "2026-03-01T15:38:00.000Z",
+      "queueCode": "QUEUE-SIM-009",
+      "materialMix": "processed_catalyst",
+      "sampleCount": 2,
+      "converterCount": 3,
+      "exposedValueUsd": "0.00",
+      "catalystWeightKg": null,
+      "ledgerEntryCount": 1,
+      "settlementStatus": "finalized",
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [],
+        "complete": 11
+      },
+      "estimatedValueUsd": "325378.53",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": null,
+      "evidenceArtifactCount": 6,
+      "linkedLedgerAmountUsd": "32250.00",
+      "openReconciliationCount": 0
+    },
+    {
+      "state": "settled",
+      "queueId": "6f53588b-1f07-54f6-86b8-1047843d8865",
+      "boxCount": 2,
+      "createdAt": "2026-03-01T15:37:00.000Z",
+      "queueCode": "QUEUE-SIM-008",
+      "materialMix": "processed_catalyst",
+      "sampleCount": 3,
+      "converterCount": 3,
+      "exposedValueUsd": "0.00",
+      "catalystWeightKg": null,
+      "ledgerEntryCount": 3,
+      "settlementStatus": "finalized",
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [],
+        "complete": 11
+      },
+      "estimatedValueUsd": "268158.07",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": null,
+      "evidenceArtifactCount": 6,
+      "linkedLedgerAmountUsd": "333000.00",
+      "openReconciliationCount": 1
+    },
+    {
+      "state": "settled",
+      "queueId": "acdf4837-1abf-504e-8f24-52c03e3d511f",
+      "boxCount": 2,
+      "createdAt": "2026-03-01T15:36:00.000Z",
+      "queueCode": "QUEUE-SIM-007",
+      "materialMix": "processed_catalyst",
+      "sampleCount": 4,
+      "converterCount": 3,
+      "exposedValueUsd": "0.00",
+      "catalystWeightKg": null,
+      "ledgerEntryCount": 3,
+      "settlementStatus": "finalized",
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [],
+        "complete": 11
+      },
+      "estimatedValueUsd": "267183.51",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": null,
+      "evidenceArtifactCount": 6,
+      "linkedLedgerAmountUsd": "382250.00",
+      "openReconciliationCount": 0
+    },
+    {
+      "state": "settled",
+      "queueId": "2a771332-22a0-5336-822d-f76134356904",
+      "boxCount": 2,
+      "createdAt": "2026-03-01T15:35:00.000Z",
+      "queueCode": "QUEUE-SIM-006",
+      "materialMix": "processed_catalyst",
+      "sampleCount": 3,
+      "converterCount": 3,
+      "exposedValueUsd": "0.00",
+      "catalystWeightKg": null,
+      "ledgerEntryCount": 3,
+      "settlementStatus": "finalized",
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [],
+        "complete": 11
+      },
+      "estimatedValueUsd": "285139.14",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": null,
+      "evidenceArtifactCount": 6,
+      "linkedLedgerAmountUsd": "241000.00",
+      "openReconciliationCount": 0
+    },
+    {
+      "state": "settled",
+      "queueId": "bc4b145c-33df-536a-8971-563bd5a344d6",
+      "boxCount": 2,
+      "createdAt": "2026-03-01T15:34:00.000Z",
+      "queueCode": "QUEUE-SIM-005",
+      "materialMix": "processed_catalyst",
+      "sampleCount": 2,
+      "converterCount": 3,
+      "exposedValueUsd": "0.00",
+      "catalystWeightKg": null,
+      "ledgerEntryCount": 2,
+      "settlementStatus": "finalized",
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [],
+        "complete": 11
+      },
+      "estimatedValueUsd": "306004.17",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": null,
+      "evidenceArtifactCount": 6,
+      "linkedLedgerAmountUsd": "197250.00",
+      "openReconciliationCount": 0
+    },
+    {
+      "state": "settled",
+      "queueId": "2b798869-7293-5ad2-8ba6-cbfc6d6d279b",
+      "boxCount": 2,
+      "createdAt": "2026-03-01T15:33:00.000Z",
+      "queueCode": "QUEUE-SIM-004",
+      "materialMix": "processed_catalyst",
+      "sampleCount": 4,
+      "converterCount": 3,
+      "exposedValueUsd": "0.00",
+      "catalystWeightKg": null,
+      "ledgerEntryCount": 3,
+      "settlementStatus": "finalized",
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [],
+        "complete": 11
+      },
+      "estimatedValueUsd": "293909.66",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": null,
+      "evidenceArtifactCount": 6,
+      "linkedLedgerAmountUsd": "255750.00",
+      "openReconciliationCount": 1
+    },
+    {
+      "state": "settled",
+      "queueId": "c4c67974-82f5-518d-887b-6ec5d7247ba8",
+      "boxCount": 2,
+      "createdAt": "2026-03-01T15:32:00.000Z",
+      "queueCode": "QUEUE-SIM-003",
+      "materialMix": "processed_catalyst",
+      "sampleCount": 3,
+      "converterCount": 3,
+      "exposedValueUsd": "0.00",
+      "catalystWeightKg": null,
+      "ledgerEntryCount": 3,
+      "settlementStatus": "finalized",
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [],
+        "complete": 11
+      },
+      "estimatedValueUsd": "293781.78",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": null,
+      "evidenceArtifactCount": 6,
+      "linkedLedgerAmountUsd": "145750.00",
+      "openReconciliationCount": 0
+    },
+    {
+      "state": "settled",
+      "queueId": "4a98e527-f78d-5331-8b19-90b2fc17d9a3",
+      "boxCount": 2,
+      "createdAt": "2026-03-01T15:31:00.000Z",
+      "queueCode": "QUEUE-SIM-002",
+      "materialMix": "processed_catalyst",
+      "sampleCount": 3,
+      "converterCount": 3,
+      "exposedValueUsd": "0.00",
+      "catalystWeightKg": null,
+      "ledgerEntryCount": 2,
+      "settlementStatus": "finalized",
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [],
+        "complete": 11
+      },
+      "estimatedValueUsd": "268158.07",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": null,
+      "evidenceArtifactCount": 6,
+      "linkedLedgerAmountUsd": "227000.00",
+      "openReconciliationCount": 1
+    },
+    {
+      "state": "settled",
+      "queueId": "9b8d51d0-3d73-5bab-8062-152fda6e9a7f",
+      "boxCount": 2,
+      "createdAt": "2026-03-01T15:30:00.000Z",
+      "queueCode": "QUEUE-SIM-001",
+      "materialMix": "processed_catalyst",
+      "sampleCount": 3,
+      "converterCount": 3,
+      "exposedValueUsd": "0.00",
+      "catalystWeightKg": null,
+      "ledgerEntryCount": 4,
+      "settlementStatus": "finalized",
+      "chainCompleteness": {
+        "total": 11,
+        "missing": [],
+        "complete": 11
+      },
+      "estimatedValueUsd": "277981.95",
+      "lockedForProcessing": true,
+      "possibleVarianceUsd": null,
+      "evidenceArtifactCount": 6,
+      "linkedLedgerAmountUsd": "274500.00",
+      "openReconciliationCount": 0
     }
   ],
   "shipments": [
     {
+      "state": "in_transit",
+      "boxCount": 3,
+      "departedAt": "2026-03-01T18:40:00.000Z",
+      "receivedAt": null,
+      "shipmentId": "82851226-713f-5c26-8c2b-b517e60b795c",
+      "originSiteId": "ae754c35-9935-5d08-8c48-53bdecce2e2c",
+      "shipmentCode": "SHIP-SIM-021",
+      "destinationSiteId": "1f34f29d-e7dc-5a4b-8cc9-2921a4e90e59"
+    },
+    {
       "state": "received",
-      "boxCount": 1,
-      "departedAt": "2026-04-23T20:44:52.691Z",
-      "receivedAt": "2026-04-23T20:44:52.709Z",
-      "shipmentId": "b62f544d-1eee-438d-b3ed-b46178132cbe",
-      "originSiteId": "52a2513e-309d-45fb-bcd8-d3b42a4176a0",
-      "shipmentCode": "SHIP-SIM-01",
-      "destinationSiteId": "0d58e6b9-9c41-4806-bb56-0b8a14c5e70f"
+      "boxCount": 3,
+      "departedAt": "2026-03-01T18:39:00.000Z",
+      "receivedAt": "2026-03-01T19:39:00.000Z",
+      "shipmentId": "150dd51e-dc3e-5558-8770-9709a55eb11c",
+      "originSiteId": "d44e0a7d-9582-5187-8cbb-ed85df2d4697",
+      "shipmentCode": "SHIP-SIM-020",
+      "destinationSiteId": "1f34f29d-e7dc-5a4b-8cc9-2921a4e90e59"
+    },
+    {
+      "state": "received",
+      "boxCount": 2,
+      "departedAt": "2026-03-01T18:38:00.000Z",
+      "receivedAt": "2026-03-01T19:38:00.000Z",
+      "shipmentId": "e6209a19-6cb0-58b8-87e9-bbd58ce60b4a",
+      "originSiteId": "093fe653-93f0-5015-8854-5fe22cf705be",
+      "shipmentCode": "SHIP-SIM-019",
+      "destinationSiteId": "1f34f29d-e7dc-5a4b-8cc9-2921a4e90e59"
+    },
+    {
+      "state": "received",
+      "boxCount": 4,
+      "departedAt": "2026-03-01T18:37:00.000Z",
+      "receivedAt": "2026-03-01T19:37:00.000Z",
+      "shipmentId": "dfb86647-e280-5dcb-80b9-5a70daeaa178",
+      "originSiteId": "eff45612-4d02-5bc1-815b-c9e7242e02ce",
+      "shipmentCode": "SHIP-SIM-018",
+      "destinationSiteId": "1f34f29d-e7dc-5a4b-8cc9-2921a4e90e59"
+    },
+    {
+      "state": "in_transit",
+      "boxCount": 3,
+      "departedAt": "2026-03-01T18:36:00.000Z",
+      "receivedAt": null,
+      "shipmentId": "8c992550-3d0f-51a9-86a2-555474e28204",
+      "originSiteId": "ae754c35-9935-5d08-8c48-53bdecce2e2c",
+      "shipmentCode": "SHIP-SIM-017",
+      "destinationSiteId": "1f34f29d-e7dc-5a4b-8cc9-2921a4e90e59"
+    },
+    {
+      "state": "received",
+      "boxCount": 2,
+      "departedAt": "2026-03-01T18:35:00.000Z",
+      "receivedAt": "2026-03-01T19:35:00.000Z",
+      "shipmentId": "36cdb445-4473-53a6-808d-cc31ba75c3aa",
+      "originSiteId": "d44e0a7d-9582-5187-8cbb-ed85df2d4697",
+      "shipmentCode": "SHIP-SIM-016",
+      "destinationSiteId": "1f34f29d-e7dc-5a4b-8cc9-2921a4e90e59"
+    },
+    {
+      "state": "received",
+      "boxCount": 4,
+      "departedAt": "2026-03-01T18:34:00.000Z",
+      "receivedAt": "2026-03-01T19:34:00.000Z",
+      "shipmentId": "f89ce7ac-a6ab-54ee-8626-5be2bb051d7a",
+      "originSiteId": "093fe653-93f0-5015-8854-5fe22cf705be",
+      "shipmentCode": "SHIP-SIM-015",
+      "destinationSiteId": "1f34f29d-e7dc-5a4b-8cc9-2921a4e90e59"
+    },
+    {
+      "state": "received",
+      "boxCount": 3,
+      "departedAt": "2026-03-01T18:33:00.000Z",
+      "receivedAt": "2026-03-01T19:33:00.000Z",
+      "shipmentId": "5a99c6de-e306-5a20-8670-06c116ffa696",
+      "originSiteId": "eff45612-4d02-5bc1-815b-c9e7242e02ce",
+      "shipmentCode": "SHIP-SIM-014",
+      "destinationSiteId": "1f34f29d-e7dc-5a4b-8cc9-2921a4e90e59"
+    },
+    {
+      "state": "in_transit",
+      "boxCount": 2,
+      "departedAt": "2026-03-01T18:32:00.000Z",
+      "receivedAt": null,
+      "shipmentId": "0e80646d-cd4b-5e9e-8495-225949b52ed5",
+      "originSiteId": "ae754c35-9935-5d08-8c48-53bdecce2e2c",
+      "shipmentCode": "SHIP-SIM-013",
+      "destinationSiteId": "1f34f29d-e7dc-5a4b-8cc9-2921a4e90e59"
+    },
+    {
+      "state": "received",
+      "boxCount": 4,
+      "departedAt": "2026-03-01T18:31:00.000Z",
+      "receivedAt": "2026-03-01T19:31:00.000Z",
+      "shipmentId": "d7300612-d80b-5142-8543-fcf7bdae7026",
+      "originSiteId": "d44e0a7d-9582-5187-8cbb-ed85df2d4697",
+      "shipmentCode": "SHIP-SIM-012",
+      "destinationSiteId": "1f34f29d-e7dc-5a4b-8cc9-2921a4e90e59"
+    },
+    {
+      "state": "received",
+      "boxCount": 3,
+      "departedAt": "2026-03-01T18:30:00.000Z",
+      "receivedAt": "2026-03-01T19:30:00.000Z",
+      "shipmentId": "603e4be9-bdc1-5c54-8af5-c5cdb515544c",
+      "originSiteId": "093fe653-93f0-5015-8854-5fe22cf705be",
+      "shipmentCode": "SHIP-SIM-011",
+      "destinationSiteId": "1f34f29d-e7dc-5a4b-8cc9-2921a4e90e59"
+    },
+    {
+      "state": "received",
+      "boxCount": 2,
+      "departedAt": "2026-03-01T18:29:00.000Z",
+      "receivedAt": "2026-03-01T19:29:00.000Z",
+      "shipmentId": "507344dc-3951-532f-8bc8-df502b82bc46",
+      "originSiteId": "eff45612-4d02-5bc1-815b-c9e7242e02ce",
+      "shipmentCode": "SHIP-SIM-010",
+      "destinationSiteId": "1f34f29d-e7dc-5a4b-8cc9-2921a4e90e59"
+    },
+    {
+      "state": "received",
+      "boxCount": 4,
+      "departedAt": "2026-03-01T18:28:00.000Z",
+      "receivedAt": "2026-03-01T19:28:00.000Z",
+      "shipmentId": "d9e5c2eb-3fe2-5ea8-8604-9098dd4db8a1",
+      "originSiteId": "ae754c35-9935-5d08-8c48-53bdecce2e2c",
+      "shipmentCode": "SHIP-SIM-009",
+      "destinationSiteId": "1f34f29d-e7dc-5a4b-8cc9-2921a4e90e59"
+    },
+    {
+      "state": "received",
+      "boxCount": 3,
+      "departedAt": "2026-03-01T18:27:00.000Z",
+      "receivedAt": "2026-03-01T19:27:00.000Z",
+      "shipmentId": "4135cce8-fe62-55de-8a1f-d613f9ddf197",
+      "originSiteId": "d44e0a7d-9582-5187-8cbb-ed85df2d4697",
+      "shipmentCode": "SHIP-SIM-008",
+      "destinationSiteId": "1f34f29d-e7dc-5a4b-8cc9-2921a4e90e59"
+    },
+    {
+      "state": "received",
+      "boxCount": 2,
+      "departedAt": "2026-03-01T18:26:00.000Z",
+      "receivedAt": "2026-03-01T19:26:00.000Z",
+      "shipmentId": "0091e52e-c215-5029-8f3f-f25e6b5fd0df",
+      "originSiteId": "093fe653-93f0-5015-8854-5fe22cf705be",
+      "shipmentCode": "SHIP-SIM-007",
+      "destinationSiteId": "1f34f29d-e7dc-5a4b-8cc9-2921a4e90e59"
+    },
+    {
+      "state": "received",
+      "boxCount": 4,
+      "departedAt": "2026-03-01T18:25:00.000Z",
+      "receivedAt": "2026-03-01T19:25:00.000Z",
+      "shipmentId": "06db8308-d394-5ed8-8fd9-b8f8433dd80f",
+      "originSiteId": "eff45612-4d02-5bc1-815b-c9e7242e02ce",
+      "shipmentCode": "SHIP-SIM-006",
+      "destinationSiteId": "1f34f29d-e7dc-5a4b-8cc9-2921a4e90e59"
+    },
+    {
+      "state": "received",
+      "boxCount": 3,
+      "departedAt": "2026-03-01T18:24:00.000Z",
+      "receivedAt": "2026-03-01T19:24:00.000Z",
+      "shipmentId": "9a8595ab-81ee-5c5a-8cdc-ecf31cde8ecf",
+      "originSiteId": "ae754c35-9935-5d08-8c48-53bdecce2e2c",
+      "shipmentCode": "SHIP-SIM-005",
+      "destinationSiteId": "1f34f29d-e7dc-5a4b-8cc9-2921a4e90e59"
+    },
+    {
+      "state": "received",
+      "boxCount": 2,
+      "departedAt": "2026-03-01T18:23:00.000Z",
+      "receivedAt": "2026-03-01T19:23:00.000Z",
+      "shipmentId": "3c6a10e0-9911-5243-8769-41f70c3d2e8f",
+      "originSiteId": "d44e0a7d-9582-5187-8cbb-ed85df2d4697",
+      "shipmentCode": "SHIP-SIM-004",
+      "destinationSiteId": "1f34f29d-e7dc-5a4b-8cc9-2921a4e90e59"
+    },
+    {
+      "state": "received",
+      "boxCount": 4,
+      "departedAt": "2026-03-01T18:22:00.000Z",
+      "receivedAt": "2026-03-01T19:22:00.000Z",
+      "shipmentId": "0752c735-1adc-5899-85a3-678079eb85f8",
+      "originSiteId": "093fe653-93f0-5015-8854-5fe22cf705be",
+      "shipmentCode": "SHIP-SIM-003",
+      "destinationSiteId": "1f34f29d-e7dc-5a4b-8cc9-2921a4e90e59"
+    },
+    {
+      "state": "received",
+      "boxCount": 3,
+      "departedAt": "2026-03-01T18:21:00.000Z",
+      "receivedAt": "2026-03-01T19:21:00.000Z",
+      "shipmentId": "6e6cd685-4ae0-58a8-8b7c-bbbfbc7804f6",
+      "originSiteId": "eff45612-4d02-5bc1-815b-c9e7242e02ce",
+      "shipmentCode": "SHIP-SIM-002",
+      "destinationSiteId": "1f34f29d-e7dc-5a4b-8cc9-2921a4e90e59"
+    },
+    {
+      "state": "received",
+      "boxCount": 2,
+      "departedAt": "2026-03-01T18:20:00.000Z",
+      "receivedAt": "2026-03-01T19:20:00.000Z",
+      "shipmentId": "db8fe70e-fce4-5018-842b-67a9b60df8a5",
+      "originSiteId": "ae754c35-9935-5d08-8c48-53bdecce2e2c",
+      "shipmentCode": "SHIP-SIM-001",
+      "destinationSiteId": "1f34f29d-e7dc-5a4b-8cc9-2921a4e90e59"
     }
   ]
 }
