@@ -30,7 +30,7 @@
         "playwright:install": "playwright install chromium"
     },
     "devDependencies": {
-        "@eslint/js": "^9.39.1",
+        "@eslint/js": "^10.0.1",
         "@types/node": "^22.20.0",
         "@types/pg": "^8.11.11",
         "drizzle-kit": "^0.31.10",
