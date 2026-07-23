@@ -1,14 +1,426 @@
 [
   {
-    "status": "finalized",
-    "scopeId": "SETTLEMENT-SIM-01",
-    "createdAt": "2026-04-23T20:44:52.790Z",
+    "status": "draft",
+    "scopeId": "QUEUE-SIM-034",
+    "createdAt": "2026-03-02T14:59:00.000Z",
     "scopeType": "queue",
-    "finalizedAt": "2026-04-23T20:44:52.813Z",
-    "varianceUsd": "1038.41",
+    "finalizedAt": null,
+    "varianceUsd": null,
+    "invoiceCount": 0,
+    "settlementId": "c4631770-18b1-5359-80a8-6a311116813e",
+    "finalValueUsd": null,
+    "chainCompleteness": {
+      "total": 11,
+      "missing": [
+        "sample",
+        "hedge",
+        "finalization"
+      ],
+      "complete": 8
+    },
+    "estimatedValueUsd": "75000.00"
+  },
+  {
+    "status": "draft",
+    "scopeId": "QUEUE-SIM-033",
+    "createdAt": "2026-03-02T14:56:00.000Z",
+    "scopeType": "queue",
+    "finalizedAt": null,
+    "varianceUsd": null,
+    "invoiceCount": 0,
+    "settlementId": "d2929414-0c51-5a5d-887b-f132fa514e27",
+    "finalValueUsd": null,
+    "chainCompleteness": {
+      "total": 11,
+      "missing": [
+        "sample",
+        "hedge",
+        "finalization"
+      ],
+      "complete": 8
+    },
+    "estimatedValueUsd": "75000.00"
+  },
+  {
+    "status": "draft",
+    "scopeId": "QUEUE-SIM-032",
+    "createdAt": "2026-03-02T14:53:00.000Z",
+    "scopeType": "queue",
+    "finalizedAt": null,
+    "varianceUsd": null,
+    "invoiceCount": 0,
+    "settlementId": "ac3a07c1-80ac-5bd2-836e-47a1e7ddee79",
+    "finalValueUsd": null,
+    "chainCompleteness": {
+      "total": 11,
+      "missing": [
+        "sample",
+        "hedge",
+        "finalization"
+      ],
+      "complete": 8
+    },
+    "estimatedValueUsd": "75000.00"
+  },
+  {
+    "status": "finalized",
+    "scopeId": "QUEUE-SIM-020",
+    "createdAt": "2026-03-02T14:52:00.000Z",
+    "scopeType": "queue",
+    "finalizedAt": "2026-03-02T14:59:00.000Z",
+    "varianceUsd": "1530.00",
     "invoiceCount": 1,
-    "settlementId": "f0a1378b-ebfd-4b89-b8aa-ed8370986666",
-    "finalValueUsd": "2038.41",
-    "estimatedValueUsd": "1000.00"
+    "settlementId": "42f9514d-c988-5804-8ee1-4700c960047e",
+    "finalValueUsd": "86530.00",
+    "chainCompleteness": {
+      "total": 11,
+      "missing": [],
+      "complete": 11
+    },
+    "estimatedValueUsd": "85000.00"
+  },
+  {
+    "status": "draft",
+    "scopeId": "QUEUE-SIM-031",
+    "createdAt": "2026-03-02T14:50:00.000Z",
+    "scopeType": "queue",
+    "finalizedAt": null,
+    "varianceUsd": null,
+    "invoiceCount": 0,
+    "settlementId": "a9f4504a-0102-5036-8171-312dc4239f9f",
+    "finalValueUsd": null,
+    "chainCompleteness": {
+      "total": 11,
+      "missing": [
+        "sample",
+        "hedge",
+        "finalization"
+      ],
+      "complete": 8
+    },
+    "estimatedValueUsd": "75000.00"
+  },
+  {
+    "status": "finalized",
+    "scopeId": "QUEUE-SIM-019",
+    "createdAt": "2026-03-02T14:44:00.000Z",
+    "scopeType": "queue",
+    "finalizedAt": "2026-03-02T14:51:00.000Z",
+    "varianceUsd": "510.00",
+    "invoiceCount": 1,
+    "settlementId": "78741abc-a888-5558-8722-b235f4d67c92",
+    "finalValueUsd": "85510.00",
+    "chainCompleteness": {
+      "total": 11,
+      "missing": [],
+      "complete": 11
+    },
+    "estimatedValueUsd": "85000.00"
+  },
+  {
+    "status": "finalized",
+    "scopeId": "QUEUE-SIM-018",
+    "createdAt": "2026-03-02T14:36:00.000Z",
+    "scopeType": "queue",
+    "finalizedAt": "2026-03-02T14:43:00.000Z",
+    "varianceUsd": "-510.00",
+    "invoiceCount": 1,
+    "settlementId": "2fb6d661-5b4f-5e57-8998-cb039c255e06",
+    "finalValueUsd": "84490.00",
+    "chainCompleteness": {
+      "total": 11,
+      "missing": [],
+      "complete": 11
+    },
+    "estimatedValueUsd": "85000.00"
+  },
+  {
+    "status": "finalized",
+    "scopeId": "QUEUE-SIM-017",
+    "createdAt": "2026-03-02T14:28:00.000Z",
+    "scopeType": "queue",
+    "finalizedAt": "2026-03-02T14:35:00.000Z",
+    "varianceUsd": "-1530.00",
+    "invoiceCount": 1,
+    "settlementId": "16135761-1e45-5742-89d8-2066f48330ff",
+    "finalValueUsd": "83470.00",
+    "chainCompleteness": {
+      "total": 11,
+      "missing": [],
+      "complete": 11
+    },
+    "estimatedValueUsd": "85000.00"
+  },
+  {
+    "status": "finalized",
+    "scopeId": "QUEUE-SIM-016",
+    "createdAt": "2026-03-02T14:20:00.000Z",
+    "scopeType": "queue",
+    "finalizedAt": "2026-03-02T14:27:00.000Z",
+    "varianceUsd": "-1870.00",
+    "invoiceCount": 1,
+    "settlementId": "48e168a5-511a-5db5-854a-a81ccc10f1b7",
+    "finalValueUsd": "83130.00",
+    "chainCompleteness": {
+      "total": 11,
+      "missing": [],
+      "complete": 11
+    },
+    "estimatedValueUsd": "85000.00"
+  },
+  {
+    "status": "finalized",
+    "scopeId": "QUEUE-SIM-015",
+    "createdAt": "2026-03-02T14:12:00.000Z",
+    "scopeType": "queue",
+    "finalizedAt": "2026-03-02T14:19:00.000Z",
+    "varianceUsd": "6035.00",
+    "invoiceCount": 1,
+    "settlementId": "91842ec0-da3e-590f-8899-6f96c7397bf5",
+    "finalValueUsd": "91035.00",
+    "chainCompleteness": {
+      "total": 11,
+      "missing": [],
+      "complete": 11
+    },
+    "estimatedValueUsd": "85000.00"
+  },
+  {
+    "status": "finalized",
+    "scopeId": "QUEUE-SIM-014",
+    "createdAt": "2026-03-02T14:04:00.000Z",
+    "scopeType": "queue",
+    "finalizedAt": "2026-03-02T14:11:00.000Z",
+    "varianceUsd": "-578.11",
+    "invoiceCount": 1,
+    "settlementId": "c9094323-9d17-50bb-8a35-347be3b8cb5f",
+    "finalValueUsd": "95773.43",
+    "chainCompleteness": {
+      "total": 11,
+      "missing": [],
+      "complete": 11
+    },
+    "estimatedValueUsd": "96351.54"
+  },
+  {
+    "status": "finalized",
+    "scopeId": "QUEUE-SIM-013",
+    "createdAt": "2026-03-02T13:56:00.000Z",
+    "scopeType": "queue",
+    "finalizedAt": "2026-03-02T14:03:00.000Z",
+    "varianceUsd": "-1797.99",
+    "invoiceCount": 1,
+    "settlementId": "a37ff1a9-aed9-5a34-8ae4-21ea45b1a21b",
+    "finalValueUsd": "98090.50",
+    "chainCompleteness": {
+      "total": 11,
+      "missing": [],
+      "complete": 11
+    },
+    "estimatedValueUsd": "99888.49"
+  },
+  {
+    "status": "finalized",
+    "scopeId": "QUEUE-SIM-012",
+    "createdAt": "2026-03-02T13:48:00.000Z",
+    "scopeType": "queue",
+    "finalizedAt": "2026-03-02T13:55:00.000Z",
+    "varianceUsd": "1844.42",
+    "invoiceCount": 1,
+    "settlementId": "0bf85a62-a4f9-58b1-8b08-803abe1fd8c9",
+    "finalValueUsd": "104312.43",
+    "chainCompleteness": {
+      "total": 11,
+      "missing": [],
+      "complete": 11
+    },
+    "estimatedValueUsd": "102468.01"
+  },
+  {
+    "status": "finalized",
+    "scopeId": "QUEUE-SIM-011",
+    "createdAt": "2026-03-02T13:40:00.000Z",
+    "scopeType": "queue",
+    "finalizedAt": "2026-03-02T13:47:00.000Z",
+    "varianceUsd": "-3375.31",
+    "invoiceCount": 1,
+    "settlementId": "79bee8f6-6406-55d8-83e7-d89365f4ccd7",
+    "finalValueUsd": "95898.58",
+    "chainCompleteness": {
+      "total": 11,
+      "missing": [],
+      "complete": 11
+    },
+    "estimatedValueUsd": "99273.89"
+  },
+  {
+    "status": "finalized",
+    "scopeId": "QUEUE-SIM-010",
+    "createdAt": "2026-03-02T13:32:00.000Z",
+    "scopeType": "queue",
+    "finalizedAt": "2026-03-02T13:39:00.000Z",
+    "varianceUsd": "-1763.46",
+    "invoiceCount": 1,
+    "settlementId": "408a0e31-5c5b-5876-8d3c-4c3259710737",
+    "finalValueUsd": "292146.20",
+    "chainCompleteness": {
+      "total": 11,
+      "missing": [],
+      "complete": 11
+    },
+    "estimatedValueUsd": "293909.66"
+  },
+  {
+    "status": "finalized",
+    "scopeId": "QUEUE-SIM-009",
+    "createdAt": "2026-03-02T13:24:00.000Z",
+    "scopeType": "queue",
+    "finalizedAt": "2026-03-02T13:31:00.000Z",
+    "varianceUsd": "-5856.81",
+    "invoiceCount": 1,
+    "settlementId": "5d48b67e-48ba-5eb6-8139-060051847ba9",
+    "finalValueUsd": "319521.72",
+    "chainCompleteness": {
+      "total": 11,
+      "missing": [],
+      "complete": 11
+    },
+    "estimatedValueUsd": "325378.53"
+  },
+  {
+    "status": "finalized",
+    "scopeId": "QUEUE-SIM-008",
+    "createdAt": "2026-03-02T13:16:00.000Z",
+    "scopeType": "queue",
+    "finalizedAt": "2026-03-02T13:23:00.000Z",
+    "varianceUsd": "22257.12",
+    "invoiceCount": 1,
+    "settlementId": "2150792e-d392-5ddc-8cce-1cff64778bb7",
+    "finalValueUsd": "290415.19",
+    "chainCompleteness": {
+      "total": 11,
+      "missing": [],
+      "complete": 11
+    },
+    "estimatedValueUsd": "268158.07"
+  },
+  {
+    "status": "finalized",
+    "scopeId": "QUEUE-SIM-007",
+    "createdAt": "2026-03-02T13:08:00.000Z",
+    "scopeType": "queue",
+    "finalizedAt": "2026-03-02T13:15:00.000Z",
+    "varianceUsd": "1603.10",
+    "invoiceCount": 1,
+    "settlementId": "ef4500e5-7c2b-5e54-818d-29b275f32f54",
+    "finalValueUsd": "268786.61",
+    "chainCompleteness": {
+      "total": 11,
+      "missing": [],
+      "complete": 11
+    },
+    "estimatedValueUsd": "267183.51"
+  },
+  {
+    "status": "finalized",
+    "scopeId": "QUEUE-SIM-006",
+    "createdAt": "2026-03-02T13:00:00.000Z",
+    "scopeType": "queue",
+    "finalizedAt": "2026-03-02T13:07:00.000Z",
+    "varianceUsd": "-13116.40",
+    "invoiceCount": 1,
+    "settlementId": "28f799a1-e3e2-5537-8e1b-b20f07fad299",
+    "finalValueUsd": "272022.74",
+    "chainCompleteness": {
+      "total": 11,
+      "missing": [],
+      "complete": 11
+    },
+    "estimatedValueUsd": "285139.14"
+  },
+  {
+    "status": "finalized",
+    "scopeId": "QUEUE-SIM-005",
+    "createdAt": "2026-03-02T12:52:00.000Z",
+    "scopeType": "queue",
+    "finalizedAt": "2026-03-02T12:59:00.000Z",
+    "varianceUsd": "-5508.08",
+    "invoiceCount": 1,
+    "settlementId": "c2e6da2f-3dc4-5b0d-8b44-538521d43eef",
+    "finalValueUsd": "300496.09",
+    "chainCompleteness": {
+      "total": 11,
+      "missing": [],
+      "complete": 11
+    },
+    "estimatedValueUsd": "306004.17"
+  },
+  {
+    "status": "finalized",
+    "scopeId": "QUEUE-SIM-004",
+    "createdAt": "2026-03-02T12:44:00.000Z",
+    "scopeType": "queue",
+    "finalizedAt": "2026-03-02T12:51:00.000Z",
+    "varianceUsd": "5290.37",
+    "invoiceCount": 1,
+    "settlementId": "3f3b6b69-d349-5f95-8e9d-abf2a75aa7a2",
+    "finalValueUsd": "299200.03",
+    "chainCompleteness": {
+      "total": 11,
+      "missing": [],
+      "complete": 11
+    },
+    "estimatedValueUsd": "293909.66"
+  },
+  {
+    "status": "finalized",
+    "scopeId": "QUEUE-SIM-003",
+    "createdAt": "2026-03-02T12:36:00.000Z",
+    "scopeType": "queue",
+    "finalizedAt": "2026-03-02T12:43:00.000Z",
+    "varianceUsd": "1762.69",
+    "invoiceCount": 1,
+    "settlementId": "09f98a02-72de-572a-8aea-b9d030449b8c",
+    "finalValueUsd": "295544.47",
+    "chainCompleteness": {
+      "total": 11,
+      "missing": [],
+      "complete": 11
+    },
+    "estimatedValueUsd": "293781.78"
+  },
+  {
+    "status": "finalized",
+    "scopeId": "QUEUE-SIM-002",
+    "createdAt": "2026-03-02T12:28:00.000Z",
+    "scopeType": "queue",
+    "finalizedAt": "2026-03-02T12:35:00.000Z",
+    "varianceUsd": "-1608.95",
+    "invoiceCount": 1,
+    "settlementId": "ccdd0b62-2959-51dd-8cce-c9a51cd35f67",
+    "finalValueUsd": "266549.12",
+    "chainCompleteness": {
+      "total": 11,
+      "missing": [],
+      "complete": 11
+    },
+    "estimatedValueUsd": "268158.07"
+  },
+  {
+    "status": "finalized",
+    "scopeId": "QUEUE-SIM-001",
+    "createdAt": "2026-03-02T12:20:00.000Z",
+    "scopeType": "queue",
+    "finalizedAt": "2026-03-02T12:27:00.000Z",
+    "varianceUsd": "1945.87",
+    "invoiceCount": 1,
+    "settlementId": "ebd21616-97ad-52fa-88fc-df429f3123a5",
+    "finalValueUsd": "279927.82",
+    "chainCompleteness": {
+      "total": 11,
+      "missing": [],
+      "complete": 11
+    },
+    "estimatedValueUsd": "277981.95"
   }
 ]

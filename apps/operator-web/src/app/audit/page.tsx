@@ -67,6 +67,7 @@ export default async function AuditPage() {
                 "Artifacts",
                 "Converter Links",
                 "Custody Links",
+                "Sample Links",
                 "Ledger Links",
                 "GPS",
                 "Captured At",
@@ -82,9 +83,12 @@ export default async function AuditPage() {
                   <td className="px-3 py-2">{row.artifactCount}</td>
                   <td className="px-3 py-2">{row.converterLinks}</td>
                   <td className="px-3 py-2">{row.custodyEventLinks}</td>
+                  <td className="px-3 py-2">{row.sampleLinks}</td>
                   <td className="px-3 py-2">{row.ledgerLinks}</td>
                   <td className="px-3 py-2 font-mono">
-                    {row.gpsLat}, {row.gpsLon} ({row.gpsAccuracyM}m)
+                    {row.gpsLat && row.gpsLon
+                      ? `${row.gpsLat}, ${row.gpsLon}${row.gpsAccuracyM ? ` (${row.gpsAccuracyM}m)` : ""}`
+                      : "not captured"}
                   </td>
                   <td className="px-3 py-2">{formatDateTime(row.capturedAt)}</td>
                 </tr>

@@ -34,14 +34,19 @@ function normalizeToUuid(value: string): string {
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
 }
 
-async function ensureOrigin(db: ReturnType<typeof createDb>, userId: string, deviceId: string) {
+async function ensureOrigin(
+  db: ReturnType<typeof createDb>,
+  userId: string,
+  deviceId: string,
+  role = "operator",
+) {
   const userRows = await db.select().from(users).where(eq(users.userId, userId)).limit(1);
   if (userRows.length === 0) {
     await db.insert(users).values({
       userId,
       externalRef: userId,
       displayName: "Integration Test Operator",
-      role: "operator",
+      role,
       active: true,
       createdAt: new Date(),
     });
@@ -89,8 +94,11 @@ export async function runFieldToSettlementIntegration(): Promise<void> {
     deviceId: normalizeToUuid("integration-device"),
     capturedAt: new Date("2026-02-01T08:00:00.000Z").toISOString(),
   };
+  const financeApproverUserId = normalizeToUuid("integration-finance-approver");
+  const financeApproverDeviceId = normalizeToUuid("integration-finance-approver-device");
 
   await ensureOrigin(db, origin.userId, origin.deviceId);
+  await ensureOrigin(db, financeApproverUserId, financeApproverDeviceId, "finance_approver");
 
   try {
     await processAndAssert(processor, {
@@ -111,9 +119,22 @@ export async function runFieldToSettlementIntegration(): Promise<void> {
     });
 
     await processAndAssert(processor, {
-      idempotencyKey: `it-lock-queue-${suffix}`,
+      idempotencyKey: `it-assign-box-queue-${suffix}`,
       origin,
       createdAt: new Date("2026-02-01T08:05:00.000Z").toISOString(),
+      dependencies: [],
+      command: {
+        commandType: "custody.assign_box_to_queue",
+        commandId: randomUUID(),
+        boxId: boxCode,
+        queueId: queueCode,
+      },
+    });
+
+    await processAndAssert(processor, {
+      idempotencyKey: `it-lock-queue-${suffix}`,
+      origin,
+      createdAt: new Date("2026-02-01T08:05:30.000Z").toISOString(),
       dependencies: [],
       command: {
         commandType: "custody.lock_queue_for_processing",
@@ -123,15 +144,14 @@ export async function runFieldToSettlementIntegration(): Promise<void> {
     });
 
     await processAndAssert(processor, {
-      idempotencyKey: `it-assign-box-queue-${suffix}`,
+      idempotencyKey: `it-close-box-${suffix}`,
       origin,
-      createdAt: new Date("2026-02-01T08:05:30.000Z").toISOString(),
+      createdAt: new Date("2026-02-01T08:05:45.000Z").toISOString(),
       dependencies: [],
       command: {
-        commandType: "custody.assign_box_to_queue",
+        commandType: "custody.close_box",
         commandId: randomUUID(),
         boxId: boxCode,
-        queueId: queueCode,
       },
     });
 
@@ -177,6 +197,7 @@ export async function runFieldToSettlementIntegration(): Promise<void> {
         pdPpm: 910,
         rhPpm: 105,
         matrixId: null,
+        evidence: { evidenceBundleId: randomUUID(), requiredTypesPresent: ["note"] },
       },
     });
 
@@ -194,6 +215,7 @@ export async function runFieldToSettlementIntegration(): Promise<void> {
         pdPpm: 936,
         rhPpm: 108,
         matrixId: null,
+        evidence: { evidenceBundleId: randomUUID(), requiredTypesPresent: ["note"] },
       },
     });
 
@@ -243,6 +265,7 @@ export async function runFieldToSettlementIntegration(): Promise<void> {
         amount: { amount: "4750.00", currency: "USD" },
         purposeCode: "funding_advance",
         sourceOperationalRef: queueCode,
+        approvedByUserId: financeApproverUserId,
         notes: "Integration test funding movement",
         evidence: { evidenceBundleId: randomUUID(), requiredTypesPresent: ["note"] },
       },
@@ -312,7 +335,35 @@ export async function runFieldToSettlementIntegration(): Promise<void> {
       Number(queueEstimateRows[0]?.estimatedValueUsd ?? "75000") * 1.03
     ).toFixed(2);
 
-    await processAndAssert(processor, {
+    const settlementControls = [
+      "lot_selected",
+      "contents_reviewed",
+      "sample_data_recorded",
+      "adjustments_recorded",
+      "weight_basis_locked",
+      "hedges_applied",
+      "financial_context_applied",
+    ] as const;
+    let settlementCreationTransactionId = "";
+    for (let stepIndex = 0; stepIndex < settlementControls.length; stepIndex += 1) {
+      const stepResult = await processAndAssert(processor, {
+        idempotencyKey: `it-settlement-control-${suffix}-${stepIndex + 1}`,
+        origin,
+        createdAt: new Date(Date.parse("2026-02-01T08:19:00.000Z") + stepIndex * 1_000).toISOString(),
+        dependencies: [],
+        command: {
+          commandType: "settlement.append_step",
+          commandId: randomUUID(),
+          settlementId: queueCode,
+          step: settlementControls[stepIndex],
+        },
+      });
+      if (stepIndex === 0) {
+        settlementCreationTransactionId = stepResult.transactionId;
+      }
+    }
+
+    const finalization = await processAndAssert(processor, {
       idempotencyKey: `it-finalize-settlement-${suffix}`,
       origin,
       createdAt: new Date("2026-02-01T08:20:00.000Z").toISOString(),
@@ -325,7 +376,7 @@ export async function runFieldToSettlementIntegration(): Promise<void> {
       },
     });
 
-    await processAndAssert(processor, {
+    const closure = await processAndAssert(processor, {
       idempotencyKey: `it-close-reconcile-${suffix}`,
       origin,
       createdAt: new Date("2026-02-01T08:21:00.000Z").toISOString(),
@@ -345,7 +396,12 @@ export async function runFieldToSettlementIntegration(): Promise<void> {
       .where(eq(converters.vinOrSerial, converterVin))
       .limit(1);
     assert.equal(converterRows.length, 1, "Converter should be present.");
-    assert.equal(converterRows[0].state, "received", "Converter should be in received state.");
+    assert.equal(converterRows[0].state, "settled", "Converter should reach settled state.");
+    assert.equal(
+      converterRows[0].lastTransitionTransactionId,
+      finalization.transactionId,
+      "Settled converter should reference the settlement finalization transaction.",
+    );
 
     const boxRows = await db.select().from(boxes).where(eq(boxes.externalCode, boxCode)).limit(1);
     assert.equal(boxRows.length, 1, "Box should exist.");
@@ -361,6 +417,12 @@ export async function runFieldToSettlementIntegration(): Promise<void> {
 
     const queueRows = await db.select().from(queues).where(eq(queues.queueCode, queueCode)).limit(1);
     assert.equal(queueRows.length, 1, "Queue should exist for integration scope.");
+    assert.equal(queueRows[0].state, "settled", "Queue should reach settled state.");
+    assert.equal(
+      queueRows[0].lastTransitionTransactionId,
+      finalization.transactionId,
+      "Settled queue should reference the settlement finalization transaction.",
+    );
 
     const queueBoxRows = await db
       .select()
@@ -401,6 +463,16 @@ export async function runFieldToSettlementIntegration(): Promise<void> {
       .limit(1);
     assert.equal(settlementRows.length, 1, "Settlement should exist.");
     assert.equal(settlementRows[0].status, "finalized", "Settlement should be finalized.");
+    assert.equal(
+      settlementRows[0].createdByTransactionId,
+      settlementCreationTransactionId,
+      "Settlement creation should reference its first controlled step transaction.",
+    );
+    assert.equal(
+      settlementRows[0].finalizedByTransactionId,
+      finalization.transactionId,
+      "Settlement finalization should reference the assay finalization transaction.",
+    );
 
     const invoiceRows = await db
       .select()
@@ -408,6 +480,11 @@ export async function runFieldToSettlementIntegration(): Promise<void> {
       .where(eq(invoices.settlementId, settlementRows[0].settlementId))
       .limit(1);
     assert.equal(invoiceRows.length, 1, "Finalized settlement should have an invoice.");
+    assert.equal(
+      invoiceRows[0].transactionId,
+      finalization.transactionId,
+      "Final invoice should reference the same finalization transaction.",
+    );
 
     const caseRows = await db
       .select()
@@ -416,6 +493,21 @@ export async function runFieldToSettlementIntegration(): Promise<void> {
       .limit(1);
     assert.equal(caseRows.length, 1, "Reconciliation case should exist.");
     assert.equal(caseRows[0].status, "resolved", "Reconciliation case should be resolved.");
+    assert.equal(
+      caseRows[0].openedByTransactionId,
+      openCase.transactionId,
+      "Reconciliation case should reference its opening transaction.",
+    );
+    assert.equal(
+      caseRows[0].closedByTransactionId,
+      closure.transactionId,
+      "Reconciliation case should reference its closure transaction.",
+    );
+    assert.equal(
+      caseRows[0].lastTransitionTransactionId,
+      closure.transactionId,
+      "Reconciliation transition pointer should finish at the closure transaction.",
+    );
 
     const actionRows = await db
       .select()
@@ -426,6 +518,11 @@ export async function runFieldToSettlementIntegration(): Promise<void> {
       actionRows.length >= 2,
       true,
       "Reconciliation case should have investigation and financial correction actions.",
+    );
+    assert.equal(
+      actionRows.every((row) => row.transactionId.length > 0),
+      true,
+      "Every reconciliation action should retain direct transaction provenance.",
     );
 
     console.log(`Integration workflow PASS (${suffix})`);

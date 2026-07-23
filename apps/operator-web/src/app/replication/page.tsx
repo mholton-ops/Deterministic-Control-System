@@ -10,12 +10,13 @@ import {
 } from "../../components/workbench";
 import { readReplicationSync } from "../../lib/api";
 
-type SyncState = "confirmed" | "failed" | "retrying" | "dependency_blocked";
+type SyncState = "confirmed" | "failed" | "retrying" | "dependency_blocked" | "not_applicable";
 
-function syncTone(value: SyncState): "good" | "warn" | "bad" | "info" {
+function syncTone(value: SyncState): "neutral" | "good" | "warn" | "bad" | "info" {
   if (value === "confirmed") return "good";
   if (value === "failed") return "bad";
   if (value === "dependency_blocked") return "warn";
+  if (value === "not_applicable") return "neutral";
   return "info";
 }
 
@@ -93,6 +94,7 @@ export default async function ReplicationPage() {
                 "Transaction",
                 "Event",
                 "Source",
+                "Target",
                 "Local",
                 "Outbound",
                 "Transmission",
@@ -107,10 +109,11 @@ export default async function ReplicationPage() {
               stickyActionColumns={0}
             >
               {projection.movement.slice(0, 40).map((row) => (
-                <tr key={row.transactionId}>
+                <tr key={`${row.transactionId}:${row.targetNode}:${row.streamType}`}>
                   <td className="px-3 py-2 font-mono text-status-info">{row.transactionId.slice(0, 8)}</td>
                   <td className="px-3 py-2">{row.eventType}</td>
                   <td className="px-3 py-2">{row.sourceSystem}</td>
+                  <td className="px-3 py-2">{row.targetNode}</td>
                   <td className="px-3 py-2 text-xs">
                     <div>{row.localCreation}</div>
                     <div>{row.localPersistence}</div>
@@ -148,17 +151,17 @@ export default async function ReplicationPage() {
             </DataTable>
           </Panel>
 
-          <Panel title="Projection Rebuild / Replay">
-            <DataTable columns={["Projection", "Source Count", "Replay Status", "Rebuild", "Last Replay"]}>
-              {projection.projectionReplay.map((row) => (
+          <Panel title="Projection Rebuild / Reconstruction">
+            <DataTable columns={["Projection", "Source Count", "Reconstruction", "Rebuild", "Last Rebuild"]}>
+              {projection.projectionRebuild.map((row) => (
                 <tr key={row.projectionName}>
                   <td className="px-3 py-2 font-mono text-status-info">{row.projectionName}</td>
                   <td className="px-3 py-2">{row.sourceTransactionCount}</td>
-                  <td className="px-3 py-2">{row.replayStatus}</td>
+                  <td className="px-3 py-2">{row.reconstructionStatus}</td>
                   <td className="px-3 py-2">
                     <Badge value={row.rebuildStatus} tone="good" />
                   </td>
-                  <td className="px-3 py-2">{formatDateTime(row.lastReplayAt)}</td>
+                  <td className="px-3 py-2">{formatDateTime(row.lastRebuildAt)}</td>
                 </tr>
               ))}
             </DataTable>

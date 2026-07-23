@@ -728,6 +728,8 @@ export async function buildGradingWorkbenchProjection(
 
 export interface AnalyticsWorkbenchProjectionRow {
   readonly sampleId: string;
+  readonly transactionId: string;
+  readonly evidenceBundleId: string;
   readonly queueCode: string;
   readonly source: string;
   readonly ptPpmRaw: string;
@@ -747,6 +749,8 @@ export async function buildAnalyticsWorkbenchProjection(
   const rows = await db
     .select({
       sampleId: samples.sampleId,
+      transactionId: samples.transactionId,
+      evidenceBundleId: samples.evidenceBundleId,
       queueCode: queues.queueCode,
       source: samples.source,
       ptPpmRaw: samples.ptPpmRaw,
@@ -766,6 +770,8 @@ export async function buildAnalyticsWorkbenchProjection(
 
   return rows.map((row) => ({
     sampleId: row.sampleId,
+    transactionId: row.transactionId,
+    evidenceBundleId: row.evidenceBundleId,
     queueCode: row.queueCode ?? "unknown",
     source: row.source,
     ptPpmRaw: row.ptPpmRaw,
@@ -1273,12 +1279,13 @@ export async function buildSettlementListProjection(
 export interface EvidenceExplorerProjectionRow {
   readonly evidenceBundleId: string;
   readonly capturedAt: string;
-  readonly gpsLat: string;
-  readonly gpsLon: string;
-  readonly gpsAccuracyM: string;
+  readonly gpsLat: string | null;
+  readonly gpsLon: string | null;
+  readonly gpsAccuracyM: string | null;
   readonly artifactCount: number;
   readonly converterLinks: number;
   readonly custodyEventLinks: number;
+  readonly sampleLinks: number;
   readonly ledgerLinks: number;
   readonly capturedByUser: string | null;
   readonly capturedByDevice: string | null;
@@ -1303,6 +1310,7 @@ export async function buildEvidenceExplorerProjection(
       artifactCount: sql<number>`count(distinct ${evidenceArtifacts.artifactId})::int`,
       converterLinks: sql<number>`count(distinct ${converters.converterId})::int`,
       custodyEventLinks: sql<number>`count(distinct ${custodyEvents.custodyEventId})::int`,
+      sampleLinks: sql<number>`count(distinct ${samples.sampleId})::int`,
       ledgerLinks: sql<number>`count(distinct ${ledgerEntries.ledgerEntryId})::int`,
       capturedByUser: users.displayName,
       capturedByDevice: devices.externalRef,
@@ -1311,6 +1319,7 @@ export async function buildEvidenceExplorerProjection(
     .leftJoin(evidenceArtifacts, eq(evidenceArtifacts.evidenceBundleId, evidenceBundles.evidenceBundleId))
     .leftJoin(converters, eq(converters.evidenceBundleId, evidenceBundles.evidenceBundleId))
     .leftJoin(custodyEvents, eq(custodyEvents.evidenceBundleId, evidenceBundles.evidenceBundleId))
+    .leftJoin(samples, eq(samples.evidenceBundleId, evidenceBundles.evidenceBundleId))
     .leftJoin(ledgerEntries, eq(ledgerEntries.evidenceBundleId, evidenceBundles.evidenceBundleId))
     .leftJoin(users, eq(users.userId, evidenceBundles.createdByUserId))
     .leftJoin(devices, eq(devices.deviceId, evidenceBundles.createdByDeviceId))
@@ -1367,9 +1376,10 @@ export async function buildEvidenceExplorerProjection(
     gpsLon: row.gpsLon,
     gpsAccuracyM: row.gpsAccuracyM,
     artifactCount: row.artifactCount,
-    converterLinks: row.converterLinks,
-    custodyEventLinks: row.custodyEventLinks,
-    ledgerLinks: row.ledgerLinks,
+      converterLinks: row.converterLinks,
+      custodyEventLinks: row.custodyEventLinks,
+      sampleLinks: row.sampleLinks,
+      ledgerLinks: row.ledgerLinks,
     capturedByUser: row.capturedByUser,
     capturedByDevice: row.capturedByDevice,
     artifacts: artifactsByBundle.get(row.evidenceBundleId) ?? [],

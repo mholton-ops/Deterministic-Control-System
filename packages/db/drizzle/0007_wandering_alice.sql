@@ -1,0 +1,1 @@
+ALTER TABLE "projection_rebuild_checkpoint" ADD COLUMN "source_transaction_count" integer DEFAULT 0 NOT NULL;

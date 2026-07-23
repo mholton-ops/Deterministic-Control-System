@@ -1,0 +1,1 @@
+ALTER TABLE "ledger_entries" ADD CONSTRAINT "ledger_entries_funding_approval_chk" CHECK ("ledger_entries"."purpose_code" <> 'funding_advance' or "ledger_entries"."approved_by_user_id" is not null) NOT VALID;

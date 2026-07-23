@@ -7,8 +7,8 @@
                     ".":  "./src/index.ts"
                 },
     "dependencies":  {
-                         "drizzle-orm":  "^0.39.1",
-                         "pg":  "^8.14.1"
+                         "drizzle-orm":  "^0.45.2",
+                         "pg":  "^8.22.0"
                      },
     "scripts":  {
                     "typecheck":  "tsc -p tsconfig.json --noEmit",

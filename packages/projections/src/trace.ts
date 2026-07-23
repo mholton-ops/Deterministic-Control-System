@@ -8,6 +8,7 @@ import {
   devices,
   evidenceArtifacts,
   evidenceBundles,
+  gradingDecisions,
   hedgePositions,
   invoiceLines,
   invoices,
@@ -73,9 +74,9 @@ interface EvidenceSnapshot {
   readonly capturedByUser: string | null;
   readonly capturedByDevice: string | null;
   readonly location: {
-    readonly lat: string;
-    readonly lon: string;
-    readonly accuracyM: string;
+    readonly lat: string | null;
+    readonly lon: string | null;
+    readonly accuracyM: string | null;
   };
 }
 
@@ -110,6 +111,7 @@ export interface TraceViewProjection {
     readonly queueId: string | null;
     readonly queueCode: string | null;
     readonly shipmentIds: readonly string[];
+    readonly gradingDecisionIds: readonly string[];
     readonly sampleIds: readonly string[];
     readonly pricingDecisionId: string | null;
     readonly hedgePositionIds: readonly string[];
@@ -133,7 +135,7 @@ export interface SettlementReconstructionProjection {
     readonly varianceUsd: string | null;
     readonly explanation: string;
   };
-  readonly replay: readonly {
+  readonly steps: readonly {
     readonly order: number;
     readonly stage: string;
     readonly truthStatus: TruthStatus;
@@ -337,6 +339,8 @@ async function findQueueByRef(
   state: string;
   lockedForProcessing: boolean;
   estimatedValueUsd: string | null;
+  createdByTransactionId: string;
+  lastTransitionTransactionId: string;
   createdAt: Date;
 } | null> {
   if (!queueRef) return null;
@@ -369,6 +373,8 @@ async function findSettlementForQueue(
   finalizedAt: Date | null;
   createdAt: Date;
   scopeId: string;
+  createdByTransactionId: string;
+  finalizedByTransactionId: string | null;
 } | null> {
   const refs = [queueId, queueCode].filter((value): value is string => Boolean(value));
   if (refs.length === 0) return null;
@@ -394,6 +400,7 @@ async function resolveTraceChain(
     evidenceBundleId: string;
     capturedAt: Date;
     originTransactionId: string;
+    lastTransitionTransactionId: string;
     currentBoxId: string | null;
   } | null;
   box: {
@@ -401,6 +408,7 @@ async function resolveTraceChain(
     externalCode: string;
     state: string;
     createdByTransactionId: string;
+    lastTransitionTransactionId: string;
     createdAt: Date;
   } | null;
   queue: {
@@ -409,24 +417,41 @@ async function resolveTraceChain(
     state: string;
     lockedForProcessing: boolean;
     estimatedValueUsd: string | null;
+    createdByTransactionId: string;
+    lastTransitionTransactionId: string;
     createdAt: Date;
   } | null;
   shipments: Array<{
     shipmentId: string;
     shipmentCode: string;
     state: string;
+    createdByTransactionId: string;
+    lastTransitionTransactionId: string;
     departedAt: Date | null;
     receivedAt: Date | null;
   }>;
   samples: Array<{
     sampleId: string;
+    transactionId: string;
+    evidenceBundleId: string;
     source: string;
     matrixId: string | null;
     queueId: string;
     capturedAt: Date;
   }>;
+  gradingDecisions: Array<{
+    gradingDecisionId: string;
+    converterId: string;
+    transactionId: string;
+    evidenceBundleId: string;
+    method: string;
+    confidenceBand: string;
+    estimatedValueUsd: string;
+    decidedAt: Date;
+  }>;
   pricingDecision: {
     pricingDecisionId: string;
+    transactionId: string;
     estimateUsd: string;
     confidenceBand: string;
     sourceMethod: string;
@@ -434,6 +459,7 @@ async function resolveTraceChain(
   } | null;
   hedges: Array<{
     hedgePositionId: string;
+    transactionId: string;
     status: string;
     openedAt: Date;
     closedAt: Date | null;
@@ -447,6 +473,8 @@ async function resolveTraceChain(
     finalizedAt: Date | null;
     createdAt: Date;
     scopeId: string;
+    createdByTransactionId: string;
+    finalizedByTransactionId: string | null;
   } | null;
   ledgerEntries: Array<{
     ledgerEntryId: string;
@@ -466,6 +494,9 @@ async function resolveTraceChain(
     scopeId: string;
     openedAt: Date;
     closedAt: Date | null;
+    openedByTransactionId: string;
+    lastTransitionTransactionId: string;
+    closedByTransactionId: string | null;
   }>;
 }> {
   let converter: {
@@ -474,6 +505,7 @@ async function resolveTraceChain(
     evidenceBundleId: string;
     capturedAt: Date;
     originTransactionId: string;
+    lastTransitionTransactionId: string;
     currentBoxId: string | null;
   } | null = null;
   let box: {
@@ -481,6 +513,7 @@ async function resolveTraceChain(
     externalCode: string;
     state: string;
     createdByTransactionId: string;
+    lastTransitionTransactionId: string;
     createdAt: Date;
   } | null = null;
   let queue: {
@@ -489,12 +522,16 @@ async function resolveTraceChain(
     state: string;
     lockedForProcessing: boolean;
     estimatedValueUsd: string | null;
+    createdByTransactionId: string;
+    lastTransitionTransactionId: string;
     createdAt: Date;
   } | null = null;
   let explicitShipment: {
     shipmentId: string;
     shipmentCode: string;
     state: string;
+    createdByTransactionId: string;
+    lastTransitionTransactionId: string;
     originSiteId: string;
     destinationSiteId: string;
     departedAt: Date | null;
@@ -518,6 +555,9 @@ async function resolveTraceChain(
     scopeId: string;
     openedAt: Date;
     closedAt: Date | null;
+    openedByTransactionId: string;
+    lastTransitionTransactionId: string;
+    closedByTransactionId: string | null;
   } | null = null;
 
   if (entityType === "converter") {
@@ -542,6 +582,7 @@ async function resolveTraceChain(
           evidenceBundleId: converters.evidenceBundleId,
           capturedAt: converters.capturedAt,
           originTransactionId: converters.originTransactionId,
+          lastTransitionTransactionId: converters.lastTransitionTransactionId,
           currentBoxId: converters.currentBoxId,
           assignedAt: boxConverters.assignedAt,
         })
@@ -556,7 +597,8 @@ async function resolveTraceChain(
         linked.state &&
         linked.evidenceBundleId &&
         linked.capturedAt &&
-        linked.originTransactionId
+        linked.originTransactionId &&
+        linked.lastTransitionTransactionId
       ) {
         converter = {
           converterId: linked.converterId,
@@ -564,6 +606,7 @@ async function resolveTraceChain(
           evidenceBundleId: linked.evidenceBundleId,
           capturedAt: linked.capturedAt,
           originTransactionId: linked.originTransactionId,
+          lastTransitionTransactionId: linked.lastTransitionTransactionId,
           currentBoxId: linked.currentBoxId,
         };
       }
@@ -579,6 +622,7 @@ async function resolveTraceChain(
           externalCode: boxes.externalCode,
           state: boxes.state,
           createdByTransactionId: boxes.createdByTransactionId,
+          lastTransitionTransactionId: boxes.lastTransitionTransactionId,
           createdAt: boxes.createdAt,
           assignedAt: queueBoxes.assignedAt,
         })
@@ -593,6 +637,7 @@ async function resolveTraceChain(
         linkedBox.externalCode &&
         linkedBox.state &&
         linkedBox.createdByTransactionId &&
+        linkedBox.lastTransitionTransactionId &&
         linkedBox.createdAt
       ) {
         box = {
@@ -600,6 +645,7 @@ async function resolveTraceChain(
           externalCode: linkedBox.externalCode,
           state: linkedBox.state,
           createdByTransactionId: linkedBox.createdByTransactionId,
+          lastTransitionTransactionId: linkedBox.lastTransitionTransactionId,
           createdAt: linkedBox.createdAt,
         };
       }
@@ -626,6 +672,8 @@ async function resolveTraceChain(
             state: queues.state,
             lockedForProcessing: queues.lockedForProcessing,
             estimatedValueUsd: queues.estimatedValueUsd,
+            createdByTransactionId: queues.createdByTransactionId,
+            lastTransitionTransactionId: queues.lastTransitionTransactionId,
             createdAt: queues.createdAt,
             assignedAt: queueBoxes.assignedAt,
           })
@@ -640,6 +688,8 @@ async function resolveTraceChain(
           linkedQueue.queueCode &&
           linkedQueue.state &&
           linkedQueue.lockedForProcessing !== null &&
+          linkedQueue.createdByTransactionId &&
+          linkedQueue.lastTransitionTransactionId &&
           linkedQueue.createdAt
         ) {
           queue = {
@@ -648,6 +698,8 @@ async function resolveTraceChain(
             state: linkedQueue.state,
             lockedForProcessing: linkedQueue.lockedForProcessing,
             estimatedValueUsd: linkedQueue.estimatedValueUsd,
+            createdByTransactionId: linkedQueue.createdByTransactionId,
+            lastTransitionTransactionId: linkedQueue.lastTransitionTransactionId,
             createdAt: linkedQueue.createdAt,
           };
         }
@@ -698,6 +750,9 @@ async function resolveTraceChain(
         scopeId: reconciliationCases.scopeId,
         openedAt: reconciliationCases.openedAt,
         closedAt: reconciliationCases.closedAt,
+        openedByTransactionId: reconciliationCases.openedByTransactionId,
+        lastTransitionTransactionId: reconciliationCases.lastTransitionTransactionId,
+        closedByTransactionId: reconciliationCases.closedByTransactionId,
       })
       .from(reconciliationCases)
       .where(eq(reconciliationCases.reconciliationCaseId, entityId))
@@ -743,6 +798,8 @@ async function resolveTraceChain(
         state: queues.state,
         lockedForProcessing: queues.lockedForProcessing,
         estimatedValueUsd: queues.estimatedValueUsd,
+        createdByTransactionId: queues.createdByTransactionId,
+        lastTransitionTransactionId: queues.lastTransitionTransactionId,
         createdAt: queues.createdAt,
         assignedAt: queueBoxes.assignedAt,
       })
@@ -757,6 +814,8 @@ async function resolveTraceChain(
       linkedQueue.queueCode &&
       linkedQueue.state &&
       linkedQueue.lockedForProcessing !== null &&
+      linkedQueue.createdByTransactionId &&
+      linkedQueue.lastTransitionTransactionId &&
       linkedQueue.createdAt
     ) {
       queue = {
@@ -765,6 +824,8 @@ async function resolveTraceChain(
         state: linkedQueue.state,
         lockedForProcessing: linkedQueue.lockedForProcessing,
         estimatedValueUsd: linkedQueue.estimatedValueUsd,
+        createdByTransactionId: linkedQueue.createdByTransactionId,
+        lastTransitionTransactionId: linkedQueue.lastTransitionTransactionId,
         createdAt: linkedQueue.createdAt,
       };
     }
@@ -778,6 +839,7 @@ async function resolveTraceChain(
         evidenceBundleId: converters.evidenceBundleId,
         capturedAt: converters.capturedAt,
         originTransactionId: converters.originTransactionId,
+        lastTransitionTransactionId: converters.lastTransitionTransactionId,
         currentBoxId: converters.currentBoxId,
       })
       .from(boxConverters)
@@ -786,13 +848,21 @@ async function resolveTraceChain(
       .orderBy(desc(boxConverters.assignedAt))
       .limit(1);
     const linked = converterRows[0];
-    if (linked?.converterId && linked.state && linked.evidenceBundleId && linked.capturedAt && linked.originTransactionId) {
+    if (
+      linked?.converterId &&
+      linked.state &&
+      linked.evidenceBundleId &&
+      linked.capturedAt &&
+      linked.originTransactionId &&
+      linked.lastTransitionTransactionId
+    ) {
       converter = {
         converterId: linked.converterId,
         state: linked.state,
         evidenceBundleId: linked.evidenceBundleId,
         capturedAt: linked.capturedAt,
         originTransactionId: linked.originTransactionId,
+        lastTransitionTransactionId: linked.lastTransitionTransactionId,
         currentBoxId: linked.currentBoxId,
       };
     }
@@ -802,6 +872,8 @@ async function resolveTraceChain(
     ? await db
         .select({
           sampleId: samples.sampleId,
+          transactionId: samples.transactionId,
+          evidenceBundleId: samples.evidenceBundleId,
           source: samples.source,
           matrixId: samples.matrixId,
           queueId: samples.queueId,
@@ -812,10 +884,47 @@ async function resolveTraceChain(
         .orderBy(desc(samples.capturedAt))
     : [];
 
+  const gradingRows = queue
+    ? await db
+        .select({
+          gradingDecisionId: gradingDecisions.gradingDecisionId,
+          converterId: gradingDecisions.converterId,
+          transactionId: gradingDecisions.transactionId,
+          evidenceBundleId: converters.evidenceBundleId,
+          method: gradingDecisions.method,
+          confidenceBand: gradingDecisions.confidenceBand,
+          estimatedValueUsd: gradingDecisions.estimatedValueUsd,
+          decidedAt: gradingDecisions.decidedAt,
+        })
+        .from(gradingDecisions)
+        .innerJoin(converters, eq(gradingDecisions.converterId, converters.converterId))
+        .innerJoin(boxConverters, eq(converters.converterId, boxConverters.converterId))
+        .innerJoin(queueBoxes, eq(boxConverters.boxId, queueBoxes.boxId))
+        .where(eq(queueBoxes.queueId, queue.queueId))
+        .orderBy(desc(gradingDecisions.decidedAt))
+    : converter
+      ? await db
+          .select({
+            gradingDecisionId: gradingDecisions.gradingDecisionId,
+            converterId: gradingDecisions.converterId,
+            transactionId: gradingDecisions.transactionId,
+            evidenceBundleId: converters.evidenceBundleId,
+            method: gradingDecisions.method,
+            confidenceBand: gradingDecisions.confidenceBand,
+            estimatedValueUsd: gradingDecisions.estimatedValueUsd,
+            decidedAt: gradingDecisions.decidedAt,
+          })
+          .from(gradingDecisions)
+          .innerJoin(converters, eq(gradingDecisions.converterId, converters.converterId))
+          .where(eq(gradingDecisions.converterId, converter.converterId))
+          .orderBy(desc(gradingDecisions.decidedAt))
+      : [];
+
   const pricingRows = queue
     ? await db
         .select({
           pricingDecisionId: pricingDecisions.pricingDecisionId,
+          transactionId: pricingDecisions.transactionId,
           estimateUsd: pricingDecisions.estimateUsd,
           confidenceBand: pricingDecisions.confidenceBand,
           sourceMethod: pricingDecisions.sourceMethod,
@@ -835,6 +944,7 @@ async function resolveTraceChain(
       : await db
           .select({
             hedgePositionId: hedgePositions.hedgePositionId,
+            transactionId: hedgePositions.transactionId,
             status: hedgePositions.status,
             openedAt: hedgePositions.openedAt,
             closedAt: hedgePositions.closedAt,
@@ -852,6 +962,8 @@ async function resolveTraceChain(
     finalizedAt: Date | null;
     createdAt: Date;
     scopeId: string;
+    createdByTransactionId: string;
+    finalizedByTransactionId: string | null;
   } | null = null;
 
   if (entityType === "settlement") {
@@ -901,6 +1013,8 @@ async function resolveTraceChain(
           shipmentId: explicitShipment.shipmentId,
           shipmentCode: explicitShipment.shipmentCode,
           state: explicitShipment.state,
+          createdByTransactionId: explicitShipment.createdByTransactionId,
+          lastTransitionTransactionId: explicitShipment.lastTransitionTransactionId,
           departedAt: explicitShipment.departedAt,
           receivedAt: explicitShipment.receivedAt,
         },
@@ -910,6 +1024,8 @@ async function resolveTraceChain(
       shipmentId: string;
       shipmentCode: string;
       state: string;
+      createdByTransactionId: string;
+      lastTransitionTransactionId: string;
       departedAt: Date | null;
       receivedAt: Date | null;
     }>;
@@ -926,6 +1042,8 @@ async function resolveTraceChain(
           shipmentId: shipments.shipmentId,
           shipmentCode: shipments.shipmentCode,
           state: shipments.state,
+          createdByTransactionId: shipments.createdByTransactionId,
+          lastTransitionTransactionId: shipments.lastTransitionTransactionId,
           departedAt: shipments.departedAt,
           receivedAt: shipments.receivedAt,
           assignedAt: shipmentBoxes.assignedAt,
@@ -936,15 +1054,24 @@ async function resolveTraceChain(
         .orderBy(desc(shipmentBoxes.assignedAt));
       const seenShipmentIds = new Set<string>();
       for (const row of linkedShipmentRows) {
-        if (!row.shipmentId || !row.shipmentCode || !row.state || seenShipmentIds.has(row.shipmentId)) {
+        if (
+          !row.shipmentId ||
+          !row.shipmentCode ||
+          !row.state ||
+          !row.createdByTransactionId ||
+          !row.lastTransitionTransactionId ||
+          seenShipmentIds.has(row.shipmentId)
+        ) {
           continue;
         }
         seenShipmentIds.add(row.shipmentId);
-        shipmentRows.push({
-          shipmentId: row.shipmentId,
-          shipmentCode: row.shipmentCode,
-          state: row.state,
-          departedAt: row.departedAt,
+          shipmentRows.push({
+            shipmentId: row.shipmentId,
+            shipmentCode: row.shipmentCode,
+            state: row.state,
+            createdByTransactionId: row.createdByTransactionId,
+            lastTransitionTransactionId: row.lastTransitionTransactionId,
+            departedAt: row.departedAt,
           receivedAt: row.receivedAt,
         });
       }
@@ -971,6 +1098,9 @@ async function resolveTraceChain(
             scopeId: reconciliationCases.scopeId,
             openedAt: reconciliationCases.openedAt,
             closedAt: reconciliationCases.closedAt,
+            openedByTransactionId: reconciliationCases.openedByTransactionId,
+            lastTransitionTransactionId: reconciliationCases.lastTransitionTransactionId,
+            closedByTransactionId: reconciliationCases.closedByTransactionId,
           })
           .from(reconciliationCases)
           .where(inArray(reconciliationCases.scopeId, reconciliationRefs))
@@ -989,6 +1119,7 @@ async function resolveTraceChain(
     box,
     queue,
     shipments: shipmentRows,
+    gradingDecisions: gradingRows,
     samples: sampleRows,
     pricingDecision,
     hedges: hedgeRows,
@@ -1043,7 +1174,7 @@ export async function buildTraceViewProjection(
   }
 
   if (chain.box) {
-    const tx = await loadTransactionContext(db, chain.box.createdByTransactionId);
+    const tx = await loadTransactionContext(db, chain.box.lastTransitionTransactionId);
     const truthStatus: TruthStatus =
       chain.box.state === "received" || chain.box.state === "closed" ? "validated" : "provisional";
     const confidence: ConfidenceLevel = chain.box.state === "empty" ? "low" : "medium";
@@ -1052,7 +1183,7 @@ export async function buildTraceViewProjection(
       title: "Custody Boundary (Box)",
       entityType: "box",
       entityId: chain.box.boxId,
-      occurredAt: toIso(chain.box.createdAt),
+      occurredAt: tx.origin?.capturedAt ?? toIso(chain.box.createdAt),
       lifecycleState: chain.box.state,
       truthStatus,
       confidence,
@@ -1066,6 +1197,7 @@ export async function buildTraceViewProjection(
   }
 
   if (chain.queue) {
+    const tx = await loadTransactionContext(db, chain.queue.lastTransitionTransactionId);
     const truthStatus: TruthStatus =
       chain.queue.state === "settled"
         ? "finalized"
@@ -1074,21 +1206,22 @@ export async function buildTraceViewProjection(
           : chain.queue.state === "sampled" || chain.queue.state === "assay_pending"
             ? "provisional"
             : "estimated";
-      const confidence: ConfidenceLevel =
+    const confidence: ConfidenceLevel =
       chain.queue.estimatedValueUsd && Number(chain.queue.estimatedValueUsd) > 0 ? "medium" : "low";
     pushStep({
       stepKey: "queue",
       title: "Queue Continuity and Processing Control",
       entityType: "queue",
       entityId: chain.queue.queueId,
-      occurredAt: toIso(chain.queue.createdAt),
+      occurredAt: tx.origin?.capturedAt ?? toIso(chain.queue.createdAt),
       lifecycleState: chain.queue.state,
       truthStatus,
       confidence,
       validationStatus: chain.queue.lockedForProcessing ? "processing_locked" : "processing_unlocked",
-      dependencyState: chain.queue.lockedForProcessing ? "complete" : "incomplete",
-      dependencies: [],
-      origin: null,
+      dependencyState:
+        chain.queue.lockedForProcessing && tx.dependencyState === "complete" ? "complete" : "incomplete",
+      dependencies: tx.dependencies,
+      origin: tx.origin,
       evidence: null,
       summary: chain.queue.lockedForProcessing
         ? "Queue lock is active; process continuity is controlled."
@@ -1098,6 +1231,7 @@ export async function buildTraceViewProjection(
 
   if (chain.shipments.length > 0) {
     const latestShipment = chain.shipments[0];
+    const tx = await loadTransactionContext(db, latestShipment.lastTransitionTransactionId);
     const shipmentState = latestShipment.state.toLowerCase();
     const truthStatus: TruthStatus =
       shipmentState === "closed"
@@ -1112,7 +1246,7 @@ export async function buildTraceViewProjection(
       title: "Shipment and Receipt Continuity",
       entityType: "shipment",
       entityId: latestShipment.shipmentId,
-      occurredAt: toIso(latestShipment.receivedAt ?? latestShipment.departedAt),
+      occurredAt: tx.origin?.capturedAt ?? toIso(latestShipment.receivedAt ?? latestShipment.departedAt),
       lifecycleState: latestShipment.state,
       truthStatus,
       confidence,
@@ -1120,14 +1254,43 @@ export async function buildTraceViewProjection(
         shipmentState === "received" || shipmentState === "closed"
           ? "receipt_confirmed"
           : "material_in_transit",
-      dependencyState: shipmentState === "discrepant" ? "incomplete" : "complete",
-      dependencies: [],
-      origin: null,
+      dependencyState:
+        shipmentState === "discrepant" || tx.dependencyState === "incomplete" ? "incomplete" : "complete",
+      dependencies: tx.dependencies,
+      origin: tx.origin,
       evidence: null,
       summary:
         shipmentState === "received" || shipmentState === "closed"
           ? `${chain.shipments.length} shipment(s) linked; latest has receipt confirmation.`
           : `${chain.shipments.length} shipment(s) linked; latest remains ${latestShipment.state}.`,
+    });
+  }
+
+  if (chain.gradingDecisions.length > 0) {
+    const latestDecision = chain.gradingDecisions[0];
+    const tx = await loadTransactionContext(db, latestDecision.transactionId);
+    const evidence = await loadEvidenceSnapshot(db, latestDecision.evidenceBundleId, ["image"]);
+    const confidence: ConfidenceLevel =
+      latestDecision.confidenceBand === "high"
+        ? "high"
+        : latestDecision.confidenceBand === "medium"
+          ? "medium"
+          : "low";
+    pushStep({
+      stepKey: "grading",
+      title: "Central Grading and Smart Library",
+      entityType: "converter",
+      entityId: latestDecision.converterId,
+      occurredAt: toIso(latestDecision.decidedAt),
+      lifecycleState: latestDecision.method,
+      truthStatus: chain.settlement?.status === "finalized" ? "validated" : "provisional",
+      confidence,
+      validationStatus: "qualified_library_decision",
+      dependencyState: tx.dependencyState,
+      dependencies: tx.dependencies,
+      origin: tx.origin,
+      evidence,
+      summary: `${chain.gradingDecisions.length} centralized grading decision(s); latest estimate ${latestDecision.estimatedValueUsd} USD via ${latestDecision.method}.`,
     });
   }
 
@@ -1150,6 +1313,8 @@ export async function buildTraceViewProjection(
       matrixRows.length > 0 && matrixRows.every((matrix) => matrix.qualificationStatus === "qualified");
     const hasIcp = chain.samples.some((sample) => sample.source === "icp_final");
     const latestSample = chain.samples[0];
+    const tx = await loadTransactionContext(db, latestSample.transactionId);
+    const evidence = await loadEvidenceSnapshot(db, latestSample.evidenceBundleId, ["note"]);
     pushStep({
       stepKey: "samples",
       title: "Analytical Samples",
@@ -1160,15 +1325,16 @@ export async function buildTraceViewProjection(
       truthStatus: hasIcp ? "finalized" : "provisional",
       confidence: hasIcp ? "high" : allQualified ? "medium" : "low",
       validationStatus: hasIcp ? "external_assay_available" : allQualified ? "matrix_qualified" : "awaiting_assay",
-      dependencyState: "complete",
-      dependencies: [],
-      origin: null,
-      evidence: null,
+      dependencyState: tx.dependencyState,
+      dependencies: tx.dependencies,
+      origin: tx.origin,
+      evidence,
       summary: `Samples captured: ${sampleIds.join(", ")}.`,
     });
   }
 
   if (chain.pricingDecision) {
+    const tx = await loadTransactionContext(db, chain.pricingDecision.transactionId);
     const confidence =
       chain.pricingDecision.confidenceBand === "high"
         ? "high"
@@ -1186,9 +1352,10 @@ export async function buildTraceViewProjection(
       truthStatus: isFinalized ? "validated" : "estimated",
       confidence,
       validationStatus: isFinalized ? "estimate_backtested_against_final" : "awaiting_assay_confirmation",
-      dependencyState: chain.samples.length > 0 ? "complete" : "incomplete",
-      dependencies: [],
-      origin: null,
+      dependencyState:
+        chain.samples.length > 0 && tx.dependencyState === "complete" ? "complete" : "incomplete",
+      dependencies: tx.dependencies,
+      origin: tx.origin,
       evidence: null,
       summary: `Pricing estimate ${chain.pricingDecision.estimateUsd} USD derived from ${chain.pricingDecision.sourceMethod}.`,
     });
@@ -1196,6 +1363,7 @@ export async function buildTraceViewProjection(
 
   if (chain.hedges.length > 0) {
     const latestHedge = chain.hedges[0];
+    const tx = await loadTransactionContext(db, latestHedge.transactionId);
     pushStep({
       stepKey: "hedge",
       title: "Hedge Association",
@@ -1206,9 +1374,9 @@ export async function buildTraceViewProjection(
       truthStatus: latestHedge.status === "closed" ? "validated" : "provisional",
       confidence: latestHedge.status === "closed" ? "high" : "medium",
       validationStatus: latestHedge.status === "closed" ? "hedge_closed" : "hedge_open",
-      dependencyState: "complete",
-      dependencies: [],
-      origin: null,
+      dependencyState: tx.dependencyState,
+      dependencies: tx.dependencies,
+      origin: tx.origin,
       evidence: null,
       summary: `${chain.hedges.length} hedge position(s) linked to queue scope.`,
     });
@@ -1241,6 +1409,9 @@ export async function buildTraceViewProjection(
 
   if (chain.reconciliationCases.length > 0) {
     const latestCase = chain.reconciliationCases[0];
+    const sourceTransactionId =
+      latestCase.closedByTransactionId ?? latestCase.lastTransitionTransactionId;
+    const tx = await loadTransactionContext(db, sourceTransactionId);
     pushStep({
       stepKey: "reconciliation",
       title: "Reconciliation Challenge",
@@ -1266,8 +1437,8 @@ export async function buildTraceViewProjection(
         latestCase.status === "resolved" || latestCase.status === "accepted_variance"
           ? "complete"
           : "incomplete",
-      dependencies: [],
-      origin: null,
+      dependencies: tx.dependencies,
+      origin: tx.origin,
       evidence: null,
       summary: `${chain.reconciliationCases.length} reconciliation case(s); latest is ${latestCase.triggerType} (${latestCase.severity}).`,
     });
@@ -1275,6 +1446,9 @@ export async function buildTraceViewProjection(
 
   if (chain.settlement) {
     const settlementStatus = truthStatusFromSettlement(chain.settlement.status);
+    const sourceTransactionId =
+      chain.settlement.finalizedByTransactionId ?? chain.settlement.createdByTransactionId;
+    const tx = await loadTransactionContext(db, sourceTransactionId);
     const confidence: ConfidenceLevel =
       settlementStatus === "finalized" ? "high" : settlementStatus === "validated" ? "medium" : "low";
     pushStep({
@@ -1294,8 +1468,8 @@ export async function buildTraceViewProjection(
             : "awaiting_assay",
       dependencyState:
         chain.settlement.status === "finalized" && chain.settlement.finalValueUsd ? "complete" : "incomplete",
-      dependencies: [],
-      origin: null,
+      dependencies: tx.dependencies,
+      origin: tx.origin,
       evidence: null,
       summary:
         chain.settlement.finalValueUsd && chain.settlement.varianceUsd
@@ -1309,16 +1483,17 @@ export async function buildTraceViewProjection(
   const settlementIsFinalized = chain.settlement?.status === "finalized";
 
   for (const step of steps) {
+    const stepRef = `${step.title} (${step.entityType}:${step.entityId.slice(0, 8)})`;
     overallTrust = minConfidence(overallTrust, step.confidence);
     if (!settlementIsFinalized && step.truthStatus !== "finalized" && step.stepKey !== "pricing") {
-      openGaps.push(`${step.title}: truth is ${step.truthStatus}`);
+      openGaps.push(`${stepRef}: truth is ${step.truthStatus}`);
     }
     if (step.dependencyState === "incomplete") {
-      openGaps.push(`${step.title}: dependency chain incomplete`);
+      openGaps.push(`${stepRef}: dependency chain incomplete`);
       overallTrust = minConfidence(overallTrust, "low");
     }
     if (step.evidence && step.evidence.missingTypes.length > 0) {
-      openGaps.push(`${step.title}: missing evidence ${step.evidence.missingTypes.join(", ")}`);
+      openGaps.push(`${stepRef}: missing evidence ${step.evidence.missingTypes.join(", ")}`);
       overallTrust = minConfidence(overallTrust, "low");
     }
   }
@@ -1348,6 +1523,7 @@ export async function buildTraceViewProjection(
       queueId: chain.queue?.queueId ?? null,
       queueCode: chain.queue?.queueCode ?? null,
       shipmentIds: chain.shipments.map((shipment) => shipment.shipmentId),
+      gradingDecisionIds: chain.gradingDecisions.map((decision) => decision.gradingDecisionId),
       sampleIds: chain.samples.map((sample) => sample.sampleId),
       pricingDecisionId: chain.pricingDecision?.pricingDecisionId ?? null,
       hedgePositionIds: chain.hedges.map((hedge) => hedge.hedgePositionId),
@@ -1387,7 +1563,7 @@ export async function buildSettlementReconstructionProjection(
   const trace = await buildTraceViewProjection(db, "settlement", settlementId);
   const settlement = settlementRows[0];
 
-  const replay = trace.steps.map((step, index) => ({
+  const steps = trace.steps.map((step, index) => ({
     order: index + 1,
     stage: step.title,
     truthStatus: step.truthStatus,
@@ -1425,7 +1601,7 @@ export async function buildSettlementReconstructionProjection(
       varianceUsd: settlement.varianceUsd,
       explanation,
     },
-    replay,
+    steps,
   };
 }
 

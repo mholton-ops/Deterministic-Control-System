@@ -1,9 +1,12 @@
 {
-  "generatedAt": "2026-04-23T20:44:54.053Z",
+  "generatedAt": "2026-07-23T14:24:55.274Z",
   "convertersByState": {
-    "received": 1
+    "settled": 64,
+    "received": 90,
+    "in_transit": 35,
+    "processing": 81
   },
-  "queueCount": 1,
-  "openReconciliationCount": 1,
-  "totalEstimatedQueueValueUsd": "1943.18"
+  "queueCount": 38,
+  "openReconciliationCount": 0,
+  "totalEstimatedQueueValueUsd": "5137586.47"
 }

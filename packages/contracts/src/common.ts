@@ -4,7 +4,10 @@ export const idSchema = z.string().min(1).max(64);
 export const isoDateTimeSchema = z.string().datetime({ offset: true });
 
 export const moneySchema = z.object({
-  amount: z.string().regex(/^-?\d+(\.\d{1,2})?$/),
+  amount: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/)
+    .refine((value) => Number(value) > 0, "amount must be greater than zero"),
   currency: z.literal("USD"),
 });
 
@@ -16,8 +19,8 @@ export const geoPointSchema = z.object({
 
 export const originSchema = z.object({
   sourceSystem: z.enum(["field_client", "server", "operator_console"]),
-  userId: idSchema,
-  deviceId: idSchema,
+  userId: z.string().uuid(),
+  deviceId: z.string().uuid(),
   capturedAt: isoDateTimeSchema,
 });
 

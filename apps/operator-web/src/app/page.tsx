@@ -35,57 +35,68 @@ export default async function OverviewPage() {
     ]);
 
     const openCases = reconciliation.filter((row) => row.status === "open" || row.status === "investigating");
-    const hedgeAttention = queueExposure.filter((row) => row.needsHedgeAttention).length;
-    const settlementFinalizedCount = settlements.filter((row) => row.status === "finalized").length;
-    const unprovenQueues = queueExposure.filter(
-      (row) => assessExposure(row).truthStatus !== "finalized",
-    ).length;
-    const unresolvedDivergence = reconciliation.filter(
-      (row) => assessReconciliation(row).validationStatus !== "reconciled",
-    ).length;
 
     return (
       <div className="space-y-4">
         <PageHeader
           title="Operations Command Surface"
-          subtitle="Live control metrics for capital, uncertainty, divergence, and chain completeness across the truth graph."
+          subtitle="Deterministic control metrics for capital, uncertainty, divergence, and chain completeness across the truth graph."
         />
-        <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <StatCard label="Total Capital Deployed" value={formatCurrency(commandSurface.totalCapitalDeployedUsd)} />
-          <StatCard label="Material Value Under Control" value={formatCurrency(commandSurface.materialValueUnderControlUsd)} />
-          <StatCard label="Estimated Floor Value" value={formatCurrency(commandSurface.estimatedFloorValueUsd)} />
-          <StatCard label="Floor Inventory Value" value={formatCurrency(commandSurface.floorInventoryValueUsd)} />
-          <StatCard label="Material In Custody" value={formatCurrency(commandSurface.materialInCustodyUsd)} />
-          <StatCard label="Material In Transit" value={formatCurrency(commandSurface.materialInTransitUsd)} />
-          <StatCard label="Processed Catalyst Value" value={formatCurrency(commandSurface.processedCatalystValueUsd)} />
-          <StatCard label="Whole Converter Value" value={formatCurrency(commandSurface.wholeConverterValueUsd)} />
-          <StatCard label="Unproven Capital Exposure" value={formatCurrency(commandSurface.unprovenCapitalExposureUsd)} />
-          <StatCard label="Unproven Exposure" value={formatCurrency(commandSurface.unprovenExposureUsd)} />
-          <StatCard label="Pending Settlement Value" value={formatCurrency(commandSurface.pendingSettlementValueUsd)} />
-          <StatCard label="Pending Assay Value" value={formatCurrency(commandSurface.pendingAssayValueUsd)} />
-          <StatCard label="Low Confidence Exposure" value={formatCurrency(commandSurface.lowConfidenceExposureUsd)} />
-          <StatCard label="Open Divergence Impact" value={formatCurrency(commandSurface.openDivergenceImpactUsd)} />
-          <StatCard label="Queues Awaiting Assay" value={String(commandSurface.queuesAwaitingAssay)} />
-          <StatCard label="Open Divergences" value={String(commandSurface.openDivergences)} />
-          <StatCard label="Evidence Gaps" value={String(commandSurface.evidenceGaps)} />
-          <StatCard
-            label="Chain Completeness"
-            value={`${commandSurface.chainCompleteness.complete}/${commandSurface.chainCompleteness.total}`}
-            hint={`${commandSurface.chainCompleteness.percent}% complete`}
-          />
-          <StatCard label="Active Sites" value={String(commandSurface.activeSites)} />
-          <StatCard label="Material In Transit Units" value={String(commandSurface.materialInTransit)} />
-          <StatCard label="Processing Backlog" value={String(commandSurface.processingBacklog)} />
-          <StatCard label="Settlement Variance" value={formatCurrency(commandSurface.settlementVarianceUsd)} />
-          <StatCard label="Estimated vs Final Variance" value={formatCurrency(commandSurface.estimatedVsFinalVarianceUsd)} />
-          <StatCard label="Hedge Coverage" value={`${commandSurface.hedgeCoveragePercent}%`} />
-          <StatCard label="Oldest Capture Risk" value={`${commandSurface.agingRisk.oldestCaptureDays}d`} />
-          <StatCard label="Avg Assay Wait" value={`${commandSurface.agingRisk.avgAssayWaitDays}d`} />
-          <StatCard label="Oldest Open Divergence" value={`${commandSurface.agingRisk.oldestOpenDivergenceDays}d`} />
-          <StatCard
-            label="Projection Timestamp"
-            value={formatDateTime(commandSurface.generatedAt)}
-          />
+        <section aria-labelledby="capital-control-heading" className="space-y-2">
+          <h2 id="capital-control-heading" className="font-mono text-xs uppercase tracking-wider text-surface-200">
+            Capital Control
+          </h2>
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <StatCard label="Total Capital Deployed" value={formatCurrency(commandSurface.totalCapitalDeployedUsd)} />
+            <StatCard label="Material Value Under Control" value={formatCurrency(commandSurface.materialValueUnderControlUsd)} />
+            <StatCard label="Unproven Capital Exposure" value={formatCurrency(commandSurface.unprovenCapitalExposureUsd)} />
+            <StatCard label="Pending Settlement Value" value={formatCurrency(commandSurface.pendingSettlementValueUsd)} />
+            <StatCard label="Material In Custody" value={formatCurrency(commandSurface.materialInCustodyUsd)} compact />
+            <StatCard label="Material In Transit" value={formatCurrency(commandSurface.materialInTransitUsd)} compact />
+            <StatCard label="Pending Assay Value" value={formatCurrency(commandSurface.pendingAssayValueUsd)} compact />
+            <StatCard label="Open Divergence Impact" value={formatCurrency(commandSurface.openDivergenceImpactUsd)} compact />
+          </div>
+        </section>
+
+        <section aria-labelledby="integrity-control-heading" className="space-y-2">
+          <h2 id="integrity-control-heading" className="font-mono text-xs uppercase tracking-wider text-surface-200">
+            Integrity Signals
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+            <StatCard label="Queues Awaiting Assay" value={String(commandSurface.queuesAwaitingAssay)} compact />
+            <StatCard label="Open Divergences" value={String(commandSurface.openDivergences)} compact />
+            <StatCard label="Evidence Gaps" value={String(commandSurface.evidenceGaps)} compact />
+            <StatCard
+              label="Chain Completeness"
+              value={`${commandSurface.chainCompleteness.complete}/${commandSurface.chainCompleteness.total}`}
+              hint={`${commandSurface.chainCompleteness.percent}% complete`}
+              compact
+            />
+            <StatCard label="Low Confidence Exposure" value={formatCurrency(commandSurface.lowConfidenceExposureUsd)} compact />
+            <StatCard label="Hedge Coverage" value={`${commandSurface.hedgeCoveragePercent}%`} compact />
+          </div>
+        </section>
+
+        <section aria-labelledby="operating-context-heading" className="space-y-2">
+          <h2 id="operating-context-heading" className="font-mono text-xs uppercase tracking-wider text-surface-200">
+            Operating Context
+          </h2>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+            <StatCard label="Estimated Floor Value" value={formatCurrency(commandSurface.estimatedFloorValueUsd)} compact />
+            <StatCard label="Floor Inventory Value" value={formatCurrency(commandSurface.floorInventoryValueUsd)} compact />
+            <StatCard label="Processed Catalyst Value" value={formatCurrency(commandSurface.processedCatalystValueUsd)} compact />
+            <StatCard label="Whole Converter Value" value={formatCurrency(commandSurface.wholeConverterValueUsd)} compact />
+            <StatCard label="Unproven Exposure" value={formatCurrency(commandSurface.unprovenExposureUsd)} compact />
+            <StatCard label="Active Sites" value={String(commandSurface.activeSites)} compact />
+            <StatCard label="Material In Transit Units" value={String(commandSurface.materialInTransit)} compact />
+            <StatCard label="Processing Backlog" value={String(commandSurface.processingBacklog)} compact />
+            <StatCard label="Settlement Variance" value={formatCurrency(commandSurface.settlementVarianceUsd)} compact />
+            <StatCard label="Estimated vs Final Variance" value={formatCurrency(commandSurface.estimatedVsFinalVarianceUsd)} compact />
+            <StatCard label="Oldest Capture Risk" value={`${commandSurface.agingRisk.oldestCaptureDays}d`} compact />
+            <StatCard label="Avg Assay Wait" value={`${commandSurface.agingRisk.avgAssayWaitDays}d`} compact />
+            <StatCard label="Oldest Open Divergence" value={`${commandSurface.agingRisk.oldestOpenDivergenceDays}d`} compact />
+            <StatCard label="Projection Timestamp" value={formatDateTime(commandSurface.generatedAt)} compact />
+          </div>
         </section>
 
         <Panel title="High-Risk Queue Chains">
@@ -279,7 +290,7 @@ export default async function OverviewPage() {
       <div className="space-y-4">
         <PageHeader
           title="Operations Command Surface"
-          subtitle="Live control metrics for capital, uncertainty, divergence, and chain completeness across the truth graph."
+          subtitle="Deterministic control metrics for capital, uncertainty, divergence, and chain completeness across the truth graph."
         />
         <ApiFailure error={error instanceof Error ? error.message : "Unknown API error"} />
       </div>

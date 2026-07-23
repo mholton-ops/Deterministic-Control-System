@@ -1,17 +1,15 @@
-import { createHash, randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
 
-import { and, eq, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import {
   accounts,
   boxes,
   converters,
   createDb,
   createPool,
-  custodyEvents,
   devices,
   evidenceArtifacts,
   ledgerEntries,
-  massMeasurements,
   queueBoxes,
   queues,
   samples,
@@ -30,6 +28,22 @@ interface OriginContext {
 }
 
 const BASE_TIME = new Date("2026-03-01T08:00:00.000Z");
+const LIBRARY_ENTRY_BY_METHOD = {
+  vin: "8a3d5b8f-899f-4a3f-a8eb-2c7af6dd4001",
+  serial: "8a3d5b8f-899f-4a3f-a8eb-2c7af6dd4002",
+  library_match: "8a3d5b8f-899f-4a3f-a8eb-2c7af6dd4003",
+  category_fallback: "8a3d5b8f-899f-4a3f-a8eb-2c7af6dd4004",
+} as const;
+const MARKET_SNAPSHOT_IDS = [
+  "8a3d5b8f-899f-4a3f-a8eb-2c7af6dd2001",
+  "8a3d5b8f-899f-4a3f-a8eb-2c7af6dd2002",
+  "8a3d5b8f-899f-4a3f-a8eb-2c7af6dd2003",
+] as const;
+const TERMS_PROFILE_IDS = [
+  "8a3d5b8f-899f-4a3f-a8eb-2c7af6dd3001",
+  "8a3d5b8f-899f-4a3f-a8eb-2c7af6dd3002",
+  "8a3d5b8f-899f-4a3f-a8eb-2c7af6dd3003",
+] as const;
 
 function normalizeToUuid(value: string): string {
   const uuidRegex =
@@ -41,6 +55,13 @@ function normalizeToUuid(value: string): string {
 
   const hex = createHash("sha1").update(value).digest("hex");
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-4${hex.slice(13, 16)}-a${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
+}
+
+let scenarioUuidSequence = 0;
+
+function nextScenarioUuid(): string {
+  scenarioUuidSequence += 1;
+  return normalizeToUuid(`scenario-uuid-${scenarioUuidSequence}`);
 }
 
 function at(minutes: number): string {
@@ -57,14 +78,20 @@ function isMilledMaterialType(materialType: string): boolean {
   return false;
 }
 
-async function ensureOrigin(db: ReturnType<typeof createDb>, userId: string, deviceId: string, index: number) {
+async function ensureOrigin(
+  db: ReturnType<typeof createDb>,
+  userId: string,
+  deviceId: string,
+  index: number,
+  role: string = index % 3 === 0 ? "supervisor" : "operator",
+) {
   const existingUser = await db.select().from(users).where(eq(users.userId, userId)).limit(1);
   if (existingUser.length === 0) {
     await db.insert(users).values({
       userId,
       externalRef: `operator-${String(index + 1).padStart(2, "0")}`,
       displayName: `Operator ${String(index + 1).padStart(2, "0")}`,
-      role: index % 3 === 0 ? "supervisor" : "operator",
+      role,
       active: true,
       createdAt: new Date(BASE_TIME.getTime() - index * 86_400_000),
     });
@@ -135,9 +162,12 @@ async function apply(
 }
 
 export async function runDeterministicScenario(): Promise<void> {
+  scenarioUuidSequence = 0;
   const pool = createPool();
   const db = createDb(pool);
   const processor = new CommandProcessor(db);
+  const financeApproverUserId = normalizeToUuid("sim-finance-approver");
+  const financeApproverDeviceId = normalizeToUuid("sim-finance-approver-device");
 
   const origins: OriginContext[] = [];
   const siteCodes = [
@@ -160,11 +190,6 @@ export async function runDeterministicScenario(): Promise<void> {
     { length: 14 },
     (_, index) => `DR-BOX-${String(index + 1).padStart(3, "0")}`,
   );
-  const boxCodes = [
-    ...wholeConverterBoxCodes,
-    ...processedCatalystBoxCodes,
-    ...dustRecoveryBoxCodes,
-  ];
   const queueCodes = Array.from({ length: 38 }, (_, index) => `QUEUE-SIM-${String(index + 1).padStart(3, "0")}`);
 
   try {
@@ -174,6 +199,7 @@ export async function runDeterministicScenario(): Promise<void> {
       await ensureOrigin(db, userId, deviceId, i);
       origins.push({ sourceSystem: "operator_console", userId, deviceId, capturedAt: at(i) });
     }
+    await ensureOrigin(db, financeApproverUserId, financeApproverDeviceId, 99, "finance_approver");
 
     await ensureSite(db, "SITE-SIM-01", "yard", "North Yard");
     await ensureSite(db, "SITE-SIM-02", "yard", "South Yard");
@@ -210,7 +236,7 @@ export async function runDeterministicScenario(): Promise<void> {
         dependencies: [],
         command: {
           commandType: "field.capture_converter",
-          commandId: randomUUID(),
+          commandId: nextScenarioUuid(),
           yardId: siteCode,
           boxId: boxCode,
           vinOrSerial,
@@ -221,53 +247,27 @@ export async function runDeterministicScenario(): Promise<void> {
             accuracyM: 5 + (converterIndex % 7),
           },
           evidence: {
-            evidenceBundleId: randomUUID(),
+            evidenceBundleId: nextScenarioUuid(),
             requiredTypesPresent: ["image", "gps"],
           },
         },
       });
     }
 
-    const queueTransactionByCode = new Map<string, string>();
-    for (let queueIndex = 0; queueIndex < queueCodes.length; queueIndex += 1) {
-      const queueCode = queueCodes[queueIndex];
-      const origin = origins[queueIndex % origins.length];
-      const result = await apply(processor, {
-        idempotencyKey: `sim-lock-queue-${String(queueIndex + 1).padStart(3, "0")}`,
-        origin: { ...origin, capturedAt: at(400 + queueIndex) },
-        createdAt: at(400 + queueIndex),
-        dependencies: [],
-        command: {
-          commandType: "custody.lock_queue_for_processing",
-          commandId: randomUUID(),
-          queueId: queueCode,
-        },
-      });
-      queueTransactionByCode.set(queueCode, result.transactionId);
-    }
-
-    const queueRows = await db.select().from(queues);
-    const boxRows = await db.select().from(boxes);
-    const queueByCode = new Map(queueRows.map((row) => [row.queueCode, row] as const));
+    const boxRows = await db.select().from(boxes).orderBy(boxes.externalCode);
     const defaultQueueCode = queueCodes[0];
     if (!defaultQueueCode) {
       throw new Error("Queue code list is empty.");
     }
-    const fallbackTransactionId = queueTransactionByCode.get(defaultQueueCode);
-    if (!fallbackTransactionId) {
-      throw new Error("Queue lock transaction map is empty; cannot assign box continuity.");
-    }
-    const fallbackTxId: string = fallbackTransactionId;
 
     const processedBoxes = boxRows.filter((row) => row.materialType === "processed_catalyst");
     const dustBoxes = boxRows.filter((row) => row.materialType === "dust_recovery");
     const wholeBoxes = boxRows.filter((row) => row.materialType === "whole_converter");
 
     const queueAssignments: Array<{
-      queueId: string;
-      boxId: string;
-      assignedAt: Date;
-      assignedByTransactionId: string;
+      queueCode: string;
+      boxCode: string;
+      assignedAt: string;
     }> = [];
 
     function assignBoxSeries(
@@ -281,27 +281,69 @@ export async function runDeterministicScenario(): Promise<void> {
         if (!selectedBox) continue;
         const queueCode =
           queueCodes[(queueStartIndex + (index % queueSpread)) % queueCodes.length] ?? defaultQueueCode;
-        const queue = queueByCode.get(queueCode);
-        if (!queue) continue;
         queueAssignments.push({
-          queueId: queue.queueId,
-          boxId: selectedBox.boxId,
-          assignedAt: new Date(BASE_TIME.getTime() + (500 + assignmentOffset + index) * 60_000),
-          assignedByTransactionId: queueTransactionByCode.get(queueCode) ?? fallbackTxId,
+          queueCode,
+          boxCode: selectedBox.externalCode,
+          assignedAt: new Date(
+            BASE_TIME.getTime() + (450 + assignmentOffset + index) * 60_000,
+          ).toISOString(),
         });
       }
     }
 
-    assignBoxSeries(processedBoxes, 0, 8, 0);
-    assignBoxSeries(dustBoxes, 8, 8, 120);
-    assignBoxSeries(wholeBoxes, 16, queueCodes.length - 4, 240);
+    assignBoxSeries(processedBoxes, 0, 10, 0);
+    assignBoxSeries(dustBoxes, 10, 10, 20);
+    assignBoxSeries(wholeBoxes, 20, queueCodes.length - 20, 34);
 
-    if (queueAssignments.length > 0) {
-      await db.insert(queueBoxes).values(queueAssignments).onConflictDoNothing();
+    for (let assignmentIndex = 0; assignmentIndex < queueAssignments.length; assignmentIndex += 1) {
+      const assignment = queueAssignments[assignmentIndex];
+      const origin = origins[assignmentIndex % origins.length];
+      await apply(processor, {
+        idempotencyKey: `sim-assign-box-queue-${String(assignmentIndex + 1).padStart(3, "0")}`,
+        origin: { ...origin, capturedAt: assignment.assignedAt },
+        createdAt: assignment.assignedAt,
+        dependencies: [],
+        command: {
+          commandType: "custody.assign_box_to_queue",
+          commandId: nextScenarioUuid(),
+          boxId: assignment.boxCode,
+          queueId: assignment.queueCode,
+        },
+      });
+    }
+
+    for (let queueIndex = 0; queueIndex < queueCodes.length; queueIndex += 1) {
+      const queueCode = queueCodes[queueIndex];
+      const origin = origins[queueIndex % origins.length];
+      await apply(processor, {
+        idempotencyKey: `sim-lock-queue-${String(queueIndex + 1).padStart(3, "0")}`,
+        origin: { ...origin, capturedAt: at(540 + queueIndex) },
+        createdAt: at(540 + queueIndex),
+        dependencies: [],
+        command: {
+          commandType: "custody.lock_queue_for_processing",
+          commandId: nextScenarioUuid(),
+          queueId: queueCode,
+        },
+      });
     }
 
     let shipmentCursor = 0;
     const shippableBoxes = boxRows.slice(0, 62).map((row) => row.externalCode);
+    for (let boxIndex = 0; boxIndex < shippableBoxes.length; boxIndex += 1) {
+      const origin = origins[boxIndex % origins.length];
+      await apply(processor, {
+        idempotencyKey: `sim-close-box-${String(boxIndex + 1).padStart(3, "0")}`,
+        origin: { ...origin, capturedAt: at(580 + boxIndex) },
+        createdAt: at(580 + boxIndex),
+        dependencies: [],
+        command: {
+          commandType: "custody.close_box",
+          commandId: nextScenarioUuid(),
+          boxId: shippableBoxes[boxIndex],
+        },
+      });
+    }
     for (let shipmentIndex = 0; shipmentIndex < 22; shipmentIndex += 1) {
       const origin = origins[shipmentIndex % origins.length];
       const chunkSize = 2 + (shipmentIndex % 3);
@@ -318,7 +360,7 @@ export async function runDeterministicScenario(): Promise<void> {
         dependencies: [],
         command: {
           commandType: "custody.create_shipment",
-          commandId: randomUUID(),
+          commandId: nextScenarioUuid(),
           shipmentCode,
           originSiteId: originSite,
           destinationSiteId: "SITE-SIM-05",
@@ -326,7 +368,10 @@ export async function runDeterministicScenario(): Promise<void> {
         },
       });
 
-      if (shipmentIndex % 4 !== 0) {
+      const containsMilledMaterial = selectedBoxes.some(
+        (boxCode) => boxCode.startsWith("PC-BOX-") || boxCode.startsWith("DR-BOX-"),
+      );
+      if (containsMilledMaterial || shipmentIndex % 4 !== 0) {
         await apply(processor, {
           idempotencyKey: `sim-receive-shipment-${String(shipmentIndex + 1).padStart(3, "0")}`,
           origin: { ...origin, capturedAt: at(680 + shipmentIndex) },
@@ -334,7 +379,7 @@ export async function runDeterministicScenario(): Promise<void> {
           dependencies: [],
           command: {
             commandType: "custody.receive_shipment",
-            commandId: randomUUID(),
+          commandId: nextScenarioUuid(),
             shipmentRef: shipmentCode,
             receivingSiteId: "SITE-SIM-05",
           },
@@ -348,7 +393,14 @@ export async function runDeterministicScenario(): Promise<void> {
       if (!converter) break;
       const origin = origins[gradingIndex % origins.length];
       const method = gradingIndex % 5 === 0 ? "category_fallback" : gradingIndex % 3 === 0 ? "library_match" : gradingIndex % 2 === 0 ? "serial" : "vin";
-      const confidence = gradingIndex % 9 === 0 ? "low" : gradingIndex % 3 === 0 ? "medium" : "high";
+      const confidence =
+        method === "category_fallback"
+          ? "low"
+          : method === "library_match"
+            ? "medium"
+            : gradingIndex % 9 === 0
+              ? "low"
+              : "high";
 
       await apply(processor, {
         idempotencyKey: `sim-grade-${String(gradingIndex + 1).padStart(4, "0")}`,
@@ -357,9 +409,9 @@ export async function runDeterministicScenario(): Promise<void> {
         dependencies: [],
         command: {
           commandType: "grading.issue_decision",
-          commandId: randomUUID(),
+          commandId: nextScenarioUuid(),
           converterId: converter.converterId,
-          candidateId: normalizeToUuid(`library-candidate-${method}-${confidence}-${gradingIndex % 16}`),
+          candidateId: LIBRARY_ENTRY_BY_METHOD[method],
           identificationMethod: method,
           confidence,
           overrideReason: gradingIndex % 16 === 0 ? "Operator override due damaged serial plate." : null,
@@ -408,13 +460,14 @@ export async function runDeterministicScenario(): Promise<void> {
           dependencies: [],
           command: {
             commandType: "analytics.record_sample",
-            commandId: randomUUID(),
+          commandId: nextScenarioUuid(),
             queueId: queueCode,
             source: sampleIndex === sampleCount - 1 && queueIndex % 4 === 0 ? "icp_final" : "internal_xrf",
             ptPpm: 420 + (queueIndex % 15) * 18 + sampleIndex * 4,
             pdPpm: 710 + (queueIndex % 13) * 23 + sampleIndex * 5,
             rhPpm: 70 + (queueIndex % 11) * 7 + sampleIndex,
             matrixId: queueIndex % 2 === 0 ? "8a3d5b8f-899f-4a3f-a8eb-2c7af6dd1001" : null,
+            evidence: { evidenceBundleId: nextScenarioUuid(), requiredTypesPresent: ["note"] },
           },
         });
       }
@@ -429,10 +482,10 @@ export async function runDeterministicScenario(): Promise<void> {
         dependencies: [],
         command: {
           commandType: "pricing.resolve_estimate",
-          commandId: randomUUID(),
+          commandId: nextScenarioUuid(),
           queueId: queueCodes[queueIndex],
-          marketSnapshotId: queueIndex % 2 === 0 ? "8a3d5b8f-899f-4a3f-a8eb-2c7af6dd2001" : randomUUID(),
-          termsProfileId: queueIndex % 3 === 0 ? "8a3d5b8f-899f-4a3f-a8eb-2c7af6dd3001" : randomUUID(),
+          marketSnapshotId: MARKET_SNAPSHOT_IDS[queueIndex % MARKET_SNAPSHOT_IDS.length],
+          termsProfileId: TERMS_PROFILE_IDS[queueIndex % TERMS_PROFILE_IDS.length],
           sourceCandidates:
             queueIndex % 6 === 0
               ? ["category_fallback"]
@@ -453,7 +506,7 @@ export async function runDeterministicScenario(): Promise<void> {
         dependencies: [],
         command: {
           commandType: "hedge.open_position",
-          commandId: randomUUID(),
+          commandId: nextScenarioUuid(),
           layer: queueIndex % 3 === 0 ? "external" : "internal",
           scopeType: "queue",
           scopeId: queueCodes[queueIndex],
@@ -478,7 +531,7 @@ export async function runDeterministicScenario(): Promise<void> {
         dependencies: [],
         command: {
           commandType: "finance.post_ledger_entry",
-          commandId: randomUUID(),
+          commandId: nextScenarioUuid(),
           debitAccountId: "internal_funding_pool",
           creditAccountId: ledgerIndex % 2 === 0 ? "buyer_alpha" : "buyer_beta",
           amount: {
@@ -487,9 +540,10 @@ export async function runDeterministicScenario(): Promise<void> {
           },
           purposeCode: ledgerIndex % 5 === 0 ? "field_purchase" : "funding_advance",
           sourceOperationalRef: queueCode,
+          approvedByUserId: ledgerIndex % 5 === 0 ? null : financeApproverUserId,
           notes: `Funding line ${ledgerIndex + 1} for ${queueCode}`,
           evidence: {
-            evidenceBundleId: randomUUID(),
+            evidenceBundleId: nextScenarioUuid(),
             requiredTypesPresent: ["note"],
           },
         },
@@ -507,7 +561,7 @@ export async function runDeterministicScenario(): Promise<void> {
         dependencies: [],
         command: {
           commandType: "finance.post_ledger_entry",
-          commandId: randomUUID(),
+          commandId: nextScenarioUuid(),
           debitAccountId: "buyer_gamma",
           creditAccountId: "treasury_bank",
           amount: {
@@ -516,9 +570,10 @@ export async function runDeterministicScenario(): Promise<void> {
           },
           purposeCode: "wire",
           sourceOperationalRef: queueCode,
+          approvedByUserId: null,
           notes: `Treasury movement ${ledgerIndex + 1}`,
           evidence: {
-            evidenceBundleId: randomUUID(),
+            evidenceBundleId: nextScenarioUuid(),
             requiredTypesPresent: ["note"],
           },
         },
@@ -536,7 +591,7 @@ export async function runDeterministicScenario(): Promise<void> {
         dependencies: [],
         command: {
           commandType: "finance.post_ledger_entry",
-          commandId: randomUUID(),
+          commandId: nextScenarioUuid(),
           debitAccountId: "warehouse_ops",
           creditAccountId: "buyer_beta",
           amount: {
@@ -545,9 +600,10 @@ export async function runDeterministicScenario(): Promise<void> {
           },
           purposeCode: "adjustment",
           sourceOperationalRef: queueCode,
+          approvedByUserId: null,
           notes: `Additive correction ${ledgerIndex + 1} for ${queueCode}`,
           evidence: {
-            evidenceBundleId: randomUUID(),
+            evidenceBundleId: nextScenarioUuid(),
             requiredTypesPresent: ["note"],
           },
         },
@@ -574,7 +630,7 @@ export async function runDeterministicScenario(): Promise<void> {
         dependencies: [],
         command: {
           commandType: "reconciliation.open_case",
-          commandId: randomUUID(),
+          commandId: nextScenarioUuid(),
           triggerType: caseIndex % 4 === 0 ? "weight_delta" : caseIndex % 3 === 0 ? "custody_mismatch" : "assay_variance",
           severity: caseIndex % 6 === 0 ? "critical" : caseIndex % 4 === 0 ? "high" : caseIndex % 3 === 0 ? "medium" : "low",
           relatedScopeType: scopeType,
@@ -591,7 +647,7 @@ export async function runDeterministicScenario(): Promise<void> {
         dependencies: [],
         command: {
           commandType: "reconciliation.record_action",
-          commandId: randomUUID(),
+          commandId: nextScenarioUuid(),
           caseId,
           actionType: caseIndex % 3 === 0 ? "request_additional_assay" : "operator_review",
           actionPayload: {
@@ -609,7 +665,7 @@ export async function runDeterministicScenario(): Promise<void> {
           dependencies: [],
           command: {
             commandType: "reconciliation.close_case",
-            commandId: randomUUID(),
+          commandId: nextScenarioUuid(),
             caseId,
             status: caseIndex % 5 === 0 ? "accepted_variance" : "resolved",
             closureRationale:
@@ -655,13 +711,14 @@ export async function runDeterministicScenario(): Promise<void> {
           dependencies: [],
           command: {
             commandType: "analytics.record_sample",
-            commandId: randomUUID(),
+          commandId: nextScenarioUuid(),
             queueId: queueCode,
             source: "icp_final",
             ptPpm: 460 + (settlementIndex % 12) * 15,
             pdPpm: 760 + (settlementIndex % 10) * 21,
             rhPpm: 84 + (settlementIndex % 9) * 6,
             matrixId: null,
+            evidence: { evidenceBundleId: nextScenarioUuid(), requiredTypesPresent: ["note"] },
           },
         });
       }
@@ -673,14 +730,45 @@ export async function runDeterministicScenario(): Promise<void> {
         (settlementIndex % 5 === 0 ? -0.04 : 0) +
         ((settlementIndex % 4) - 1.5) * 0.012;
       const finalValue = Math.max(45_000, estimateValue * (1 + varianceRatio));
+      const requiredSteps: Array<
+        | "lot_selected"
+        | "contents_reviewed"
+        | "sample_data_recorded"
+        | "adjustments_recorded"
+        | "weight_basis_locked"
+        | "hedges_applied"
+        | "financial_context_applied"
+      > = [
+        "lot_selected",
+        "contents_reviewed",
+        "sample_data_recorded",
+        "adjustments_recorded",
+        "weight_basis_locked",
+        "hedges_applied",
+        "financial_context_applied",
+      ];
+      for (let stepIndex = 0; stepIndex < requiredSteps.length; stepIndex += 1) {
+        await apply(processor, {
+          idempotencyKey: `sim-settle-control-${String(settlementIndex + 1).padStart(3, "0")}-${stepIndex + 1}`,
+          origin: { ...origin, capturedAt: at(1700 + settlementIndex * 8 + stepIndex) },
+          createdAt: at(1700 + settlementIndex * 8 + stepIndex),
+          dependencies: [],
+          command: {
+            commandType: "settlement.append_step",
+          commandId: nextScenarioUuid(),
+            settlementId: queueCode,
+            step: requiredSteps[stepIndex],
+          },
+        });
+      }
       await apply(processor, {
         idempotencyKey: `sim-settle-final-${String(settlementIndex + 1).padStart(3, "0")}`,
-        origin: { ...origin, capturedAt: at(1700 + settlementIndex) },
-        createdAt: at(1700 + settlementIndex),
+        origin: { ...origin, capturedAt: at(1700 + settlementIndex * 8 + requiredSteps.length) },
+        createdAt: at(1700 + settlementIndex * 8 + requiredSteps.length),
         dependencies: [],
         command: {
           commandType: "settlement.finalize_from_assay",
-          commandId: randomUUID(),
+          commandId: nextScenarioUuid(),
           settlementId: queueCode,
           finalValueUsd: finalValue.toFixed(2),
         },
@@ -704,86 +792,11 @@ export async function runDeterministicScenario(): Promise<void> {
           dependencies: [],
           command: {
             commandType: "settlement.append_step",
-            commandId: randomUUID(),
+          commandId: nextScenarioUuid(),
             settlementId: queueCode,
             step: steps[stepOrder],
           },
         });
-      }
-    }
-
-    const queueRowsAfter = await db.select().from(queues).orderBy(queues.queueCode);
-    for (const [index, queueRow] of queueRowsAfter.entries()) {
-      let state: (typeof queues.$inferInsert)["state"] = "processing";
-      let locked = true;
-
-      if (index < 4) {
-        state = "settled";
-      } else if (index < 10) {
-        state = "assay_pending";
-      } else if (index < 18) {
-        state = "valued";
-      } else if (index < 28) {
-        state = "assay_pending";
-      } else if (index < 34) {
-        state = "sampled";
-      } else if (index % 2 === 0) {
-        state = "open";
-        locked = false;
-      } else {
-        state = "processing";
-      }
-
-      await db.update(queues).set({ state, lockedForProcessing: locked }).where(eq(queues.queueId, queueRow.queueId));
-    }
-
-    const shipmentRowsAfter = await db.select().from(shipments).orderBy(shipments.shipmentCode);
-    for (const [index, shipment] of shipmentRowsAfter.entries()) {
-      const nextState: (typeof shipments.$inferInsert)["state"] =
-        shipment.state === "received"
-          ? index % 3 === 0
-            ? "closed"
-            : "received"
-          : index % 5 === 0
-            ? "discrepant"
-            : "in_transit";
-      await db.update(shipments).set({ state: nextState }).where(eq(shipments.shipmentId, shipment.shipmentId));
-    }
-
-    const boxRowsAfter = await db.select().from(boxes).orderBy(boxes.externalCode);
-    for (const [index, boxRow] of boxRowsAfter.entries()) {
-      const nextState: (typeof boxes.$inferInsert)["state"] =
-        boxRow.state === "shipped" || boxRow.state === "received"
-          ? boxRow.state
-          : index % 9 === 0
-            ? "retired"
-            : index % 4 === 0
-              ? "closed"
-              : "active";
-      await db.update(boxes).set({ state: nextState }).where(eq(boxes.boxId, boxRow.boxId));
-    }
-
-    const converterRowsAfter = await db.select().from(converters).orderBy(converters.capturedAt);
-    for (const [index, converter] of converterRowsAfter.entries()) {
-      const state: (typeof converters.$inferInsert)["state"] =
-        index % 17 === 0
-          ? "captured"
-          : index % 11 === 0
-            ? "processing"
-            : index % 7 === 0
-              ? "sampled"
-              : index % 5 === 0
-                ? "settled"
-                : converter.state;
-      await db.update(converters).set({ state }).where(eq(converters.converterId, converter.converterId));
-    }
-
-    const evidenceGapBundles = converterRowsAfter.slice(0, 40).map((row) => row.evidenceBundleId);
-    for (const [index, bundleId] of evidenceGapBundles.entries()) {
-      if (index % 3 === 0) {
-        await db
-          .delete(evidenceArtifacts)
-          .where(and(eq(evidenceArtifacts.evidenceBundleId, bundleId), eq(evidenceArtifacts.evidenceType, "gps")));
       }
     }
 
@@ -792,7 +805,6 @@ export async function runDeterministicScenario(): Promise<void> {
     const evidenceConverters = await db
       .select({
         evidenceBundleId: converters.evidenceBundleId,
-        originTransactionId: converters.originTransactionId,
       })
       .from(converters)
       .orderBy(converters.capturedAt)
@@ -801,47 +813,72 @@ export async function runDeterministicScenario(): Promise<void> {
     for (let eventIndex = 0; eventIndex < evidenceConverters.length; eventIndex += 1) {
       const queueScope = usableQueues[eventIndex % Math.max(usableQueues.length, 1)]?.queueCode ?? queueCodes[0];
       const shipmentScope = usableShipments[eventIndex % Math.max(usableShipments.length, 1)]?.shipmentCode ?? "SHIP-SIM-001";
-
-      await db.insert(custodyEvents).values({
-        custodyEventId: randomUUID(),
-        transactionId: evidenceConverters[eventIndex].originTransactionId,
-        scopeType: eventIndex % 3 === 0 ? "shipment" : eventIndex % 5 === 0 ? "lot" : "queue",
-        scopeId: eventIndex % 3 === 0 ? shipmentScope : queueScope,
-        eventType: eventIndex % 3 === 0 ? "shipment_scan" : eventIndex % 5 === 0 ? "lot_reweigh" : "queue_scan",
-        evidenceBundleId: evidenceConverters[eventIndex].evidenceBundleId,
-        createdAt: new Date(BASE_TIME.getTime() + (1900 + eventIndex) * 60_000),
+      const origin = origins[eventIndex % origins.length];
+      const capturedAt = at(1900 + eventIndex);
+      await apply(processor, {
+        idempotencyKey: `sim-custody-event-${String(eventIndex + 1).padStart(3, "0")}`,
+        origin: { ...origin, capturedAt },
+        createdAt: capturedAt,
+        dependencies: [],
+        command: {
+          commandType: "custody.record_event",
+          commandId: nextScenarioUuid(),
+          scopeType: eventIndex % 3 === 0 ? "shipment" : "queue",
+          scopeId: eventIndex % 3 === 0 ? shipmentScope : queueScope,
+          eventType: eventIndex % 3 === 0 ? "shipment_scan" : "queue_scan",
+          capturedAt,
+          evidence: {
+            evidenceBundleId: evidenceConverters[eventIndex].evidenceBundleId,
+            requiredTypesPresent: ["image"],
+          },
+        },
       });
     }
 
+    const measurementQueues = usableQueues.filter((row) => row.state !== "settled");
     for (let measurementIndex = 0; measurementIndex < 28; measurementIndex += 1) {
-      const queueRow = usableQueues[measurementIndex % Math.max(usableQueues.length, 1)];
+      const queueRow = measurementQueues[measurementIndex % Math.max(measurementQueues.length, 1)];
       if (!queueRow) break;
       const input = 620 + measurementIndex * 14;
       const output = input - (12 + (measurementIndex % 5) * 2.5);
       const loss = input - output;
-      await db.insert(massMeasurements).values({
-        massMeasurementId: randomUUID(),
-        queueId: queueRow.queueId,
-        stage: measurementIndex % 2 === 0 ? "pre-process" : "post-process",
-        inputWeightKg: input.toFixed(3),
-        outputWeightKg: output.toFixed(3),
-        explainedLossKg: loss.toFixed(3),
-        capturedAt: new Date(BASE_TIME.getTime() + (2050 + measurementIndex) * 60_000),
+      const origin = origins[measurementIndex % origins.length];
+      const capturedAt = at(2050 + measurementIndex);
+      await apply(processor, {
+        idempotencyKey: `sim-mass-measurement-${String(measurementIndex + 1).padStart(3, "0")}`,
+        origin: { ...origin, capturedAt },
+        createdAt: capturedAt,
+        dependencies: [],
+        command: {
+          commandType: "custody.record_mass_measurement",
+          commandId: nextScenarioUuid(),
+          queueId: queueRow.queueCode,
+          stage: measurementIndex % 2 === 0 ? "pre-process" : "post-process",
+          inputWeightKg: input,
+          outputWeightKg: output,
+          explainedLossKg: loss,
+          capturedAt,
+          evidence: { evidenceBundleId: nextScenarioUuid(), requiredTypesPresent: ["note"] },
+        },
       });
     }
 
     const linkedSettlements = await db.select().from(settlements);
+    const finalConverters = await db.select({ id: converters.converterId }).from(converters);
+    const finalBoxes = await db.select({ id: boxes.boxId }).from(boxes);
+    const finalQueues = await db.select({ id: queues.queueId }).from(queues);
+    const finalShipments = await db.select({ id: shipments.shipmentId }).from(shipments);
 
     console.log("Deterministic scenario complete with scaled truth-graph dataset.");
     console.log({
       sites: 6,
       operators: 22,
       customers: 40,
-      converters: converterRowsAfter.length,
-      boxes: boxRowsAfter.length,
-      queues: queueRowsAfter.length,
-      shipments: shipmentRowsAfter.length,
-      evidenceArtifactsAfterGaping: await db.select().from(evidenceArtifacts).then((rows) => rows.length),
+      converters: finalConverters.length,
+      boxes: finalBoxes.length,
+      queues: finalQueues.length,
+      shipments: finalShipments.length,
+      evidenceArtifacts: await db.select().from(evidenceArtifacts).then((rows) => rows.length),
       settlements: linkedSettlements.length,
     });
   } finally {

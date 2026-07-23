@@ -3,7 +3,7 @@
     "private": true,
     "version": "0.1.0",
     "description": "Clean-room reference implementation of a deterministic operational control platform",
-    "packageManager": "pnpm@10.0.0",
+    "packageManager": "npm@10.9.4",
     "workspaces": [
         "apps/*",
         "packages/*"
@@ -21,7 +21,7 @@
         "simulate": "npm run --workspace @dcs/simulation run",
         "verify:guarantees": "npm run --workspace @dcs/simulation verify:guarantees",
         "build": "npm run --workspaces --if-present build",
-        "lint": "echo \"Lint setup is introduced in a later phase.\"",
+        "lint": "eslint apps packages scripts --max-warnings=0",
         "typecheck": "npm run --workspaces --if-present typecheck",
         "test:integration": "npm run --workspace @dcs/simulation test:integration",
         "test:api-integration": "npm run --workspace @dcs/simulation test:api-integration",
@@ -30,11 +30,16 @@
         "playwright:install": "playwright install chromium"
     },
     "devDependencies": {
-        "@types/node": "^22.13.9",
+        "@eslint/js": "^9.39.1",
+        "@types/node": "^22.20.0",
         "@types/pg": "^8.11.11",
-        "drizzle-kit": "^0.30.6",
-        "playwright": "^1.59.1",
-        "tsx": "^4.19.2",
-        "typescript": "^5.8.3"
+        "drizzle-kit": "^0.31.10",
+        "eslint": "^9.39.1",
+        "eslint-plugin-react-hooks": "^7.0.1",
+        "globals": "^16.5.0",
+        "playwright": "^1.61.1",
+        "tsx": "^4.23.1",
+        "typescript": "^5.9.3",
+        "typescript-eslint": "^8.50.1"
     }
 }

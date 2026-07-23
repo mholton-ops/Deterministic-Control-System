@@ -1,7 +1,12 @@
-import { randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
 
-import { eq, inArray, or, sql } from "drizzle-orm";
-import { commandSchema, type CommandDto, type TransactionEnvelopeDto } from "@dcs/contracts";
+import { and, asc, eq, inArray, or, sql } from "drizzle-orm";
+import {
+  commandSchema,
+  type CommandDto,
+  type CommandInputDto,
+  type TransactionEnvelopeDto,
+} from "@dcs/contracts";
 import type { DcsDb } from "@dcs/db";
 import {
   accounts,
@@ -9,6 +14,7 @@ import {
   boxConverters,
   converters,
   correctionMatrices,
+  custodyEvents,
   evidenceArtifacts,
   evidenceBundles,
   gradingDecisions,
@@ -32,6 +38,9 @@ import {
   shipments,
   sites,
   termsProfiles,
+  transactionDependencies,
+  transactionEnvelopes,
+  users,
 } from "@dcs/db";
 import {
   analytics,
@@ -47,14 +56,28 @@ import {
   type EvidenceBundleId,
   type UserId,
 } from "@dcs/domain";
-import { EventLogRepository } from "@dcs/event-log";
+import {
+  checksumPayload,
+  deterministicTransactionId,
+  EventLogRepository,
+  type StoredEnvelope,
+} from "@dcs/event-log";
+
+import { validateDependency } from "./dependency-validator";
+import { assertControlledOrigin, ControlledOriginError } from "./origin-policy";
+import {
+  processReplicationQueueBatch,
+  processReplicationTransaction,
+  retryReplicationTransaction,
+  type ReplicationAttemptResult,
+} from "./replication-worker";
 
 export interface CommandSubmission {
   readonly idempotencyKey: string;
   readonly origin: TransactionEnvelopeDto["origin"];
   readonly createdAt: string;
   readonly dependencies: readonly DependencyRef[];
-  readonly command: CommandDto;
+  readonly command: CommandInputDto;
 }
 
 export interface CommandProcessResult {
@@ -64,24 +87,179 @@ export interface CommandProcessResult {
   readonly effects: Record<string, unknown>;
 }
 
+export interface ControlledQueueBatchResult {
+  readonly resumed: readonly (
+    | CommandProcessResult
+    | { readonly transactionId: string; readonly status: "failed"; readonly error: string }
+  )[];
+  readonly replication: readonly ReplicationAttemptResult[];
+}
+
+interface ExecutionContext {
+  readonly transactionId: string;
+  readonly occurredAt: Date;
+}
+
+export class IdempotencyConflictError extends Error {
+  public constructor(idempotencyKey: string) {
+    super(`Idempotency key ${idempotencyKey} is already bound to a different command payload.`);
+    this.name = "IdempotencyConflictError";
+  }
+}
+
 export class CommandProcessor {
   private readonly eventLog: EventLogRepository;
+  private readonly idCounters = new Map<string, number>();
 
-  public constructor(private readonly db: DcsDb) {
+  public constructor(
+    private readonly db: DcsDb,
+    private readonly executionContext?: ExecutionContext,
+  ) {
     this.eventLog = new EventLogRepository(db);
   }
 
   public async process(submission: CommandSubmission): Promise<CommandProcessResult> {
     const command = commandSchema.parse(submission.command);
+    const occurredAt = new Date(submission.createdAt);
+    const transactionId = deterministicTransactionId(submission.idempotencyKey);
 
+    let result: CommandProcessResult;
+    try {
+      result = await this.db.transaction(async (transaction) => {
+        const processor = new CommandProcessor(transaction as unknown as DcsDb, {
+          transactionId,
+          occurredAt,
+        });
+        await assertControlledOrigin(processor.db, submission.origin, command.commandType);
+        return processor.processInTransaction(submission, command);
+      });
+    } catch (error) {
+      const existing = await this.eventLog.findByIdempotencyKey(submission.idempotencyKey);
+      if (existing) {
+        return this.duplicateResult(existing, command, submission.idempotencyKey);
+      }
+      if (!(error instanceof ControlledOriginError)) {
+        await this.recordFailedSubmission(submission, command, error, occurredAt).catch(() => undefined);
+      }
+      throw error;
+    }
+
+    if (result.status !== "applied") {
+      return result;
+    }
+
+    const replication = await processReplicationTransaction(this.db, result.transactionId, occurredAt);
+    return {
+      ...result,
+      effects: { ...result.effects, replicationStatus: replication.status },
+    };
+  }
+
+  public async resumeAwaitingValidation(
+    transactionId: string,
+    resumedAt = new Date(),
+  ): Promise<CommandProcessResult> {
+    let result: CommandProcessResult;
+    try {
+      result = await this.db.transaction(async (transaction) => {
+        const db = transaction as unknown as DcsDb;
+        await db.execute(
+          sql`select transaction_id from transaction_envelopes where transaction_id = ${transactionId} for update`,
+        );
+
+        const envelopeRows = await db
+          .select()
+          .from(transactionEnvelopes)
+          .where(eq(transactionEnvelopes.transactionId, transactionId))
+          .limit(1);
+        const envelope = envelopeRows[0];
+        if (!envelope) {
+          throw new Error(`Transaction ${transactionId} was not found.`);
+        }
+
+        const command = commandSchema.parse(envelope.payload);
+        if (envelope.validationState !== "awaiting_validation") {
+          return {
+            transactionId,
+            status: "duplicate" as const,
+            eventType: envelope.eventType,
+            effects: { priorStatus: envelope.validationState },
+          };
+        }
+
+        const origin: CommandSubmission["origin"] = {
+          sourceSystem: envelope.sourceSystem,
+          userId: envelope.originUserId,
+          deviceId: envelope.originDeviceId,
+          capturedAt: envelope.originCapturedAt.toISOString(),
+        };
+        const processor = new CommandProcessor(db, {
+          transactionId,
+          occurredAt: envelope.createdAt,
+        });
+        await assertControlledOrigin(db, origin, command.commandType);
+
+        const dependencies = await db
+          .select()
+          .from(transactionDependencies)
+          .where(eq(transactionDependencies.transactionId, transactionId));
+        const dependencyError = await processor.firstDependencyViolation(
+          dependencies.map((dependency) => ({
+            entityType: dependency.dependencyEntityType,
+            entityId: dependency.dependencyEntityId,
+            requiredState: dependency.requiredState,
+          })),
+        );
+        if (dependencyError) {
+          await processor.eventLog.markAwaitingValidation(transactionId, dependencyError, resumedAt);
+          return {
+            transactionId,
+            status: "awaiting_validation" as const,
+            eventType: envelope.eventType,
+            effects: { reason: dependencyError },
+          };
+        }
+
+        const effects = await processor.applyCommand(command, origin, transactionId);
+        await processor.eventLog.markApplied(transactionId, resumedAt);
+        return {
+          transactionId,
+          status: "applied" as const,
+          eventType: envelope.eventType,
+          effects,
+        };
+      });
+    } catch (error) {
+      const rows = await this.db
+        .select({ status: transactionEnvelopes.validationState })
+        .from(transactionEnvelopes)
+        .where(eq(transactionEnvelopes.transactionId, transactionId))
+        .limit(1);
+      if (rows[0]?.status === "awaiting_validation") {
+        await this.eventLog.markFailed(
+          transactionId,
+          error instanceof Error ? error.message : "Deferred command application failed.",
+          resumedAt,
+        );
+      }
+      throw error;
+    }
+
+    if (result.status !== "applied") return result;
+    const replication = await processReplicationTransaction(this.db, transactionId, resumedAt);
+    return {
+      ...result,
+      effects: { ...result.effects, replicationStatus: replication.status },
+    };
+  }
+
+  private async processInTransaction(
+    submission: CommandSubmission,
+    command: CommandDto,
+  ): Promise<CommandProcessResult> {
     const existing = await this.eventLog.findByIdempotencyKey(submission.idempotencyKey);
     if (existing) {
-      return {
-        transactionId: existing.transactionId,
-        status: "duplicate",
-        eventType: existing.eventType,
-        effects: {},
-      };
+      return this.duplicateResult(existing, command, submission.idempotencyKey);
     }
 
     const envelope = await this.eventLog.appendEnvelope({
@@ -90,6 +268,7 @@ export class CommandProcessor {
       sourceSystem: submission.origin.sourceSystem,
       originUserId: submission.origin.userId,
       originDeviceId: submission.origin.deviceId,
+      originCapturedAt: submission.origin.capturedAt,
       payload: command,
       createdAt: submission.createdAt,
       dependencies: submission.dependencies.map((dependency) => ({
@@ -97,11 +276,12 @@ export class CommandProcessor {
         entityId: dependency.entityId,
         requiredState: dependency.requiredState,
       })),
+      streams: this.replicationStreams(command),
     });
 
     const dependencyError = await this.firstDependencyViolation(submission.dependencies);
     if (dependencyError) {
-      await this.eventLog.markAwaitingValidation(envelope.transactionId);
+      await this.eventLog.markAwaitingValidation(envelope.transactionId, dependencyError, this.occurredAt());
       return {
         transactionId: envelope.transactionId,
         status: "awaiting_validation",
@@ -111,14 +291,63 @@ export class CommandProcessor {
     }
 
     const effects = await this.applyCommand(command, submission.origin, envelope.transactionId);
-    await this.eventLog.markApplied(envelope.transactionId);
-
+    await this.eventLog.markApplied(envelope.transactionId, this.occurredAt());
     return {
       transactionId: envelope.transactionId,
       status: "applied",
       eventType: command.commandType,
       effects,
     };
+  }
+
+  private duplicateResult(
+    existing: StoredEnvelope,
+    command: CommandDto,
+    idempotencyKey: string,
+  ): CommandProcessResult {
+    if (existing.eventType !== command.commandType || checksumPayload(existing.payload) !== checksumPayload(command)) {
+      throw new IdempotencyConflictError(idempotencyKey);
+    }
+    return {
+      transactionId: existing.transactionId,
+      status: "duplicate",
+      eventType: existing.eventType,
+      effects: { priorStatus: existing.validationState },
+    };
+  }
+
+  private async recordFailedSubmission(
+    submission: CommandSubmission,
+    command: CommandDto,
+    error: unknown,
+    failedAt: Date,
+  ): Promise<void> {
+    await this.db.transaction(async (transaction) => {
+      const log = new EventLogRepository(transaction as unknown as DcsDb);
+      const envelope = await log.appendEnvelope({
+        idempotencyKey: submission.idempotencyKey,
+        eventType: command.commandType,
+        sourceSystem: submission.origin.sourceSystem,
+        originUserId: submission.origin.userId,
+        originDeviceId: submission.origin.deviceId,
+        originCapturedAt: submission.origin.capturedAt,
+        payload: command,
+        createdAt: submission.createdAt,
+        dependencies: submission.dependencies.map((dependency) => ({ ...dependency })),
+        streams: this.replicationStreams(command),
+      });
+      await log.markFailed(
+        envelope.transactionId,
+        error instanceof Error ? error.message : "Command application failed.",
+        failedAt,
+      );
+    });
+  }
+
+  private replicationStreams(command: CommandDto): readonly ("record" | "image")[] {
+    return "evidence" in command && command.evidence.requiredTypesPresent.includes("image")
+      ? ["record", "image"]
+      : ["record"];
   }
 
   private async firstDependencyViolation(
@@ -135,63 +364,7 @@ export class CommandProcessor {
   }
 
   private async checkDependency(dependency: DependencyRef): Promise<string | null> {
-    if (dependency.entityType === "converter") {
-      const rows = await this.db
-        .select({ state: converters.state })
-        .from(converters)
-        .where(eq(converters.converterId, dependency.entityId))
-        .limit(1);
-      if (rows.length === 0) return `converter ${dependency.entityId} not found`;
-      if (rows[0].state !== dependency.requiredState) {
-        return `converter ${dependency.entityId} expected ${dependency.requiredState} got ${rows[0].state}`;
-      }
-
-      return null;
-    }
-
-    if (dependency.entityType === "box") {
-      const rows = await this.db
-        .select({ state: boxes.state })
-        .from(boxes)
-        .where(eq(boxes.boxId, dependency.entityId))
-        .limit(1);
-      if (rows.length === 0) return `box ${dependency.entityId} not found`;
-      if (rows[0].state !== dependency.requiredState) {
-        return `box ${dependency.entityId} expected ${dependency.requiredState} got ${rows[0].state}`;
-      }
-
-      return null;
-    }
-
-    if (dependency.entityType === "queue") {
-      const rows = await this.db
-        .select({ state: queues.state })
-        .from(queues)
-        .where(eq(queues.queueId, dependency.entityId))
-        .limit(1);
-      if (rows.length === 0) return `queue ${dependency.entityId} not found`;
-      if (rows[0].state !== dependency.requiredState) {
-        return `queue ${dependency.entityId} expected ${dependency.requiredState} got ${rows[0].state}`;
-      }
-
-      return null;
-    }
-
-    if (dependency.entityType === "settlement") {
-      const rows = await this.db
-        .select({ state: settlements.status })
-        .from(settlements)
-        .where(eq(settlements.settlementId, dependency.entityId))
-        .limit(1);
-      if (rows.length === 0) return `settlement ${dependency.entityId} not found`;
-      if (rows[0].state !== dependency.requiredState) {
-        return `settlement ${dependency.entityId} expected ${dependency.requiredState} got ${rows[0].state}`;
-      }
-
-      return null;
-    }
-
-    return dependency.requiredState === "exists" ? null : `unknown dependency type ${dependency.entityType}`;
+    return validateDependency(this.db, dependency);
   }
 
   private async applyCommand(
@@ -204,36 +377,42 @@ export class CommandProcessor {
         return this.applyFieldCapture(command, origin, transactionId);
       case "custody.assign_converter_to_box":
         return this.applyAssignConverterToBox(command, transactionId);
+      case "custody.close_box":
+        return this.applyCloseBox(command, transactionId);
       case "custody.lock_queue_for_processing":
-        return this.applyLockQueue(command);
+        return this.applyLockQueue(command, transactionId);
       case "custody.assign_box_to_queue":
         return this.applyAssignBoxToQueue(command, transactionId);
       case "custody.create_shipment":
-        return this.applyCreateShipment(command);
+        return this.applyCreateShipment(command, transactionId);
       case "custody.receive_shipment":
-        return this.applyReceiveShipment(command);
+        return this.applyReceiveShipment(command, transactionId);
+      case "custody.record_event":
+        return this.applyRecordCustodyEvent(command, transactionId);
+      case "custody.record_mass_measurement":
+        return this.applyRecordMassMeasurement(command, origin, transactionId);
       case "grading.issue_decision":
-        return this.applyGradingDecision(command, origin);
+        return this.applyGradingDecision(command, origin, transactionId);
       case "analytics.record_sample":
-        return this.applyRecordSample(command);
+        return this.applyRecordSample(command, origin, transactionId);
       case "pricing.resolve_estimate":
-        return this.applyResolvePricing(command);
+        return this.applyResolvePricing(command, transactionId);
       case "finance.post_ledger_entry":
         return this.applyPostLedgerEntry(command, origin, transactionId);
       case "finance.post_additive_correction":
         return this.applyPostAdditiveCorrection(command, origin, transactionId);
       case "hedge.open_position":
-        return this.applyOpenHedge(command);
+        return this.applyOpenHedge(command, transactionId);
       case "settlement.append_step":
-        return this.applySettlementStep(command, origin);
+        return this.applySettlementStep(command, origin, transactionId);
       case "settlement.finalize_from_assay":
-        return this.applyFinalizeSettlementFromAssay(command, origin);
+        return this.applyFinalizeSettlementFromAssay(command, origin, transactionId);
       case "reconciliation.open_case":
-        return this.applyOpenReconciliation(command);
+        return this.applyOpenReconciliation(command, transactionId);
       case "reconciliation.record_action":
-        return this.applyRecordReconciliationAction(command, origin);
+        return this.applyRecordReconciliationAction(command, origin, transactionId);
       case "reconciliation.close_case":
-        return this.applyCloseReconciliation(command);
+        return this.applyCloseReconciliation(command, transactionId);
       default:
         return {};
     }
@@ -263,20 +442,22 @@ export class CommandProcessor {
     });
     if (!validation.ok) throw new Error(validation.error.message);
 
-    const site = await this.getOrCreateSite(command.yardId);
+    const site = await this.getRequiredSite(command.yardId);
     const box = await this.getOrCreateBoxByCode(command.boxId, transactionId);
     const evidenceBundleId = await this.createEvidenceBundle(
+      command.evidence.evidenceBundleId,
       origin,
       command.capturedAt,
       command.location,
       command.evidence.requiredTypesPresent,
     );
 
-    const converterId = randomUUID();
+    const converterId = this.nextId("effect");
     await this.db.insert(converters).values({
       converterId,
       state: "boxed",
       originTransactionId: transactionId,
+      lastTransitionTransactionId: transactionId,
       evidenceBundleId,
       currentBoxId: box.boxId,
       vinOrSerial: command.vinOrSerial,
@@ -287,7 +468,7 @@ export class CommandProcessor {
     await this.db.insert(boxConverters).values({
       boxId: box.boxId,
       converterId,
-      assignedAt: new Date(),
+      assignedAt: this.occurredAt(),
       assignedByTransactionId: transactionId,
     });
 
@@ -315,13 +496,13 @@ export class CommandProcessor {
 
     await this.db
       .update(converters)
-      .set({ currentBoxId: box.boxId, state: "boxed" })
+      .set({ currentBoxId: box.boxId, state: "boxed", lastTransitionTransactionId: transactionId })
       .where(eq(converters.converterId, command.converterId));
 
     await this.db.insert(boxConverters).values({
       boxId: box.boxId,
       converterId: command.converterId,
-      assignedAt: new Date(),
+      assignedAt: this.occurredAt(),
       assignedByTransactionId: transactionId,
     });
 
@@ -330,8 +511,17 @@ export class CommandProcessor {
 
   private async applyLockQueue(
     command: Extract<CommandDto, { commandType: "custody.lock_queue_for_processing" }>,
+    transactionId: string,
   ): Promise<Record<string, unknown>> {
-    const queue = await this.getOrCreateQueue(command.queueId);
+    const queue = await this.getRequiredQueue(command.queueId);
+    const queueBoxCountRows = await this.db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(queueBoxes)
+      .where(eq(queueBoxes.queueId, queue.queueId));
+    const queueBoxCount = queueBoxCountRows[0]?.count ?? 0;
+    if (queueBoxCount === 0) {
+      throw new Error(`Queue ${command.queueId} cannot lock without custody-linked boxes.`);
+    }
     const result = custody.lockQueueForProcessing({
       queueId: queue.queueId,
       state: queue.state,
@@ -341,28 +531,77 @@ export class CommandProcessor {
 
     await this.db
       .update(queues)
-      .set({ state: result.value.state, lockedForProcessing: true })
+      .set({
+        state: result.value.state,
+        lockedForProcessing: true,
+        lastTransitionTransactionId: transactionId,
+      })
       .where(eq(queues.queueId, queue.queueId));
+    await this.updateQueueConverterState(queue.queueId, "processing", transactionId);
 
     return { queueId: queue.queueId, state: result.value.state };
+  }
+
+  private async applyCloseBox(
+    command: Extract<CommandDto, { commandType: "custody.close_box" }>,
+    transactionId: string,
+  ): Promise<Record<string, unknown>> {
+    const box = await this.getRequiredBoxByCode(command.boxId);
+    const converterCountRows = await this.db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(boxConverters)
+      .where(eq(boxConverters.boxId, box.boxId));
+    const converterCount = converterCountRows[0]?.count ?? 0;
+    if (converterCount === 0) {
+      throw new Error(`Box ${command.boxId} cannot close without custody-linked material.`);
+    }
+    const transition = custody.transitionBoxState(
+      { boxId: box.boxId, state: box.state, converterCount },
+      "closed",
+    );
+    if (!transition.ok) throw new Error(transition.error.message);
+
+    await this.db
+      .update(boxes)
+      .set({ state: "closed", lastTransitionTransactionId: transactionId })
+      .where(eq(boxes.boxId, box.boxId));
+    return { boxId: box.boxId, state: "closed", converterCount };
   }
 
   private async applyAssignBoxToQueue(
     command: Extract<CommandDto, { commandType: "custody.assign_box_to_queue" }>,
     transactionId: string,
   ): Promise<Record<string, unknown>> {
-    const queue = await this.getOrCreateQueue(command.queueId);
+    const queue = await this.getOrCreateQueue(command.queueId, transactionId);
     const box = await this.getRequiredBoxByCode(command.boxId);
+    if (queue.lockedForProcessing) {
+      throw new Error(`Queue ${queue.queueCode} is locked; box membership cannot change.`);
+    }
+
+    const existingAssignments = await this.db
+      .select({ queueId: queueBoxes.queueId })
+      .from(queueBoxes)
+      .where(eq(queueBoxes.boxId, box.boxId))
+      .limit(1);
+    if (existingAssignments.length > 0) {
+      throw new Error(
+        existingAssignments[0].queueId === queue.queueId
+          ? `Box ${command.boxId} is already assigned to queue ${queue.queueCode}.`
+          : `Box ${command.boxId} is already assigned to a different queue.`,
+      );
+    }
+
+    await this.db.insert(queueBoxes).values({
+      queueId: queue.queueId,
+      boxId: box.boxId,
+      assignedAt: this.occurredAt(),
+      assignedByTransactionId: transactionId,
+    });
 
     await this.db
-      .insert(queueBoxes)
-      .values({
-        queueId: queue.queueId,
-        boxId: box.boxId,
-        assignedAt: new Date(),
-        assignedByTransactionId: transactionId,
-      })
-      .onConflictDoNothing();
+      .update(converters)
+      .set({ state: "queued", lastTransitionTransactionId: transactionId })
+      .where(eq(converters.currentBoxId, box.boxId));
 
     return {
       queueId: queue.queueId,
@@ -373,28 +612,31 @@ export class CommandProcessor {
 
   private async applyCreateShipment(
     command: Extract<CommandDto, { commandType: "custody.create_shipment" }>,
+    transactionId: string,
   ): Promise<Record<string, unknown>> {
-    const originSite = await this.getOrCreateSite(command.originSiteId);
-    const destinationSite = await this.getOrCreateSite(command.destinationSiteId);
+    const originSite = await this.getRequiredSite(command.originSiteId);
+    const destinationSite = await this.getRequiredSite(command.destinationSiteId);
 
     const boxRows = [] as Awaited<ReturnType<typeof this.getRequiredBoxByCode>>[];
     for (const boxCode of command.boxCodes) {
       const box = await this.getRequiredBoxByCode(boxCode);
-      if (box.state !== "closed" && box.state !== "active") {
+      if (box.state !== "closed") {
         throw new Error(`Box ${boxCode} cannot be shipped from state ${box.state}.`);
       }
 
       boxRows.push(box);
     }
 
-    const shipmentId = randomUUID();
+    const shipmentId = this.nextId("effect");
     await this.db.insert(shipments).values({
       shipmentId,
+      createdByTransactionId: transactionId,
+      lastTransitionTransactionId: transactionId,
       shipmentCode: command.shipmentCode,
       state: "in_transit",
       originSiteId: originSite.siteId,
       destinationSiteId: destinationSite.siteId,
-      departedAt: new Date(),
+      departedAt: this.occurredAt(),
       receivedAt: null,
     });
 
@@ -402,15 +644,19 @@ export class CommandProcessor {
       boxRows.map((box) => ({
         shipmentId,
         boxId: box.boxId,
-        assignedAt: new Date(),
+        assignedByTransactionId: transactionId,
+        assignedAt: this.occurredAt(),
       })),
     );
 
     for (const box of boxRows) {
-      await this.db.update(boxes).set({ state: "shipped" }).where(eq(boxes.boxId, box.boxId));
+      await this.db
+        .update(boxes)
+        .set({ state: "shipped", lastTransitionTransactionId: transactionId })
+        .where(eq(boxes.boxId, box.boxId));
       await this.db
         .update(converters)
-        .set({ state: "in_transit" })
+        .set({ state: "in_transit", lastTransitionTransactionId: transactionId })
         .where(eq(converters.currentBoxId, box.boxId));
     }
 
@@ -424,13 +670,17 @@ export class CommandProcessor {
 
   private async applyReceiveShipment(
     command: Extract<CommandDto, { commandType: "custody.receive_shipment" }>,
+    transactionId: string,
   ): Promise<Record<string, unknown>> {
     const shipment = await this.getShipmentByRef(command.shipmentRef);
     if (!shipment) {
       throw new Error(`Shipment ${command.shipmentRef} was not found.`);
     }
+    if (shipment.state !== "in_transit") {
+      throw new Error(`Shipment ${command.shipmentRef} cannot be received from state ${shipment.state}.`);
+    }
 
-    const receivingSite = await this.getOrCreateSite(command.receivingSiteId);
+    const receivingSite = await this.getRequiredSite(command.receivingSiteId);
     if (shipment.destinationSiteId !== receivingSite.siteId) {
       throw new Error(
         `Shipment destination ${shipment.destinationSiteId} does not match receiving site ${receivingSite.siteId}.`,
@@ -439,7 +689,11 @@ export class CommandProcessor {
 
     await this.db
       .update(shipments)
-      .set({ state: "received", receivedAt: new Date() })
+      .set({
+        state: "received",
+        receivedAt: this.occurredAt(),
+        lastTransitionTransactionId: transactionId,
+      })
       .where(eq(shipments.shipmentId, shipment.shipmentId));
 
     const linkedBoxes = await this.db
@@ -448,10 +702,13 @@ export class CommandProcessor {
       .where(eq(shipmentBoxes.shipmentId, shipment.shipmentId));
 
     for (const row of linkedBoxes) {
-      await this.db.update(boxes).set({ state: "received" }).where(eq(boxes.boxId, row.boxId));
+      await this.db
+        .update(boxes)
+        .set({ state: "received", lastTransitionTransactionId: transactionId })
+        .where(eq(boxes.boxId, row.boxId));
       await this.db
         .update(converters)
-        .set({ state: "received" })
+        .set({ state: "received", lastTransitionTransactionId: transactionId })
         .where(eq(converters.currentBoxId, row.boxId));
     }
 
@@ -463,18 +720,105 @@ export class CommandProcessor {
     };
   }
 
+  private async applyRecordCustodyEvent(
+    command: Extract<CommandDto, { commandType: "custody.record_event" }>,
+    transactionId: string,
+  ): Promise<Record<string, unknown>> {
+    if (command.scopeType === "queue") {
+      await this.getRequiredQueue(command.scopeId);
+    } else {
+      const shipment = await this.getShipmentByRef(command.scopeId);
+      if (!shipment) throw new Error(`Shipment ${command.scopeId} was not found.`);
+    }
+    await this.getRequiredEvidenceBundle(
+      command.evidence.evidenceBundleId,
+      command.evidence.requiredTypesPresent,
+    );
+
+    const custodyEventId = this.nextId("effect");
+    await this.db.insert(custodyEvents).values({
+      custodyEventId,
+      transactionId,
+      scopeType: command.scopeType,
+      scopeId: command.scopeId,
+      eventType: command.eventType,
+      evidenceBundleId: command.evidence.evidenceBundleId,
+      createdAt: new Date(command.capturedAt),
+    });
+    return { custodyEventId, scopeType: command.scopeType, scopeId: command.scopeId };
+  }
+
+  private async applyRecordMassMeasurement(
+    command: Extract<CommandDto, { commandType: "custody.record_mass_measurement" }>,
+    origin: CommandSubmission["origin"],
+    transactionId: string,
+  ): Promise<Record<string, unknown>> {
+    const queue = await this.getRequiredQueue(command.queueId);
+    if (!queue.lockedForProcessing) {
+      throw new Error(`Queue ${queue.queueCode} must be locked before mass measurement.`);
+    }
+    if (queue.state === "settled") {
+      throw new Error(`Queue ${queue.queueCode} cannot accept mass measurements after settlement.`);
+    }
+
+    const lockedWeightRows = await this.db
+      .select({ settlementStepId: settlementSteps.settlementStepId })
+      .from(settlementSteps)
+      .innerJoin(settlements, eq(settlementSteps.settlementId, settlements.settlementId))
+      .where(
+        and(
+          or(eq(settlements.scopeId, queue.queueId), eq(settlements.scopeId, queue.queueCode)),
+          eq(settlementSteps.stepName, "weight_basis_locked"),
+        ),
+      )
+      .limit(1);
+    if (lockedWeightRows.length > 0) {
+      throw new Error(`Queue ${queue.queueCode} cannot accept mass measurements after weight basis lock.`);
+    }
+
+    const expectedLoss = command.inputWeightKg - command.outputWeightKg;
+    if (command.outputWeightKg > command.inputWeightKg) {
+      throw new Error("Mass measurement output cannot exceed input.");
+    }
+    if (Math.abs(expectedLoss - command.explainedLossKg) > 0.01) {
+      throw new Error("Mass measurement loss must reconcile input and output within 0.01 kg.");
+    }
+
+    const evidenceBundleId = await this.createEvidenceBundle(
+      command.evidence.evidenceBundleId,
+      origin,
+      command.capturedAt,
+      null,
+      command.evidence.requiredTypesPresent,
+    );
+    const massMeasurementId = this.nextId("effect");
+    await this.db.insert(massMeasurements).values({
+      massMeasurementId,
+      transactionId,
+      queueId: queue.queueId,
+      evidenceBundleId,
+      stage: command.stage,
+      inputWeightKg: command.inputWeightKg.toFixed(3),
+      outputWeightKg: command.outputWeightKg.toFixed(3),
+      explainedLossKg: command.explainedLossKg.toFixed(3),
+      capturedAt: new Date(command.capturedAt),
+    });
+    return { massMeasurementId, queueId: queue.queueId, reconciledLossKg: expectedLoss.toFixed(3) };
+  }
+
   private async applyGradingDecision(
     command: Extract<CommandDto, { commandType: "grading.issue_decision" }>,
     origin: CommandSubmission["origin"],
+    transactionId: string,
   ): Promise<Record<string, unknown>> {
-    const library = await this.getOrCreateLibraryEntry(
+    const library = await this.getRequiredLibraryEntry(
       command.candidateId,
       command.identificationMethod,
       command.confidence,
     );
 
     const decision = grading.createGradingDecision({
-      decisionId: randomUUID(),
+      decisionId: this.nextId("effect"),
       converterId: command.converterId,
       candidate: {
         candidateId: library.libraryEntryId,
@@ -489,9 +833,10 @@ export class CommandProcessor {
     });
     if (!decision.ok) throw new Error(decision.error.message);
 
-    const gradingDecisionId = randomUUID();
+    const gradingDecisionId = this.nextId("effect");
     await this.db.insert(gradingDecisions).values({
       gradingDecisionId,
+      transactionId,
       converterId: command.converterId,
       libraryEntryId: library.libraryEntryId,
       method: command.identificationMethod,
@@ -500,7 +845,7 @@ export class CommandProcessor {
       overridden: Boolean(command.overrideReason),
       overrideReason: command.overrideReason,
       decidedByUserId: origin.userId,
-      decidedAt: new Date(),
+      decidedAt: this.occurredAt(),
     });
 
     return { gradingDecisionId };
@@ -508,8 +853,24 @@ export class CommandProcessor {
 
   private async applyRecordSample(
     command: Extract<CommandDto, { commandType: "analytics.record_sample" }>,
+    origin: CommandSubmission["origin"],
+    transactionId: string,
   ): Promise<Record<string, unknown>> {
-    const queue = await this.getOrCreateQueue(command.queueId);
+    const queue = await this.getRequiredQueue(command.queueId);
+    if (!queue.lockedForProcessing || !["processing", "sampled", "assay_pending"].includes(queue.state)) {
+      throw new Error(`Queue ${queue.queueCode} must be in controlled processing before sampling.`);
+    }
+
+    const inTransitRows = await this.db
+      .select({ shipmentId: shipments.shipmentId })
+      .from(queueBoxes)
+      .innerJoin(shipmentBoxes, eq(queueBoxes.boxId, shipmentBoxes.boxId))
+      .innerJoin(shipments, eq(shipmentBoxes.shipmentId, shipments.shipmentId))
+      .where(and(eq(queueBoxes.queueId, queue.queueId), eq(shipments.state, "in_transit")))
+      .limit(1);
+    if (inTransitRows.length > 0) {
+      throw new Error(`Queue ${queue.queueCode} cannot be sampled while linked material is in transit.`);
+    }
     const queueMaterialRows = await this.db
       .select({ materialType: boxes.materialType })
       .from(queueBoxes)
@@ -535,6 +896,14 @@ export class CommandProcessor {
         `Queue ${queue.queueCode} contains non-milled material forms: ${[...nonMilled].join(", ")}. Sampling is only allowed for milled material.`,
       );
     }
+
+    const evidenceBundleId = await this.createEvidenceBundle(
+      command.evidence.evidenceBundleId,
+      origin,
+      origin.capturedAt,
+      null,
+      command.evidence.requiredTypesPresent,
+    );
 
     let pt = command.ptPpm;
     let pd = command.pdPpm;
@@ -567,37 +936,65 @@ export class CommandProcessor {
       }
     }
 
-    const sampleId = randomUUID();
+    const sampleId = this.nextId("effect");
     await this.db.insert(samples).values({
       sampleId,
+      transactionId,
       queueId: queue.queueId,
       source: command.source,
       matrixId: command.matrixId,
+      evidenceBundleId,
       ptPpmRaw: command.ptPpm.toFixed(4),
       pdPpmRaw: command.pdPpm.toFixed(4),
       rhPpmRaw: command.rhPpm.toFixed(4),
       ptPpmCorrected: pt.toFixed(4),
       pdPpmCorrected: pd.toFixed(4),
       rhPpmCorrected: rh.toFixed(4),
-      capturedAt: new Date(),
+      capturedAt: this.occurredAt(),
     });
 
-    return { sampleId, queueId: queue.queueId };
+    let nextQueueState: custody.QueueState = queue.state;
+    if (nextQueueState === "processing") {
+      const transition = custody.transitionQueueState(queue, "sampled");
+      if (!transition.ok) throw new Error(transition.error.message);
+      nextQueueState = transition.value.state;
+    }
+    if (command.source === "icp_final" && nextQueueState === "sampled") {
+      const transition = custody.transitionQueueState(
+        { ...queue, state: nextQueueState },
+        "assay_pending",
+      );
+      if (!transition.ok) throw new Error(transition.error.message);
+      nextQueueState = transition.value.state;
+    }
+    if (nextQueueState !== queue.state) {
+      await this.db
+        .update(queues)
+        .set({ state: nextQueueState, lastTransitionTransactionId: transactionId })
+        .where(eq(queues.queueId, queue.queueId));
+    }
+    await this.updateQueueConverterState(queue.queueId, "sampled", transactionId);
+
+    return { sampleId, queueId: queue.queueId, evidenceBundleId, queueState: nextQueueState };
   }
 
   private async applyResolvePricing(
     command: Extract<CommandDto, { commandType: "pricing.resolve_estimate" }>,
+    transactionId: string,
   ): Promise<Record<string, unknown>> {
     if (command.attemptedFieldOverride) {
       throw new Error("Field-origin actors cannot override centrally controlled pricing decisions.");
     }
 
-    const queue = await this.getOrCreateQueue(command.queueId);
+    const queue = await this.getRequiredQueue(command.queueId);
+    if (!queue.lockedForProcessing || queue.state === "settled") {
+      throw new Error(`Queue ${queue.queueCode} is not eligible for controlled pricing.`);
+    }
     const source = pricing.resolvePricingSource(command.sourceCandidates);
     if (!source.ok) throw new Error(source.error.message);
 
-    const market = await this.getOrCreateMarketSnapshot(command.marketSnapshotId);
-    const terms = await this.getOrCreateTermsProfile(command.termsProfileId);
+    const market = await this.getRequiredMarketSnapshot(command.marketSnapshotId);
+    const terms = await this.getRequiredTermsProfile(command.termsProfileId);
 
     const assayStats = await this.db
       .select({
@@ -626,6 +1023,9 @@ export class CommandProcessor {
       .leftJoin(boxes, eq(boxes.boxId, queueBoxes.boxId))
       .where(eq(queueBoxes.queueId, queue.queueId));
     const boxIds = queueBoxRows.map((row) => row.boxId);
+    if (boxIds.length === 0) {
+      throw new Error(`Queue ${queue.queueCode} cannot be priced without custody-linked material.`);
+    }
 
     const converterCountRows =
       boxIds.length === 0
@@ -713,21 +1113,33 @@ export class CommandProcessor {
           ? "low"
           : "medium";
 
-    const pricingDecisionId = randomUUID();
+    const pricingDecisionId = this.nextId("effect");
     await this.db.insert(pricingDecisions).values({
       pricingDecisionId,
+      transactionId,
       queueId: queue.queueId,
       marketSnapshotId: market.marketSnapshotId,
       termsProfileId: terms.termsProfileId,
       sourceMethod: source.value,
       estimateUsd: finalEstimateUsd,
       confidenceBand,
-      decidedAt: new Date(),
+      decidedAt: this.occurredAt(),
     });
+
+    let nextQueueState: custody.QueueState = queue.state;
+    if (assay.finalAssayCount > 0 && queue.state === "assay_pending") {
+      const transition = custody.transitionQueueState(queue, "valued");
+      if (!transition.ok) throw new Error(transition.error.message);
+      nextQueueState = transition.value.state;
+    }
 
     await this.db
       .update(queues)
-      .set({ estimatedValueUsd: finalEstimateUsd })
+      .set({
+        estimatedValueUsd: finalEstimateUsd,
+        state: nextQueueState,
+        lastTransitionTransactionId: transactionId,
+      })
       .where(eq(queues.queueId, queue.queueId));
 
     return {
@@ -738,6 +1150,7 @@ export class CommandProcessor {
       sampleCount: assay.sampleCount,
       finalAssayCount: assay.finalAssayCount,
       queueFloorUsd: queueFloorUsd.toFixed(2),
+      queueState: nextQueueState,
     };
   }
 
@@ -746,19 +1159,39 @@ export class CommandProcessor {
     origin: CommandSubmission["origin"],
     transactionId: string,
   ): Promise<Record<string, unknown>> {
-    const debit = await this.getOrCreateAccount(command.debitAccountId, "internal");
-    const credit = await this.getOrCreateAccount(command.creditAccountId, "buyer");
+    const debit = await this.getRequiredAccount(command.debitAccountId);
+    const credit = await this.getRequiredAccount(command.creditAccountId);
+    await this.assertOperationalReference(command.sourceOperationalRef);
+
+    if (command.purposeCode === "funding_advance" && !command.approvedByUserId) {
+      throw new Error("Funding advances require an approving actor.");
+    }
+    if (command.approvedByUserId === origin.userId) {
+      throw new Error("The approving actor and executing actor must be different users.");
+    }
+    if (command.approvedByUserId) {
+      const approverRows = await this.db
+        .select({ role: users.role, active: users.active })
+        .from(users)
+        .where(eq(users.userId, command.approvedByUserId))
+        .limit(1);
+      const approver = approverRows[0];
+      if (!approver?.active || !["finance_approver", "control_admin", "supervisor"].includes(approver.role)) {
+        throw new Error("The funding approving actor is unknown, inactive, or lacks approval authority.");
+      }
+    }
 
     const evidenceBundleId = await this.createEvidenceBundle(
+      command.evidence.evidenceBundleId,
       origin,
       origin.capturedAt,
-      { lat: 0, lon: 0, accuracyM: 1 },
-      ["note"],
+      null,
+      command.evidence.requiredTypesPresent,
     );
 
     const validation = finance.validateLedgerPosting(
       {
-        ledgerEntryId: randomUUID(),
+        ledgerEntryId: this.nextId("effect"),
         debitAccountId: debit.accountId,
         creditAccountId: credit.accountId,
         amountUsd: command.amount.amount,
@@ -777,7 +1210,7 @@ export class CommandProcessor {
     );
     if (!validation.ok) throw new Error(validation.error.message);
 
-    const ledgerEntryId = randomUUID();
+    const ledgerEntryId = this.nextId("effect");
     await this.db.insert(ledgerEntries).values({
       ledgerEntryId,
       transactionId,
@@ -788,7 +1221,9 @@ export class CommandProcessor {
       sourceOperationalRef: command.sourceOperationalRef,
       evidenceBundleId,
       notes: command.notes,
-      createdAt: new Date(),
+      approvedByUserId: command.approvedByUserId,
+      executedByUserId: origin.userId,
+      createdAt: this.occurredAt(),
     });
 
     return { ledgerEntryId };
@@ -809,7 +1244,7 @@ export class CommandProcessor {
     }
 
     const correctionValidation = finance.validateAdditiveCorrection({
-      correctionEntryId: randomUUID(),
+      correctionEntryId: this.nextId("effect"),
       targetLedgerEntryId: command.targetLedgerEntryId,
       reasonCode: command.reasonCode,
       deltaUsd: command.deltaUsd,
@@ -841,13 +1276,14 @@ export class CommandProcessor {
     const correctionCreditAccountId = delta >= 0 ? target.creditAccountId : target.debitAccountId;
 
     const evidenceBundleId = await this.createEvidenceBundle(
+      command.evidence.evidenceBundleId,
       origin,
       origin.capturedAt,
-      { lat: 0, lon: 0, accuracyM: 1 },
-      ["note"],
+      null,
+      command.evidence.requiredTypesPresent,
     );
 
-    const correctionLedgerEntryId = randomUUID();
+    const correctionLedgerEntryId = this.nextId("effect");
     await this.db.insert(ledgerEntries).values({
       ledgerEntryId: correctionLedgerEntryId,
       transactionId,
@@ -858,21 +1294,44 @@ export class CommandProcessor {
       sourceOperationalRef: target.sourceOperationalRef,
       evidenceBundleId,
       notes: command.notes,
-      createdAt: new Date(),
+      approvedByUserId: null,
+      executedByUserId: origin.userId,
+      createdAt: this.occurredAt(),
     });
 
-    const correctionId = randomUUID();
+    const correctionId = this.nextId("effect");
     await this.db.insert(ledgerCorrections).values({
       correctionId,
       targetLedgerEntryId: target.ledgerEntryId,
       correctionLedgerEntryId,
       reasonCode: command.reasonCode,
-      createdAt: new Date(),
+      createdAt: this.occurredAt(),
     });
 
     if (command.reconciliationCaseId) {
+      const caseRows = await this.db
+        .select({ status: reconciliationCases.status })
+        .from(reconciliationCases)
+        .where(eq(reconciliationCases.reconciliationCaseId, command.reconciliationCaseId))
+        .limit(1);
+      const reconciliationCase = caseRows[0];
+      if (!reconciliationCase) {
+        throw new Error(`Reconciliation case ${command.reconciliationCaseId} not found.`);
+      }
+      if (reconciliationCase.status !== "open" && reconciliationCase.status !== "investigating") {
+        throw new Error(
+          `Reconciliation case ${command.reconciliationCaseId} cannot accept corrections in status ${reconciliationCase.status}.`,
+        );
+      }
+      if (reconciliationCase.status === "open") {
+        await this.db
+          .update(reconciliationCases)
+          .set({ status: "investigating", lastTransitionTransactionId: transactionId })
+          .where(eq(reconciliationCases.reconciliationCaseId, command.reconciliationCaseId));
+      }
       await this.db.insert(reconciliationActions).values({
-        reconciliationActionId: randomUUID(),
+        reconciliationActionId: this.nextId("effect"),
+        transactionId,
         reconciliationCaseId: command.reconciliationCaseId,
         actionType: "financial_correction_posted",
         actionPayload: {
@@ -882,7 +1341,7 @@ export class CommandProcessor {
           deltaUsd: command.deltaUsd,
         },
         createdByUserId: origin.userId,
-        createdAt: new Date(),
+        createdAt: this.occurredAt(),
       });
     }
 
@@ -896,10 +1355,12 @@ export class CommandProcessor {
 
   private async applyOpenHedge(
     command: Extract<CommandDto, { commandType: "hedge.open_position" }>,
+    transactionId: string,
   ): Promise<Record<string, unknown>> {
-    const hedgePositionId = randomUUID();
+    const hedgePositionId = this.nextId("effect");
     await this.db.insert(hedgePositions).values({
       hedgePositionId,
+      transactionId,
       layer: command.layer,
       scopeType: command.scopeType,
       scopeId: command.scopeId,
@@ -907,7 +1368,7 @@ export class CommandProcessor {
       hedgedPdOz: command.hedgedPdOz.toFixed(6),
       hedgedRhOz: command.hedgedRhOz.toFixed(6),
       status: "open",
-      openedAt: new Date(),
+      openedAt: this.occurredAt(),
     });
 
     return { hedgePositionId };
@@ -916,8 +1377,14 @@ export class CommandProcessor {
   private async applySettlementStep(
     command: Extract<CommandDto, { commandType: "settlement.append_step" }>,
     origin: CommandSubmission["origin"],
+    transactionId: string,
   ): Promise<Record<string, unknown>> {
-    const settlementRow = await this.getOrCreateSettlement(command.settlementId);
+    if (command.step === "final_value_calculated" || command.step === "invoice_finalized") {
+      throw new Error(
+        `${command.step} is system-derived and can only be recorded by settlement.finalize_from_assay.`,
+      );
+    }
+    const settlementRow = await this.getOrCreateSettlement(command.settlementId, transactionId);
     const steps = await this.db
       .select({ stepName: settlementSteps.stepName, stepOrder: settlementSteps.stepOrder })
       .from(settlementSteps)
@@ -937,52 +1404,14 @@ export class CommandProcessor {
     if (!next.ok) throw new Error(next.error.message);
 
     await this.db.insert(settlementSteps).values({
-      settlementStepId: randomUUID(),
+      settlementStepId: this.nextId("effect"),
+      transactionId,
       settlementId: settlementRow.settlementId,
       stepOrder: steps.length + 1,
       stepName: command.step,
-      recordedAt: new Date(),
+      recordedAt: this.occurredAt(),
       recordedByUserId: origin.userId,
     });
-
-    if (command.step === "final_value_calculated") {
-      const finalValue = (Number(settlementRow.estimatedValueUsd) * 1.04).toFixed(2);
-      const variance = settlement.calculateSettlementVariance(settlementRow.estimatedValueUsd, finalValue);
-      if (!variance.ok) throw new Error(variance.error.message);
-
-      await this.db
-        .update(settlements)
-        .set({ status: "validated", finalValueUsd: finalValue, varianceUsd: variance.value })
-        .where(eq(settlements.settlementId, settlementRow.settlementId));
-    }
-
-    if (command.step === "invoice_finalized") {
-      await this.db
-        .update(settlements)
-        .set({ status: "finalized", finalizedAt: new Date() })
-        .where(eq(settlements.settlementId, settlementRow.settlementId));
-
-      const invoiceId = randomUUID();
-      await this.db.insert(invoices).values({
-        invoiceId,
-        settlementId: settlementRow.settlementId,
-        invoiceNumber: `INV-${settlementRow.settlementId.slice(0, 8).toUpperCase()}`,
-        status: "final",
-        issuedAt: new Date(),
-        immutable: true,
-      });
-
-      await this.db.insert(invoiceLines).values({
-        invoiceLineId: randomUUID(),
-        invoiceId,
-        lineType: "net_payout",
-        description: "Final net payout",
-        amountUsd: settlementRow.finalValueUsd ?? settlementRow.estimatedValueUsd,
-        sortOrder: 1,
-      });
-
-      return { settlementId: settlementRow.settlementId, invoiceId };
-    }
 
     return { settlementId: settlementRow.settlementId, step: command.step };
   }
@@ -990,12 +1419,18 @@ export class CommandProcessor {
   private async applyFinalizeSettlementFromAssay(
     command: Extract<CommandDto, { commandType: "settlement.finalize_from_assay" }>,
     origin: CommandSubmission["origin"],
+    transactionId: string,
   ): Promise<Record<string, unknown>> {
-    const settlementRow = await this.getOrCreateSettlement(command.settlementId);
+    const settlementRow = await this.getOrCreateSettlement(command.settlementId, transactionId);
+    if (settlementRow.status === "finalized") {
+      throw new Error(`Settlement ${settlementRow.settlementId} is already finalized and cannot be rewritten.`);
+    }
     const queueRows = await this.db
       .select({
         queueId: queues.queueId,
         queueCode: queues.queueCode,
+        state: queues.state,
+        lockedForProcessing: queues.lockedForProcessing,
       })
       .from(queues)
       .where(
@@ -1010,6 +1445,11 @@ export class CommandProcessor {
       );
     }
     const queue = queueRows[0];
+    if (!queue.lockedForProcessing || !["assay_pending", "valued"].includes(queue.state)) {
+      throw new Error(
+        `Settlement ${settlementRow.settlementId} cannot finalize while queue ${queue.queueCode} is ${queue.state}.`,
+      );
+    }
 
     const assayCoverageRows = await this.db
       .select({
@@ -1045,7 +1485,7 @@ export class CommandProcessor {
       .where(eq(settlementSteps.settlementId, settlementRow.settlementId))
       .orderBy(settlementSteps.stepOrder);
 
-    const strictSteps: settlement.SettlementStep[] = [
+    const requiredOperatorSteps: settlement.SettlementStep[] = [
       "lot_selected",
       "contents_reviewed",
       "sample_data_recorded",
@@ -1053,24 +1493,16 @@ export class CommandProcessor {
       "weight_basis_locked",
       "hedges_applied",
       "financial_context_applied",
-      "final_value_calculated",
-      "invoice_finalized",
     ];
 
-    const existingNames = new Set(existingSteps.map((step) => step.stepName));
-    let nextOrder = existingSteps.length + 1;
-    for (const step of strictSteps) {
-      if (!existingNames.has(step)) {
-        await this.db.insert(settlementSteps).values({
-          settlementStepId: randomUUID(),
-          settlementId: settlementRow.settlementId,
-          stepOrder: nextOrder,
-          stepName: step,
-          recordedAt: new Date(),
-          recordedByUserId: origin.userId,
-        });
-        nextOrder += 1;
-      }
+    const existingNames = existingSteps.map((step) => step.stepName);
+    const missingSteps = requiredOperatorSteps.filter(
+      (step, index) => existingNames[index] !== step,
+    );
+    if (missingSteps.length > 0 || existingNames.length !== requiredOperatorSteps.length) {
+      throw new Error(
+        `Settlement ${settlementRow.settlementId} is missing ordered operator controls: ${missingSteps.join(", ") || "unexpected step sequence"}.`,
+      );
     }
 
     const varianceResult = settlement.calculateSettlementVariance(
@@ -1081,19 +1513,26 @@ export class CommandProcessor {
       throw new Error(varianceResult.error.message);
     }
 
-    await this.db
-      .update(settlements)
-      .set({
-        status: "finalized",
-        finalValueUsd: command.finalValueUsd,
-        varianceUsd: varianceResult.value,
-        finalizedAt: new Date(),
-      })
-      .where(eq(settlements.settlementId, settlementRow.settlementId));
-    await this.db
-      .update(queues)
-      .set({ state: "settled", lockedForProcessing: true })
-      .where(eq(queues.queueId, queue.queueId));
+    await this.db.insert(settlementSteps).values([
+      {
+        settlementStepId: this.nextId("effect"),
+        transactionId,
+        settlementId: settlementRow.settlementId,
+        stepOrder: requiredOperatorSteps.length + 1,
+        stepName: "final_value_calculated",
+        recordedAt: this.occurredAt(),
+        recordedByUserId: origin.userId,
+      },
+      {
+        settlementStepId: this.nextId("effect"),
+        transactionId,
+        settlementId: settlementRow.settlementId,
+        stepOrder: requiredOperatorSteps.length + 2,
+        stepName: "invoice_finalized",
+        recordedAt: this.occurredAt(),
+        recordedByUserId: origin.userId,
+      },
+    ]);
 
     const existingInvoice = await this.db
       .select()
@@ -1101,33 +1540,58 @@ export class CommandProcessor {
       .where(eq(invoices.settlementId, settlementRow.settlementId))
       .limit(1);
 
-    const invoiceId = existingInvoice.length > 0 ? existingInvoice[0].invoiceId : randomUUID();
-    if (existingInvoice.length === 0) {
-      await this.db.insert(invoices).values({
-        invoiceId,
-        settlementId: settlementRow.settlementId,
-        invoiceNumber: `INV-${settlementRow.settlementId.slice(0, 8).toUpperCase()}`,
-        status: "final",
-        issuedAt: new Date(),
-        immutable: true,
-      });
+    if (existingInvoice.length > 0) {
+      throw new Error(`Settlement ${settlementRow.settlementId} already has a final invoice.`);
     }
 
-    const existingLines = await this.db
-      .select({ invoiceLineId: invoiceLines.invoiceLineId })
-      .from(invoiceLines)
-      .where(eq(invoiceLines.invoiceId, invoiceId));
+    const invoiceId = this.nextId("effect");
+    await this.db.insert(invoices).values({
+      invoiceId,
+      transactionId,
+      settlementId: settlementRow.settlementId,
+      invoiceNumber: `INV-${settlementRow.settlementId.slice(0, 8).toUpperCase()}`,
+      status: "final",
+      issuedAt: this.occurredAt(),
+      immutable: true,
+    });
 
-    if (existingLines.length === 0) {
-      await this.db.insert(invoiceLines).values({
-        invoiceLineId: randomUUID(),
-        invoiceId,
-        lineType: "net_payout",
-        description: "Final net payout from assay finalization",
-        amountUsd: command.finalValueUsd,
-        sortOrder: 1,
-      });
+    await this.db.insert(invoiceLines).values({
+      invoiceLineId: this.nextId("effect"),
+      invoiceId,
+      lineType: "net_payout",
+      description: "Final net payout from assay finalization",
+      amountUsd: command.finalValueUsd,
+      sortOrder: 1,
+    });
+
+    let finalQueueState = queue.state;
+    if (finalQueueState === "assay_pending") {
+      const valued = custody.transitionQueueState({ ...queue, state: finalQueueState }, "valued");
+      if (!valued.ok) throw new Error(valued.error.message);
+      finalQueueState = valued.value.state;
     }
+    const settled = custody.transitionQueueState({ ...queue, state: finalQueueState }, "settled");
+    if (!settled.ok) throw new Error(settled.error.message);
+
+    await this.db
+      .update(settlements)
+      .set({
+        status: "finalized",
+        finalValueUsd: command.finalValueUsd,
+        varianceUsd: varianceResult.value,
+        finalizedAt: this.occurredAt(),
+        finalizedByTransactionId: transactionId,
+      })
+      .where(eq(settlements.settlementId, settlementRow.settlementId));
+    await this.db
+      .update(queues)
+      .set({
+        state: settled.value.state,
+        lockedForProcessing: true,
+        lastTransitionTransactionId: transactionId,
+      })
+      .where(eq(queues.queueId, queue.queueId));
+    await this.updateQueueConverterState(queue.queueId, "settled", transactionId);
 
     return {
       settlementId: settlementRow.settlementId,
@@ -1139,16 +1603,19 @@ export class CommandProcessor {
 
   private async applyOpenReconciliation(
     command: Extract<CommandDto, { commandType: "reconciliation.open_case" }>,
+    transactionId: string,
   ): Promise<Record<string, unknown>> {
-    const reconciliationCaseId = randomUUID();
+    const reconciliationCaseId = this.nextId("effect");
     await this.db.insert(reconciliationCases).values({
       reconciliationCaseId,
+      openedByTransactionId: transactionId,
+      lastTransitionTransactionId: transactionId,
       triggerType: command.triggerType,
       severity: command.severity,
       status: "open",
       scopeType: command.relatedScopeType,
       scopeId: command.relatedScopeId,
-      openedAt: new Date(),
+      openedAt: this.occurredAt(),
     });
 
     return { reconciliationCaseId };
@@ -1156,6 +1623,7 @@ export class CommandProcessor {
 
   private async applyCloseReconciliation(
     command: Extract<CommandDto, { commandType: "reconciliation.close_case" }>,
+    transactionId: string,
   ): Promise<Record<string, unknown>> {
     const rows = await this.db
       .select()
@@ -1183,7 +1651,13 @@ export class CommandProcessor {
 
     await this.db
       .update(reconciliationCases)
-      .set({ status: command.status, closureRationale: command.closureRationale, closedAt: new Date() })
+      .set({
+        status: command.status,
+        closureRationale: command.closureRationale,
+        closedAt: this.occurredAt(),
+        closedByTransactionId: transactionId,
+        lastTransitionTransactionId: transactionId,
+      })
       .where(eq(reconciliationCases.reconciliationCaseId, command.caseId));
 
     return { reconciliationCaseId: command.caseId, status: command.status };
@@ -1192,6 +1666,7 @@ export class CommandProcessor {
   private async applyRecordReconciliationAction(
     command: Extract<CommandDto, { commandType: "reconciliation.record_action" }>,
     origin: CommandSubmission["origin"],
+    transactionId: string,
   ): Promise<Record<string, unknown>> {
     const caseRows = await this.db
       .select()
@@ -1213,52 +1688,44 @@ export class CommandProcessor {
     if (currentStatus === "open") {
       await this.db
         .update(reconciliationCases)
-        .set({ status: "investigating" })
+        .set({ status: "investigating", lastTransitionTransactionId: transactionId })
         .where(eq(reconciliationCases.reconciliationCaseId, command.caseId));
       nextStatus = "investigating";
     }
 
-    const reconciliationActionId = randomUUID();
+    const reconciliationActionId = this.nextId("effect");
     await this.db.insert(reconciliationActions).values({
       reconciliationActionId,
+      transactionId,
       reconciliationCaseId: command.caseId,
       actionType: command.actionType,
       actionPayload: command.actionPayload,
       createdByUserId: origin.userId,
-      createdAt: new Date(),
+      createdAt: this.occurredAt(),
     });
 
     return { reconciliationActionId, reconciliationCaseId: command.caseId, status: nextStatus };
   }
 
-  private async getOrCreateSite(siteCode: string) {
+  private async getRequiredSite(siteCode: string) {
     const rows = await this.db.select().from(sites).where(eq(sites.siteCode, siteCode)).limit(1);
     if (rows.length > 0) return rows[0];
-
-    const siteId = randomUUID();
-    await this.db.insert(sites).values({
-      siteId,
-      siteCode,
-      name: `Site ${siteCode}`,
-      siteType: "yard",
-      createdAt: new Date(),
-    });
-    const inserted = await this.db.select().from(sites).where(eq(sites.siteId, siteId)).limit(1);
-    return inserted[0];
+    throw new Error(`Site ${siteCode} is not registered in controlled master data.`);
   }
 
   private async getOrCreateBoxByCode(externalCode: string, transactionId: string) {
     const rows = await this.db.select().from(boxes).where(eq(boxes.externalCode, externalCode)).limit(1);
     if (rows.length > 0) return rows[0];
 
-    const boxId = randomUUID();
+    const boxId = this.nextId("effect");
     await this.db.insert(boxes).values({
       boxId,
       externalCode,
       materialType: this.inferMaterialTypeFromBoxCode(externalCode),
       state: "active",
       createdByTransactionId: transactionId,
-      createdAt: new Date(),
+      lastTransitionTransactionId: transactionId,
+      createdAt: this.occurredAt(),
     });
     const inserted = await this.db.select().from(boxes).where(eq(boxes.boxId, boxId)).limit(1);
     return inserted[0];
@@ -1293,7 +1760,7 @@ export class CommandProcessor {
     return byCode.length > 0 ? byCode[0] : null;
   }
 
-  private async getOrCreateQueue(queueCodeOrId: string) {
+  private async getOrCreateQueue(queueCodeOrId: string, transactionId: string) {
     if (this.isUuid(queueCodeOrId)) {
       const byId = await this.db.select().from(queues).where(eq(queues.queueId, queueCodeOrId)).limit(1);
       if (byId.length > 0) return byId[0];
@@ -1302,16 +1769,37 @@ export class CommandProcessor {
     const byCode = await this.db.select().from(queues).where(eq(queues.queueCode, queueCodeOrId)).limit(1);
     if (byCode.length > 0) return byCode[0];
 
-    const queueId = randomUUID();
+    const queueId = this.nextId("effect");
     await this.db.insert(queues).values({
       queueId,
+      createdByTransactionId: transactionId,
+      lastTransitionTransactionId: transactionId,
       queueCode: queueCodeOrId,
       state: "open",
       lockedForProcessing: false,
-      createdAt: new Date(),
+      createdAt: this.occurredAt(),
     });
     const inserted = await this.db.select().from(queues).where(eq(queues.queueId, queueId)).limit(1);
     return inserted[0];
+  }
+
+  private async getRequiredQueue(queueCodeOrId: string) {
+    if (this.isUuid(queueCodeOrId)) {
+      const byId = await this.db
+        .select()
+        .from(queues)
+        .where(eq(queues.queueId, queueCodeOrId))
+        .limit(1);
+      if (byId.length > 0) return byId[0];
+    }
+
+    const byCode = await this.db
+      .select()
+      .from(queues)
+      .where(eq(queues.queueCode, queueCodeOrId))
+      .limit(1);
+    if (byCode.length > 0) return byCode[0];
+    throw new Error(`Queue ${queueCodeOrId} was not found.`);
   }
 
   private isUuid(value: string): boolean {
@@ -1320,7 +1808,7 @@ export class CommandProcessor {
     );
   }
 
-  private async getOrCreateLibraryEntry(
+  private async getRequiredLibraryEntry(
     candidateId: string,
     method: "vin" | "serial" | "library_match" | "category_fallback",
     confidence: "high" | "medium" | "low",
@@ -1330,102 +1818,118 @@ export class CommandProcessor {
       .from(libraryEntries)
       .where(eq(libraryEntries.libraryEntryId, candidateId))
       .limit(1);
-    if (byId.length > 0) return byId[0];
-
-    const libraryEntryId = randomUUID();
-    await this.db.insert(libraryEntries).values({
-      libraryEntryId,
-      qualificationStatus: "qualified",
-      vinPattern: method === "vin" ? "VIN*" : null,
-      serialPattern: method === "serial" ? "SERIAL*" : null,
-      morphologicalSignature: { method },
-      confidenceBand: confidence,
-      createdAt: new Date(),
-    });
-    const inserted = await this.db
-      .select()
-      .from(libraryEntries)
-      .where(eq(libraryEntries.libraryEntryId, libraryEntryId))
-      .limit(1);
-    return inserted[0];
+    const entry = byId[0];
+    if (!entry || entry.qualificationStatus !== "qualified") {
+      throw new Error(`Smart Library entry ${candidateId} is unknown or not qualified.`);
+    }
+    const confidenceRank = { low: 0, medium: 1, high: 2 } as const;
+    if (confidenceRank[confidence] > confidenceRank[entry.confidenceBand]) {
+      throw new Error(
+        `Smart Library entry ${candidateId} cannot support a ${confidence}-confidence decision.`,
+      );
+    }
+    if (method === "vin" && !entry.vinPattern) {
+      throw new Error(`Smart Library entry ${candidateId} is not qualified for VIN matching.`);
+    }
+    if (method === "serial" && !entry.serialPattern) {
+      throw new Error(`Smart Library entry ${candidateId} is not qualified for serial matching.`);
+    }
+    return entry;
   }
 
-  private async getOrCreateMarketSnapshot(requestedId: string) {
+  private async getRequiredMarketSnapshot(requestedId: string) {
     const byId = await this.db
       .select()
       .from(marketSnapshots)
       .where(eq(marketSnapshots.marketSnapshotId, requestedId))
       .limit(1);
     if (byId.length > 0) return byId[0];
-
-    const marketSnapshotId = randomUUID();
-    await this.db.insert(marketSnapshots).values({
-      marketSnapshotId,
-      ptUsdPerOz: "980.00",
-      pdUsdPerOz: "1105.00",
-      rhUsdPerOz: "4520.00",
-      capturedAt: new Date(),
-    });
-    const inserted = await this.db
-      .select()
-      .from(marketSnapshots)
-      .where(eq(marketSnapshots.marketSnapshotId, marketSnapshotId))
-      .limit(1);
-    return inserted[0];
+    throw new Error(`Market snapshot ${requestedId} is not registered in controlled master data.`);
   }
 
-  private async getOrCreateTermsProfile(requestedId: string) {
+  private async getRequiredTermsProfile(requestedId: string) {
     const byId = await this.db
       .select()
       .from(termsProfiles)
       .where(eq(termsProfiles.termsProfileId, requestedId))
       .limit(1);
-    if (byId.length > 0) return byId[0];
-
-    const customer = await this.getOrCreateAccount("customer_demo", "customer");
-    const termsProfileId = randomUUID();
-    await this.db.insert(termsProfiles).values({
-      termsProfileId,
-      customerAccountId: customer.accountId,
-      payoutFactor: "0.92",
-      processingChargeUsd: "25.00",
-      treatmentChargeUsd: "14.00",
-      activeFrom: new Date(),
-      activeTo: null,
-    });
-    const inserted = await this.db
-      .select()
-      .from(termsProfiles)
-      .where(eq(termsProfiles.termsProfileId, termsProfileId))
-      .limit(1);
-    return inserted[0];
+    const profile = byId[0];
+    if (!profile) {
+      throw new Error(`Terms profile ${requestedId} is not registered in controlled master data.`);
+    }
+    const occurredAt = this.occurredAt();
+    if (profile.activeFrom > occurredAt || (profile.activeTo && profile.activeTo < occurredAt)) {
+      throw new Error(`Terms profile ${requestedId} is not active for this transaction time.`);
+    }
+    return profile;
   }
 
-  private async getOrCreateAccount(
-    accountCode: string,
-    accountType: "buyer" | "warehouse" | "bank" | "customer" | "internal",
-  ) {
+  private async getRequiredAccount(accountCodeOrId: string) {
     const rows = await this.db
       .select()
       .from(accounts)
-      .where(eq(accounts.accountCode, accountCode))
+      .where(
+        this.isUuid(accountCodeOrId)
+          ? or(eq(accounts.accountId, accountCodeOrId), eq(accounts.accountCode, accountCodeOrId))
+          : eq(accounts.accountCode, accountCodeOrId),
+      )
       .limit(1);
-    if (rows.length > 0) return rows[0];
-
-    const accountId = randomUUID();
-    await this.db.insert(accounts).values({
-      accountId,
-      accountCode,
-      accountType,
-      ownerRef: accountCode,
-      active: true,
-      createdAt: new Date(),
-    });
-    const inserted = await this.db.select().from(accounts).where(eq(accounts.accountId, accountId)).limit(1);
-    return inserted[0];
+    const account = rows[0];
+    if (!account?.active) {
+      throw new Error(`Account ${accountCodeOrId} is unknown or inactive.`);
+    }
+    return account;
   }
 
-  private async getOrCreateSettlement(requestedId: string) {
+  private async assertOperationalReference(reference: string): Promise<void> {
+    const queueRows = await this.db
+      .select({ id: queues.queueId })
+      .from(queues)
+      .where(
+        this.isUuid(reference)
+          ? or(eq(queues.queueId, reference), eq(queues.queueCode, reference))
+          : eq(queues.queueCode, reference),
+      )
+      .limit(1);
+    if (queueRows.length > 0) return;
+
+    const boxRows = await this.db
+      .select({ id: boxes.boxId })
+      .from(boxes)
+      .where(
+        this.isUuid(reference)
+          ? or(eq(boxes.boxId, reference), eq(boxes.externalCode, reference))
+          : eq(boxes.externalCode, reference),
+      )
+      .limit(1);
+    if (boxRows.length > 0) return;
+
+    const shipmentRows = await this.db
+      .select({ id: shipments.shipmentId })
+      .from(shipments)
+      .where(
+        this.isUuid(reference)
+          ? or(eq(shipments.shipmentId, reference), eq(shipments.shipmentCode, reference))
+          : eq(shipments.shipmentCode, reference),
+      )
+      .limit(1);
+    if (shipmentRows.length > 0) return;
+
+    const settlementRows = await this.db
+      .select({ id: settlements.settlementId })
+      .from(settlements)
+      .where(
+        this.isUuid(reference)
+          ? or(eq(settlements.settlementId, reference), eq(settlements.scopeId, reference))
+          : eq(settlements.scopeId, reference),
+      )
+      .limit(1);
+    if (settlementRows.length === 0) {
+      throw new Error(`Operational reference ${reference} is not linked to known material or settlement state.`);
+    }
+  }
+
+  private async getOrCreateSettlement(requestedId: string, transactionId: string) {
     if (this.isUuid(requestedId)) {
       const byId = await this.db
         .select()
@@ -1465,14 +1969,15 @@ export class CommandProcessor {
     const queueEstimateUsd = queueRows[0]?.estimatedValueUsd ?? null;
     const baselineEstimateUsd = queueEstimateUsd && Number(queueEstimateUsd) > 0 ? queueEstimateUsd : "75000.00";
 
-    const settlementId = randomUUID();
+    const settlementId = this.nextId("effect");
     await this.db.insert(settlements).values({
       settlementId,
+      createdByTransactionId: transactionId,
       scopeType: "queue",
       scopeId: queueScopeId,
       status: "draft",
       estimatedValueUsd: baselineEstimateUsd,
-      createdAt: new Date(),
+      createdAt: this.occurredAt(),
       finalizedAt: null,
     });
     const inserted = await this.db
@@ -1481,6 +1986,42 @@ export class CommandProcessor {
       .where(eq(settlements.settlementId, settlementId))
       .limit(1);
     return inserted[0];
+  }
+
+  private async updateQueueConverterState(
+    queueId: string,
+    state: "processing" | "sampled" | "settled",
+    transactionId: string,
+  ): Promise<void> {
+    const linkedBoxes = await this.db
+      .select({ boxId: queueBoxes.boxId })
+      .from(queueBoxes)
+      .where(eq(queueBoxes.queueId, queueId));
+    if (linkedBoxes.length === 0) return;
+
+    await this.db
+      .update(converters)
+      .set({ state, lastTransitionTransactionId: transactionId })
+      .where(inArray(converters.currentBoxId, linkedBoxes.map((row) => row.boxId)));
+  }
+
+  private occurredAt(): Date {
+    if (!this.executionContext) {
+      throw new Error("Command execution context is required for deterministic effects.");
+    }
+    return new Date(this.executionContext.occurredAt);
+  }
+
+  private nextId(scope: string): string {
+    if (!this.executionContext) {
+      throw new Error("Command execution context is required for deterministic identifiers.");
+    }
+    const sequence = (this.idCounters.get(scope) ?? 0) + 1;
+    this.idCounters.set(scope, sequence);
+    const hex = createHash("sha256")
+      .update(`${this.executionContext.transactionId}:${scope}:${sequence}`)
+      .digest("hex");
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-5${hex.slice(13, 16)}-8${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
   }
 
   private clamp(value: number, min: number, max: number): number {
@@ -1566,31 +2107,89 @@ export class CommandProcessor {
     return "converter_mix";
   }
 
+  private async getRequiredEvidenceBundle(
+    evidenceBundleId: string,
+    requiredTypes: readonly ("image" | "note" | "gps" | "video" | "document")[],
+  ): Promise<void> {
+    const bundles = await this.db
+      .select({ id: evidenceBundles.evidenceBundleId })
+      .from(evidenceBundles)
+      .where(eq(evidenceBundles.evidenceBundleId, evidenceBundleId))
+      .limit(1);
+    if (bundles.length === 0) {
+      throw new Error(`Evidence bundle ${evidenceBundleId} was not found.`);
+    }
+
+    const artifacts = await this.db
+      .select({ evidenceType: evidenceArtifacts.evidenceType })
+      .from(evidenceArtifacts)
+      .where(eq(evidenceArtifacts.evidenceBundleId, evidenceBundleId));
+    const available = new Set(artifacts.map((artifact) => artifact.evidenceType));
+    const missing = requiredTypes.filter((type) => !available.has(type));
+    if (missing.length > 0) {
+      throw new Error(`Evidence bundle ${evidenceBundleId} is missing required artifacts: ${missing.join(", ")}.`);
+    }
+  }
+
   private async createEvidenceBundle(
+    requestedEvidenceBundleId: string,
     origin: CommandSubmission["origin"],
     capturedAt: string,
-    location: { lat: number; lon: number; accuracyM: number },
+    location: { lat: number; lon: number; accuracyM: number } | null,
     types: readonly ("image" | "note" | "gps" | "video" | "document")[],
   ): Promise<string> {
-    const evidenceBundleId = randomUUID();
+    if (!this.isUuid(requestedEvidenceBundleId)) {
+      throw new Error(`Evidence bundle ${requestedEvidenceBundleId} must be a UUID.`);
+    }
+
+    const existing = await this.db
+      .select()
+      .from(evidenceBundles)
+      .where(eq(evidenceBundles.evidenceBundleId, requestedEvidenceBundleId))
+      .limit(1);
+    if (existing.length > 0) {
+      if (
+        existing[0].createdByUserId !== origin.userId ||
+        existing[0].createdByDeviceId !== origin.deviceId
+      ) {
+        throw new Error(`Evidence bundle ${requestedEvidenceBundleId} belongs to a different origin.`);
+      }
+      const artifacts = await this.db
+        .select({ evidenceType: evidenceArtifacts.evidenceType })
+        .from(evidenceArtifacts)
+        .where(eq(evidenceArtifacts.evidenceBundleId, requestedEvidenceBundleId));
+      const existingTypes = new Set(artifacts.map((artifact) => artifact.evidenceType));
+      const missingTypes = types.filter((type) => !existingTypes.has(type));
+      if (missingTypes.length > 0) {
+        throw new Error(
+          `Evidence bundle ${requestedEvidenceBundleId} is missing required artifacts: ${missingTypes.join(", ")}.`,
+        );
+      }
+      return requestedEvidenceBundleId;
+    }
+
+    const evidenceBundleId = requestedEvidenceBundleId;
     await this.db.insert(evidenceBundles).values({
       evidenceBundleId,
       createdByUserId: origin.userId,
       createdByDeviceId: origin.deviceId,
       capturedAt: new Date(capturedAt),
-      gpsLat: location.lat.toFixed(6),
-      gpsLon: location.lon.toFixed(6),
-      gpsAccuracyM: location.accuracyM.toFixed(3),
+      gpsLat: location?.lat.toFixed(6) ?? null,
+      gpsLon: location?.lon.toFixed(6) ?? null,
+      gpsAccuracyM: location?.accuracyM.toFixed(3) ?? null,
     });
 
     await this.db.insert(evidenceArtifacts).values(
       types.map((type) => {
-        const artifactId = randomUUID();
+        const artifactId = this.nextId("effect");
+        const uri = `dcs-proof://${type}/${evidenceBundleId}/${artifactId}`;
         return {
           artifactId,
           evidenceBundleId,
           evidenceType: type,
-          uri: `dcs-proof://${type}/${evidenceBundleId}/${artifactId}`,
+          uri,
+          sha256: createHash("sha256").update(uri).digest("hex"),
+          synthetic: true,
           capturedAt: new Date(capturedAt),
         };
       }),
@@ -1598,4 +2197,82 @@ export class CommandProcessor {
 
     return evidenceBundleId;
   }
+}
+
+export async function processControlledQueueBatch(
+  db: DcsDb,
+  limit = 100,
+  attemptedAt = new Date(),
+): Promise<ControlledQueueBatchResult> {
+  const awaitingRows = await db
+    .select({ transactionId: transactionEnvelopes.transactionId })
+    .from(transactionEnvelopes)
+    .where(eq(transactionEnvelopes.validationState, "awaiting_validation"))
+    .orderBy(asc(transactionEnvelopes.createdAt))
+    .limit(limit);
+
+  const processor = new CommandProcessor(db);
+  const resumed: Array<
+    | CommandProcessResult
+    | { readonly transactionId: string; readonly status: "failed"; readonly error: string }
+  > = [];
+  for (const row of awaitingRows) {
+    try {
+      resumed.push(await processor.resumeAwaitingValidation(row.transactionId, attemptedAt));
+    } catch (error) {
+      resumed.push({
+        transactionId: row.transactionId,
+        status: "failed",
+        error: error instanceof Error ? error.message : "Deferred command application failed.",
+      });
+    }
+  }
+
+  return {
+    resumed,
+    replication: await processReplicationQueueBatch(db, limit, attemptedAt),
+  };
+}
+
+export async function retryControlledTransaction(
+  db: DcsDb,
+  transactionId: string,
+  retriedAt = new Date(),
+): Promise<{
+  readonly transactionId: string;
+  readonly command: CommandProcessResult;
+  readonly replication: ReplicationAttemptResult | null;
+}> {
+  const rows = await db
+    .select()
+    .from(transactionEnvelopes)
+    .where(eq(transactionEnvelopes.transactionId, transactionId))
+    .limit(1);
+  const envelope = rows[0];
+  if (!envelope) throw new Error(`Transaction ${transactionId} was not found.`);
+
+  let command: CommandProcessResult;
+  if (envelope.validationState === "awaiting_validation") {
+    command = await new CommandProcessor(db).resumeAwaitingValidation(transactionId, retriedAt);
+  } else {
+    command = {
+      transactionId,
+      status: "duplicate",
+      eventType: envelope.eventType,
+      effects: {
+        priorStatus: envelope.validationState,
+        ...(envelope.failureReason ? { failureReason: envelope.failureReason } : {}),
+      },
+    };
+  }
+
+  if (command.status === "awaiting_validation" || envelope.validationState === "failed") {
+    return { transactionId, command, replication: null };
+  }
+
+  return {
+    transactionId,
+    command,
+    replication: await retryReplicationTransaction(db, transactionId, retriedAt),
+  };
 }

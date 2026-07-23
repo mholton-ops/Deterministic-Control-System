@@ -37,10 +37,10 @@ Code location:
 - `packages/projections/src/align-control-evidence.ts`
 
 Design note:
-Projection rows are read models derived from operational transaction-linked data and are intended to be rebuildable.
+Projection rows are read models derived from transaction-linked operational data. A rebuild reads one repeatable database snapshot and records its source-transaction count in the projection checkpoint.
 
 ALIGN alignment note:
-- replication/sync integrity is shown as controlled transaction movement, with demo statuses for queue, transmission, validation, dependency, idempotent apply, acknowledgement, and stream separation
+- replication/sync integrity is shown from deterministic outbox, receiver-receipt, dependency, retry, acknowledgement, and stream records
 - Smart Library detail is shown as centralized valuation authority with match hierarchy, artifact reference, qualification, overrides, assay feedback, and refinement notes
 - funding control is shown as money movement tied to material state, ledger source references, separation of duty, evidence notes, corrections, and settlement status
 
@@ -53,6 +53,11 @@ Current phase:
 - checkpoint-based projection worker implemented for incremental rebuild decisions
 - materialized workbench view caches implemented for consistent `mode=materialized` reads
 - materialized settlement drilldown caches implemented
+
+Implementation boundary:
+- projection rebuild is implemented
+- receiver application is idempotent per transaction, target, and stream
+- generic state-at-time event replay and physical multi-node transport are intentionally not claimed
 
 Rebuild command:
 - `npm run projections:rebuild`

@@ -1,65 +1,41 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { RouteLoader } from "./route-loader";
 
-const SHOW_DELAY_MS = 0;
-const MIN_VISIBLE_MS = 1500;
 const MAX_OVERLAY_MS = 12_000;
 
 type Bounds = { left: number; top: number; width: number; height: number };
 
 export function RouteTransitionOverlay() {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [visible, setVisible] = useState(false);
   const [panelBounds, setPanelBounds] = useState<Bounds | null>(null);
-  const visibleStartedAtRef = useRef<number>(0);
-
-  const showTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const minTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const maxTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  function clearTimers() {
-    if (showTimerRef.current) {
-      clearTimeout(showTimerRef.current);
-      showTimerRef.current = null;
-    }
-    if (minTimerRef.current) {
-      clearTimeout(minTimerRef.current);
-      minTimerRef.current = null;
-    }
+  const clearTimer = useCallback(() => {
     if (maxTimerRef.current) {
       clearTimeout(maxTimerRef.current);
       maxTimerRef.current = null;
     }
-  }
+  }, []);
 
-  function startOverlay() {
-    clearTimers();
-    function show() {
-      visibleStartedAtRef.current = Date.now();
-      setVisible(true);
-    }
-
-    if (SHOW_DELAY_MS <= 0) {
-      show();
-    } else {
-      showTimerRef.current = setTimeout(show, SHOW_DELAY_MS);
-    }
-
-    minTimerRef.current = setTimeout(() => {
-      stopOverlay();
-    }, MIN_VISIBLE_MS);
-    maxTimerRef.current = setTimeout(() => {
-      stopOverlay();
-    }, MAX_OVERLAY_MS);
-  }
-
-  function stopOverlay() {
-    clearTimers();
+  const stopOverlay = useCallback(() => {
+    clearTimer();
     setVisible(false);
-    visibleStartedAtRef.current = 0;
-  }
+  }, [clearTimer]);
+
+  const startOverlay = useCallback(() => {
+    clearTimer();
+    setVisible(true);
+    maxTimerRef.current = setTimeout(() => {
+      setVisible(false);
+      maxTimerRef.current = null;
+    }, MAX_OVERLAY_MS);
+  }, [clearTimer]);
 
   useEffect(() => {
     let frame = 0;
@@ -106,6 +82,10 @@ export function RouteTransitionOverlay() {
   }, []);
 
   useEffect(() => {
+    stopOverlay();
+  }, [pathname, searchParams, stopOverlay]);
+
+  useEffect(() => {
     function onRouteIntent(event: MouseEvent | PointerEvent) {
       if (event.defaultPrevented) return;
       if ("metaKey" in event && (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)) return;
@@ -145,16 +125,21 @@ export function RouteTransitionOverlay() {
       startOverlay();
     }
 
-    document.addEventListener("click", onRouteIntent, { capture: true });
+    function onClick(event: MouseEvent) {
+      if (event.detail === 0) onRouteIntent(event);
+    }
+
+    document.addEventListener("pointerdown", onRouteIntent, { capture: true });
+    document.addEventListener("click", onClick, { capture: true });
     window.addEventListener("popstate", onPopState);
 
     return () => {
-      document.removeEventListener("click", onRouteIntent, { capture: true });
+      document.removeEventListener("pointerdown", onRouteIntent, { capture: true });
+      document.removeEventListener("click", onClick, { capture: true });
       window.removeEventListener("popstate", onPopState);
-      clearTimers();
+      clearTimer();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [clearTimer, startOverlay]);
 
   if (!visible) return <span data-haldn-route-overlay-ready className="hidden" />;
 
@@ -171,26 +156,29 @@ export function RouteTransitionOverlay() {
     <>
       <span data-haldn-route-overlay-ready className="hidden" />
       <div
-        className="pointer-events-none fixed z-[70]"
+        className="pointer-events-auto fixed z-[70]"
         style={overlayStyle ?? { inset: 0 }}
+        role="status"
+        aria-label="Loading next operational surface"
         aria-live="polite"
+        aria-busy="true"
       >
-        <div className="absolute inset-0 rounded-2xl bg-surface-950/55 backdrop-blur-[2px]" />
+        <div className="absolute inset-0 rounded-lg bg-surface-950/55 backdrop-blur-[2px]" />
         <div className="absolute inset-0">
           <div className="absolute left-1/2 top-[20%] w-full max-w-3xl -translate-x-1/2 px-4 md:px-6">
-            <div className="relative z-10 rounded-2xl border-2 border-sky-300/70 bg-slate-950/95 p-4 shadow-[0_18px_50px_rgba(0,0,0,0.55)] md:p-5">
-            <div className="mb-3 flex items-center gap-3 border-b border-sky-200/25 pb-3">
-              <span className="haldn-overlay-spinner" aria-hidden />
-              <div>
-                <div className="font-mono text-xs uppercase tracking-[0.16em] text-sky-200">
-                  HALDN CONTROL
-                </div>
-                <div className="text-sm font-semibold text-slate-100">
-                  Loading Next Operational Surface
+            <div className="relative z-10 rounded-lg border-2 border-sky-300/70 bg-slate-950/95 p-4 shadow-[0_18px_50px_rgba(0,0,0,0.55)] md:p-5">
+              <div className="mb-3 flex items-center gap-3 border-b border-sky-200/25 pb-3">
+                <span className="haldn-overlay-spinner" aria-hidden />
+                <div>
+                  <div className="font-mono text-xs uppercase tracking-[0.16em] text-sky-200">
+                    HALDN CONTROL
+                  </div>
+                  <div className="text-sm font-semibold text-slate-100">
+                    Loading Next Operational Surface
+                  </div>
                 </div>
               </div>
-            </div>
-            <RouteLoader compact />
+              <RouteLoader compact />
             </div>
           </div>
         </div>
