@@ -11,7 +11,7 @@
                          "@dcs/db":  "file:../db",
                          "@dcs/domain":  "file:../domain",
                          "@dcs/event-log":  "file:../event-log",
-                         "drizzle-orm":  "^0.45.2"
+                         "drizzle-orm":  "^0.45.3"
                      },
     "scripts":  {
                     "typecheck":  "tsc -p tsconfig.json --noEmit"
