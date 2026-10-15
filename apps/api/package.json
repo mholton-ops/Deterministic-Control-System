@@ -8,10 +8,10 @@
         "@dcs/db": "file:../../packages/db",
         "@dcs/projections": "file:../../packages/projections",
         "@dcs/replication": "file:../../packages/replication",
-        "@fastify/cors": "^11.3.0",
-        "@fastify/rate-limit": "^11.1.0",
-        "drizzle-orm": "^0.45.2",
-        "fastify": "^5.10.0",
+        "@fastify/cors": "^11.3.1",
+        "@fastify/rate-limit": "^11.2.1",
+        "drizzle-orm": "^0.45.4",
+        "fastify": "^5.12.5",
         "zod": "^3.24.1"
     },
     "scripts": {
